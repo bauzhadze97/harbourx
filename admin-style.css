@@ -228,23 +228,36 @@ h1, h2, h3 { letter-spacing: -0.02em; color: var(--ink); }
 .theme-toggle:active { transform: translateY(0) scale(.96); }
 .login-fab { position: fixed; top: 18px; right: 18px; z-index: 30; }
 
-/* ---------- entrance animations ---------- */
-@keyframes hx-enter {
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: none; }
+/* ---------- entrance animations ----------------------------------------
+   Keyframes, durations and easings come from hx-motion.css. */
+
+.topbar { animation: hx-rise var(--hx-dur-slow) var(--hx-ease-out) backwards; }
+.page > .card { animation: hx-rise var(--hx-dur-slow) var(--hx-ease-out) backwards 80ms; }
+.page > .card ~ .card { animation-delay: 140ms; }
+.client-grid .client-card { animation: hx-rise var(--hx-dur-slow) var(--hx-ease-out) backwards; }
+.client-grid .client-card:nth-child(3n+1) { animation-delay: 40ms; }
+.client-grid .client-card:nth-child(3n+2) { animation-delay: 100ms; }
+.client-grid .client-card:nth-child(3n)   { animation-delay: 160ms; }
+.login-box { animation: hx-scale-in var(--hx-dur-slower) var(--hx-ease-spring) backwards 50ms; }
+
+/* Cards lift under the pointer so a long client list stays navigable. */
+.client-grid .client-card {
+  transition:
+    transform var(--hx-dur-base) var(--hx-ease-out),
+    box-shadow var(--hx-dur-base) var(--hx-ease-out),
+    border-color var(--hx-dur-base) var(--hx-ease-out);
 }
-@media (prefers-reduced-motion: no-preference) {
-  .topbar { animation: hx-enter .48s cubic-bezier(.2,.7,.2,1) backwards; }
-  .page > .card { animation: hx-enter .5s cubic-bezier(.2,.7,.2,1) backwards .08s; }
-  .page > .card ~ .card { animation-delay: .14s; }
-  .client-grid .client-card { animation: hx-enter .44s cubic-bezier(.2,.7,.2,1) backwards; }
-  .client-grid .client-card:nth-child(3n+1) { animation-delay: .04s; }
-  .client-grid .client-card:nth-child(3n+2) { animation-delay: .10s; }
-  .client-grid .client-card:nth-child(3n)   { animation-delay: .16s; }
-  .login-box { animation: hx-enter .55s cubic-bezier(.2,.7,.2,1) backwards .05s; }
+@media (hover: hover) {
+  .client-grid .client-card:hover { transform: translateY(-2px); }
 }
+
 @media (prefers-reduced-motion: reduce) {
   .theme-toggle .t-ico svg { transition: none; }
+  .topbar,
+  .page > .card,
+  .client-grid .client-card,
+  .login-box { animation: none; }
+  .client-grid .client-card:hover { transform: none; }
 }
 
 /* ---------- notices ---------- */

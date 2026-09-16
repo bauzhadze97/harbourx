@@ -9,7 +9,11 @@
 <script src="theme.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap"></noscript>
+<link rel="stylesheet" href="hx-motion.css">
+<script src="hx-motion.js" defer></script>
 <style>
   :root {
     color-scheme: light;
@@ -411,27 +415,50 @@
   }
 
   /* ---------------- entrance animations ---------------- */
-  @keyframes hx-enter {
-    from { opacity: 0; transform: translateY(18px); }
-    to   { opacity: 1; transform: none; }
-  }
+  /* ---------------------------------------------------------------- motion
+     Durations, easings and the hx-rise / hx-fade keyframes come from
+     hx-motion.css; only the choreography is page-specific. The showcase panel
+     leads, the sign-in card follows, and the feature list cascades behind it. */
+
   @keyframes hx-enter-left {
     from { opacity: 0; transform: translateX(-22px); }
     to   { opacity: 1; transform: none; }
   }
-  @media (prefers-reduced-motion: no-preference) {
-    .a-brand      { animation: hx-enter-left .55s cubic-bezier(.2,.7,.2,1) backwards .05s; }
-    .a-hero h2    { animation: hx-enter .6s cubic-bezier(.2,.7,.2,1) backwards .14s; }
-    .a-hero > p   { animation: hx-enter .6s cubic-bezier(.2,.7,.2,1) backwards .22s; }
-    .a-features li:nth-child(1) { animation: hx-enter .5s cubic-bezier(.2,.7,.2,1) backwards .30s; }
-    .a-features li:nth-child(2) { animation: hx-enter .5s cubic-bezier(.2,.7,.2,1) backwards .37s; }
-    .a-features li:nth-child(3) { animation: hx-enter .5s cubic-bezier(.2,.7,.2,1) backwards .44s; }
-    .a-ticker     { animation: hx-enter .55s cubic-bezier(.2,.7,.2,1) backwards .52s; }
-    .a-foot       { animation: hx-enter .55s cubic-bezier(.2,.7,.2,1) backwards .58s; }
-    .auth-card    { animation: hx-enter .6s cubic-bezier(.2,.7,.2,1) backwards .2s; }
-  }
+
+  .a-brand      { animation: hx-enter-left var(--hx-dur-slower) var(--hx-ease-out) backwards 50ms; }
+  .a-hero h2    { animation: hx-rise var(--hx-dur-slower) var(--hx-ease-out) backwards 140ms; }
+  .a-hero > p   { animation: hx-rise var(--hx-dur-slower) var(--hx-ease-out) backwards 220ms; }
+  .a-features li { animation: hx-rise var(--hx-dur-slow) var(--hx-ease-out) backwards calc(300ms + var(--hx-i, 0) * 70ms); }
+  .a-ticker     { animation: hx-rise var(--hx-dur-slower) var(--hx-ease-out) backwards 520ms; }
+  .a-foot       { animation: hx-rise var(--hx-dur-slower) var(--hx-ease-out) backwards 580ms; }
+  .auth-card    { animation: hx-rise var(--hx-dur-slower) var(--hx-ease-spring) backwards 200ms; }
+
+  /* Input focus reads as the field lighting up, not just a border colour swap. */
+  .fld .wrap { transition: transform var(--hx-dur-fast) var(--hx-ease-out); }
+  .fld .wrap:focus-within { transform: translateY(-1px); }
+  .fld input { transition: border-color var(--hx-dur-fast) var(--hx-ease-out), box-shadow var(--hx-dur-fast) var(--hx-ease-out), background-color var(--hx-dur-fast) var(--hx-ease-out); }
+  .toggle-pw { transition: color var(--hx-dur-fast) var(--hx-ease-out), transform var(--hx-dur-fast) var(--hx-ease-spring); }
+  .toggle-pw:hover { transform: scale(1.1); }
+
+  /* The arrow leans into the press. */
+  .submit { position: relative; overflow: hidden; transition: filter var(--hx-dur-fast) var(--hx-ease-out), transform var(--hx-dur-instant) var(--hx-ease-out), box-shadow var(--hx-dur-base) var(--hx-ease-out); }
+  .submit:active:not(:disabled) { transform: scale(.985); }
+  .submit .arrow { transition: transform var(--hx-dur-base) var(--hx-ease-spring); }
+  .submit:hover:not(:disabled) .arrow { transform: translateX(4px); }
+
+  .auth-error { animation: hx-rise var(--hx-dur-base) var(--hx-ease-out); }
+  .a-features li .a-ficon { transition: transform var(--hx-dur-base) var(--hx-ease-spring); }
+  .a-features li:hover .a-ficon { transform: scale(1.12) rotate(-6deg); }
+
   @media (prefers-reduced-motion: reduce) {
     .theme-fab .t-ico svg { transition: none; }
+    .a-brand, .a-hero h2, .a-hero > p, .a-features li,
+    .a-ticker, .a-foot, .auth-card, .auth-error { animation: none; }
+    .fld .wrap:focus-within,
+    .toggle-pw:hover,
+    .submit:active:not(:disabled),
+    .submit:hover:not(:disabled) .arrow,
+    .a-features li:hover .a-ficon { transform: none; }
   }
 </style>
 </head>
@@ -453,7 +480,7 @@
       <h2>Your digital assets, under control.</h2>
       <p>A private portfolio workspace for holding Bitcoin, converting to your local currency, and withdrawing to your bank — with compliance built in.</p>
 
-      <ul class="a-features">
+      <ul class="a-features hx-stagger">
         <li>
           <span class="a-ficon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
           <div><b>Bank-grade protection</b><span>AML/KYC verification, session security, and audited withdrawal controls.</span></div>
@@ -519,7 +546,7 @@
           </div>
         </div>
 
-        <button type="submit" class="submit" id="submitBtn">
+        <button type="submit" class="submit" id="submitBtn" data-ripple>
           <span class="spinner" aria-hidden="true"></span>
           <span class="label">Sign in</span>
           <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="17" height="17"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
