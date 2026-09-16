@@ -8,6 +8,20 @@ Running it on your own computer
 The portal is plain PHP + HTML, so it needs a PHP interpreter and nothing else —
 no build step, no npm install, no database.
 
+The short way — setup.sh / setup.ps1 install what is missing, fetch the project
+and start it, and are safe to re-run:
+
+  Linux, WSL, macOS   ./setup.sh
+  Windows             .\setup.ps1
+
+On Windows, setup.ps1 installs Git, clones the project, and then starts it with
+PHP if Windows will run PHP — and hands the job to setup.sh inside WSL if it
+will not, which is what happens on a machine with Smart App Control or a WDAC
+policy. Pass -UseWsl to skip straight to that, -Path to clone somewhere other
+than %USERPROFILE%\harbourx, or -Port for a different port.
+
+The rest of this section is the same thing done by hand.
+
 1. Install PHP 8 (7.3 is the minimum; 8.3 is what CI uses).
 
      Windows      winget install PHP.PHP.8.3
