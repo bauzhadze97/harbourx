@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HarbourX · AML / KYC verification</title>
+  <meta name="description" content="Submit AML and KYC information for HarbourX account review.">
+  <meta name="color-scheme" content="light dark">
+  <script src="theme.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f3f6f7;
+      --panel: #fff;
+      --panel-2: #fbfdfd;
+      --field-bg: #fbfdfd;
+      --field-bd: #d7e0e4;
+      --readonly-bg: #f2f5f6;
+      --glass: rgba(255,255,255,.9);
+      --ink: #0d1f30;
+      --text: #1c2b39;
+      --muted: #5c6b7a;
+      --faint: #8b98a5;
+      --line: #e4eaee;
+      --teal: #0e938e;
+      --teal-dark: #0b7671;
+      --teal-bright: #14b8ad;
+      --green: #12a150;
+      --orange: #c77700;
+      --red: #e0424b;
+      --note-fg: #8a5416;
+      --note-bg: #fff7ec;
+      --note-bd: #f3ddb9;
+      --primary-bg: #0b2545;
+      --primary-bg-hover: #0f2f56;
+      --primary-fg: #fff;
+      --primary-sh: 0 12px 26px rgba(11,37,69,.22);
+      --toggle-bg: rgba(255,255,255,.72);
+      --toggle-bd: #e1e8ec;
+      --toggle-fg: #47586a;
+      --shadow: 0 2px 6px rgba(11,37,69,.05), 0 16px 38px rgba(11,37,69,.08);
+      --ring: 0 0 0 4px rgba(20,184,173,.18);
+      --glow-1: rgba(20,184,173,.12);
+      --glow-2: rgba(11,37,69,.06);
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #070f18;
+      --panel: #0f1d2b;
+      --panel-2: #13212f;
+      --field-bg: #0e1c29;
+      --field-bd: #2b4150;
+      --readonly-bg: #0b1622;
+      --glass: rgba(15,29,43,.74);
+      --ink: #f1f6f8;
+      --text: #c4d2dc;
+      --muted: #93a5b2;
+      --faint: #6d7f8c;
+      --line: #223442;
+      --teal-dark: #33d6c8;
+      --note-fg: #f0c07a;
+      --note-bg: rgba(199,119,0,.14);
+      --note-bd: rgba(199,119,0,.32);
+      --primary-bg: linear-gradient(135deg, #14c4b7, #0e938e);
+      --primary-bg-hover: linear-gradient(135deg, #1ad4c6, #11a89c);
+      --primary-fg: #04211f;
+      --primary-sh: 0 14px 34px -8px rgba(20,200,187,.5);
+      --toggle-bg: rgba(255,255,255,.06);
+      --toggle-bd: rgba(255,255,255,.14);
+      --toggle-fg: #c4d2dc;
+      --shadow: 0 2px 8px rgba(0,0,0,.3), 0 20px 44px -18px rgba(0,0,0,.5);
+      --glow-1: rgba(30,200,187,.13);
+      --glow-2: rgba(20,50,88,.30);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      background:
+        radial-gradient(900px 480px at 100% -8%, var(--glow-1), transparent 60%),
+        radial-gradient(760px 460px at -6% 2%, var(--glow-2), transparent 55%),
+        var(--bg);
+      background-attachment: fixed;
+      transition: background-color .35s ease, color .35s ease;
+    }
+    h1, h2, h3 { color: var(--ink); letter-spacing: -0.02em; }
+    .page { max-width: 1040px; margin: 0 auto; padding: 26px clamp(14px,3vw,28px) 60px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+    .topbar-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .brand { display: flex; align-items: center; gap: 13px; }
+    .badge { width: 46px; height: 46px; border-radius: 13px; display: grid; place-items: center; color: #fff; background: linear-gradient(135deg, #0b2545, #0e938e); box-shadow: 0 10px 22px rgba(14,147,142,.28), inset 0 1px 0 rgba(255,255,255,.24); }
+    :root[data-theme="dark"] .badge { background: linear-gradient(135deg, #10365f, #14b8ad); color: #eafffb; }
+    .badge svg { width: 23px; height: 23px; }
+    h1 { margin: 0; font-size: 21px; font-weight: 800; letter-spacing: -.03em; }
+    .subtitle { margin: 3px 0 0; color: var(--muted); font-size: 13px; }
+    .back { color: var(--ink); font-weight: 700; text-decoration: none; padding: 11px 15px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 1px 2px rgba(11,37,69,.05); transition: border-color .2s, background .2s; }
+    .back:hover { border-color: var(--teal-bright); background: var(--panel-2); }
+    .theme-fab {
+      display: inline-flex; align-items: center; gap: 8px;
+      height: 40px; padding: 0 14px;
+      border-radius: 999px;
+      border: 1px solid var(--toggle-bd);
+      background: var(--toggle-bg);
+      color: var(--toggle-fg);
+      font: inherit; font-size: 12.5px; font-weight: 700;
+      cursor: pointer;
+      -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+      transition: transform .2s, border-color .2s, color .2s;
+    }
+    .theme-fab:hover { transform: translateY(-1px); color: var(--ink); border-color: var(--teal-bright); }
+    .theme-fab:active { transform: translateY(0) scale(.96); }
+    .theme-fab:focus-visible { outline: none; box-shadow: var(--ring); }
+    .theme-fab .t-ico { position: relative; width: 15px; height: 15px; flex: 0 0 auto; }
+    .theme-fab .t-ico svg {
+      position: absolute; inset: 0; width: 15px; height: 15px; display: block;
+      transition: opacity .3s ease, transform .45s cubic-bezier(.2,.7,.2,1);
+    }
+    .theme-fab .t-sun  { opacity: 0; transform: rotate(-90deg) scale(.4); }
+    .theme-fab .t-moon { opacity: 1; transform: none; }
+    :root[data-theme="dark"] .theme-fab .t-sun  { opacity: 1; transform: none; }
+    :root[data-theme="dark"] .theme-fab .t-moon { opacity: 0; transform: rotate(90deg) scale(.4); }
+
+    @keyframes hx-enter {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: none; }
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .topbar      { animation: hx-enter .48s cubic-bezier(.2,.7,.2,1) backwards; }
+      .status-card { animation: hx-enter .5s cubic-bezier(.2,.7,.2,1) backwards .06s; }
+      form .section:nth-of-type(1) { animation: hx-enter .5s cubic-bezier(.2,.7,.2,1) backwards .12s; }
+      form .section:nth-of-type(2) { animation: hx-enter .5s cubic-bezier(.2,.7,.2,1) backwards .18s; }
+      form .section:nth-of-type(3) { animation: hx-enter .5s cubic-bezier(.2,.7,.2,1) backwards .24s; }
+      form .section:nth-of-type(4) { animation: hx-enter .5s cubic-bezier(.2,.7,.2,1) backwards .30s; }
+      form .section:nth-of-type(n+5) { animation: hx-enter .5s cubic-bezier(.2,.7,.2,1) backwards .34s; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .theme-fab .t-ico svg { transition: none; }
+    }
+    .submit:active:not(:disabled) { transform: translateY(0) scale(.98); }
+    .status-card { padding: 18px 20px; border-radius: 18px; background: var(--panel); border: 1px solid var(--line); box-shadow: var(--shadow); margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; }
+    .status-card strong { display: block; font-size: 16px; color: var(--ink); }
+    .status-card p { margin: 5px 0 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .status { display: inline-flex; align-items: center; border-radius: 999px; padding: 6px 12px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; border: 1px solid transparent; }
+    .status-unverified { color: #b5323a; background: #fdeced; border-color: #f4c9cc; }
+    .status-under_review { color: #9a5b00; background: #fff5e6; border-color: #f6dcae; }
+    .status-verified { color: #0b7a3c; background: #e9f8ef; border-color: #bfe8cf; }
+    :root[data-theme="dark"] .status-unverified { color: #ff9ea3; background: rgba(224,66,75,.15); border-color: rgba(224,66,75,.34); }
+    :root[data-theme="dark"] .status-under_review { color: #f0c07a; background: rgba(199,119,0,.16); border-color: rgba(199,119,0,.34); }
+    :root[data-theme="dark"] .status-verified { color: #7ee0a6; background: rgba(18,161,80,.15); border-color: rgba(18,161,80,.32); }
+    .section { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 22px; margin-bottom: 16px; box-shadow: var(--shadow); }
+    .section h2 { margin: 0 0 16px; font-size: 12.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+    .note { margin: -4px 0 16px; padding: 11px 13px; color: var(--note-fg); background: var(--note-bg); border: 1px solid var(--note-bd); border-radius: 10px; font-size: 12px; line-height: 1.5; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .span-2 { grid-column: 1 / -1; }
+    label { display: block; margin-bottom: 7px; font-size: 12px; font-weight: 700; color: var(--muted); }
+    input, select {
+      width: 100%;
+      height: 48px;
+      border: 1px solid var(--field-bd);
+      border-radius: 12px;
+      background: var(--field-bg);
+      padding: 0 13px;
+      color: var(--text);
+      font: inherit;
+    }
+    input:focus, select:focus { outline: none; border-color: var(--teal-bright); box-shadow: var(--ring); background: var(--panel); }
+    input::placeholder { color: var(--faint); }
+    input[readonly] { background: var(--readonly-bg); color: var(--muted); }
+    .check { display: flex; align-items: flex-start; gap: 10px; margin: 12px 0; color: var(--text); font-size: 13px; line-height: 1.5; }
+    .check input { width: 18px; height: 18px; flex: 0 0 auto; margin-top: 2px; accent-color: var(--teal); }
+    .submit { width: 100%; min-height: 52px; border: 0; border-radius: 13px; background: var(--primary-bg); color: var(--primary-fg); font-weight: 700; font-size: 15px; cursor: pointer; box-shadow: var(--primary-sh); transition: transform .2s, box-shadow .2s, background .2s; }
+    .submit:hover:not(:disabled) { transform: translateY(-1px); background: var(--primary-bg-hover); box-shadow: 0 16px 32px rgba(11,37,69,.28); }
+    .submit:disabled { opacity: .6; cursor: not-allowed; }
+    .message { display: none; margin-bottom: 16px; padding: 12px 15px; border-radius: 12px; font-size: 13px; font-weight: 600; line-height: 1.5; }
+    .message.error { display: block; color: #b5323a; background: #fdeced; border: 1px solid #f4c9cc; }
+    .message.success { display: block; color: #0b7a3c; background: #e9f8ef; border: 1px solid #bfe8cf; }
+    :root[data-theme="dark"] .message.error { color: #ff9ea3; background: rgba(224,66,75,.14); border-color: rgba(224,66,75,.32); }
+    :root[data-theme="dark"] .message.success { color: #7ee0a6; background: rgba(18,161,80,.14); border-color: rgba(18,161,80,.32); }
+    .required { color: #be123c; }
+    :root[data-theme="dark"] .required { color: #ff9ea3; }
+    @media (max-width: 680px) {
+      .grid { grid-template-columns: 1fr; }
+      .span-2 { grid-column: auto; }
+      .section { padding: 18px; }
+    }
+  </style>
+  <link rel="stylesheet" href="portal.css">
+</head>
+<body>
+  <div class="portal-shell">
+    <aside class="portal-sidebar" id="portalSidebar">
+      <a class="portal-brand" href="dashboard.html"><svg viewBox="0 0 42 42" aria-hidden="true"><path d="M6 29 21 9l15 20"/><path d="m13 33 8-11 8 11"/></svg><strong>HarbourX</strong></a>
+      <nav class="portal-nav" aria-label="Primary navigation">
+        <a href="dashboard.html"><i>⌂</i>Overview</a><a href="dashboard.html#portfolio"><i>◔</i>Portfolio</a><a href="dashboard.html#transactions"><i>☷</i>Transactions</a><a href="dashboard.html"><i>↓</i>Deposit</a><a href="dashboard.html"><i>↑</i>Withdraw</a><a href="dashboard.html#transactions"><i>▤</i>Statements</a><a class="active" href="aml.html"><i>◇</i>Security</a><a href="mailto:support@harbourx.org"><i>?</i>Support</a>
+      </nav>
+      <div class="portal-rail-note"><strong>Demo account</strong><p>Identity information is masked and displayed for demonstration.</p></div>
+    </aside>
+
+    <div class="portal-workspace">
+      <header class="portal-topbar">
+        <button class="portal-menu" id="portalMenu" type="button" aria-label="Open navigation">☰</button>
+        <label class="portal-search"><span>⌕</span><input type="search" placeholder="Search verification help…"></label>
+        <span class="portal-demo-pill">ⓘ Demo account — sample data only.</span>
+        <div class="portal-user"><span class="portal-avatar" id="userInitials">HX</span><div><strong id="userName">HarbourX client</strong><small>Identity centre</small></div></div>
+      </header>
+
+      <main class="portal-main page">
+        <div class="portal-breadcrumb"><a href="change_password.php">Security</a> &nbsp;›&nbsp; Identity verification</div>
+        <div class="portal-heading"><div><h1>Identity verification</h1><p>Complete identity verification to keep your account secure and enable banking withdrawals.</p></div><a class="portal-back" href="dashboard.html">← Back to dashboard</a></div>
+
+        <div class="verify-progress" aria-label="Verification progress">
+          <div class="verify-step"><i>✓</i><strong>1. Personal details</strong><span>Complete</span></div><div class="verify-step"><i>✓</i><strong>2. Identity document</strong><span>Complete</span></div><div class="verify-step"><i>✓</i><strong>3. Review</strong><span id="reviewStepStatus">Complete</span></div>
+        </div>
+
+        <section class="portal-card verify-hero" id="verifiedSummary" hidden>
+          <span class="verify-check">✓</span><div class="verify-copy"><h2>Verification complete</h2><p>Your identity has been verified.</p><p>Your HarbourX account is eligible to proceed to bank withdrawal.</p></div><div class="verify-meta"><span class="status status-verified">Verified</span><small id="verifiedDate">Identity review completed</small></div>
+        </section>
+
+        <section class="identity-grid" id="identitySummary" hidden>
+          <article class="portal-card identity-card"><div class="identity-card-head"><i>♙</i><h2>Personal details</h2><button type="button" data-edit-verification>✎ Edit details</button></div><dl class="identity-list" id="personalSummary"></dl></article>
+          <article class="portal-card identity-card"><div class="identity-card-head"><i>✉</i><h2>Contact information</h2><button type="button" data-edit-verification>✎ Edit details</button></div><dl class="identity-list" id="contactSummary"></dl></article>
+          <article class="portal-card identity-card"><div class="identity-card-head"><i>⌂</i><h2>Residential address</h2><button type="button" data-edit-verification>✎ Edit details</button></div><dl class="identity-list" id="addressSummary"></dl></article>
+          <article class="portal-card identity-card"><div class="identity-card-head"><i>▤</i><h2>Verification method</h2></div><dl class="identity-list" id="documentSummary"></dl></article>
+        </section>
+
+        <section class="portal-card privacy-card" id="privacySummary" hidden><i>♙</i><div><strong>Your privacy and security matter</strong><p>Your personal information is encrypted in transit and used only for account compliance in accordance with our Privacy Policy.</p></div><a href="#privacy">Learn more ↗</a></section>
+
+    <div class="status-card portal-card" id="statusCard">
+      <div>
+        <strong id="statusTitle">Checking AML status...</strong>
+        <p id="statusText">Bank withdrawals require verified AML status.</p>
+      </div>
+      <span class="status status-unverified" id="statusBadge">Unverified</span>
+    </div>
+
+    <div class="message" id="message"></div>
+
+    <form id="amlForm" class="identity-form">
+      <section class="section portal-card form-section">
+        <h2>Personal details</h2>
+        <div class="note">Enter details exactly as shown on your government-issued identity document. You must be at least 18.</div>
+        <div class="grid form-grid">
+          <div><label for="title">Title</label><select id="title"><option value="">Select</option><option>Mr</option><option>Ms</option><option>Mrs</option><option>Dr</option><option>Mx</option></select></div>
+          <div><label for="legalFirstName">Legal first name <span class="required">*</span></label><input id="legalFirstName" required></div>
+          <div><label for="middleNames">Middle name(s)</label><input id="middleNames"></div>
+          <div><label for="legalLastName">Legal last name <span class="required">*</span></label><input id="legalLastName" required></div>
+          <div><label for="dateOfBirth">Date of birth <span class="required">*</span></label><input id="dateOfBirth" type="date" required></div>
+          <div><label for="gender">Gender <span class="required">*</span></label><select id="gender" required><option value="">Select</option><option>Female</option><option>Male</option><option>Non-binary</option><option>Prefer not to say</option></select></div>
+        </div>
+      </section>
+
+      <section class="section portal-card form-section">
+        <h2>Contact information</h2>
+        <div class="grid form-grid">
+          <div><label for="email">Email address</label><input id="email" type="email" readonly></div>
+          <div><label for="mobileNumber">Mobile number <span class="required">*</span></label><input id="mobileNumber" type="tel" required></div>
+          <div class="span-2"><label for="preferred2fa">Preferred 2FA method</label><select id="preferred2fa"><option value="">Select</option><option>Authenticator app</option><option>SMS</option><option>Email</option></select></div>
+        </div>
+      </section>
+
+      <section class="section portal-card form-section">
+        <h2>Residential address</h2>
+        <div class="note">Use your current residential address, not a P.O. Box.</div>
+        <div class="grid form-grid">
+          <div class="span-2"><label for="streetAddress">Street address <span class="required">*</span></label><input id="streetAddress" required></div>
+          <div><label for="suburb">Suburb or city <span class="required">*</span></label><input id="suburb" required></div>
+          <div><label for="postcode">Postcode <span class="required">*</span></label><input id="postcode" required></div>
+          <div><label for="state">State / territory <span class="required">*</span></label><input id="state" required></div>
+          <div><label for="country">Country <span class="required">*</span></label><input id="country" required></div>
+        </div>
+      </section>
+
+      <section class="section portal-card form-section">
+        <h2>Identity verification</h2>
+        <div class="note">HarbourX staff will manually review the identity information supplied here. This form does not itself perform government or third-party document verification.</div>
+        <div class="grid form-grid">
+          <div><label for="idType">ID type <span class="required">*</span></label><select id="idType" required><option value="">Select document type</option><option>Passport</option><option>Driver licence</option><option>National identity card</option><option>Residence permit</option></select></div>
+          <div><label for="documentNumber">Document number <span class="required">*</span></label><input id="documentNumber" required></div>
+          <div><label for="issuingCountry">Issuing country <span class="required">*</span></label><input id="issuingCountry" required></div>
+          <div><label for="expiryDate">Expiry date <span class="required">*</span></label><input id="expiryDate" type="date" required></div>
+        </div>
+      </section>
+
+      <section class="section portal-card form-section">
+        <h2>Tax and financial information</h2>
+        <div class="grid form-grid">
+          <div><label for="taxReference">Tax reference number</label><input id="taxReference"></div>
+          <div><label for="businessNumber">Business number, if applicable</label><input id="businessNumber"></div>
+          <div><label for="taxResidency">Country of tax residency <span class="required">*</span></label><input id="taxResidency" required></div>
+          <div><label for="additionalTaxResidencies">Additional tax residencies</label><input id="additionalTaxResidencies" placeholder="None"></div>
+          <div><label for="sourceOfFunds">Primary source of funds <span class="required">*</span></label><select id="sourceOfFunds" required><option value="">Select</option><option>Employment income</option><option>Business income</option><option>Savings</option><option>Investments</option><option>Inheritance</option><option>Property sale</option><option>Other</option></select></div>
+          <div><label for="expectedVolume">Expected monthly trading volume <span class="required">*</span></label><select id="expectedVolume" required><option value="">Select range</option></select></div>
+        </div>
+      </section>
+
+      <section class="section portal-card form-section">
+        <h2>PEP and sanctions screening</h2>
+        <label class="check"><input id="isPep" type="checkbox"><span>I am, or am closely associated with, a politically exposed person such as a current or former senior public official.</span></label>
+        <label class="check"><input id="sanctionsConfirmed" type="checkbox" required><span>I confirm that I am not subject to sanctions or financial restrictions. <span class="required">*</span></span></label>
+      </section>
+
+      <section class="section portal-card form-section">
+        <h2>Disclosures and consent</h2>
+        <label class="check"><input id="consentAccuracy" type="checkbox" required><span>I confirm that the information supplied is complete and accurate. <span class="required">*</span></span></label>
+        <label class="check"><input id="consentPrivacy" type="checkbox" required><span>I consent to HarbourX storing and reviewing this information for account compliance. <span class="required">*</span></span></label>
+        <label class="check"><input id="consentAml" type="checkbox" required><span>I understand that bank withdrawals remain unavailable until HarbourX marks my AML status as verified. <span class="required">*</span></span></label>
+      </section>
+
+      <button class="submit submit-primary" id="submitBtn" type="submit">Submit for AML review</button>
+    </form>
+        <footer class="portal-footer"><strong>HarbourX</strong><nav><a href="#terms">Terms</a><a href="#privacy">Privacy</a><a href="#risk">Risk disclosure</a><a href="mailto:support@harbourx.org">Support</a></nav></footer>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const rawUser = localStorage.getItem("user");
+    let currentUser = null;
+    try { currentUser = rawUser ? JSON.parse(rawUser) : null; } catch (error) {}
+    if (!currentUser || !currentUser.email) window.location.replace("login.html");
+
+    const form = document.getElementById("amlForm");
+    const submitBtn = document.getElementById("submitBtn");
+    const statusBadge = document.getElementById("statusBadge");
+    const statusTitle = document.getElementById("statusTitle");
+    const statusText = document.getElementById("statusText");
+    const message = document.getElementById("message");
+    const statusCard = document.getElementById("statusCard");
+    const verifiedSummary = document.getElementById("verifiedSummary");
+    const identitySummary = document.getElementById("identitySummary");
+    const privacySummary = document.getElementById("privacySummary");
+    document.getElementById("email").value = currentUser?.email || "";
+    const accountCurrency = /^[A-Z]{3}$/.test(String(currentUser?.currency || "").toUpperCase())
+      ? String(currentUser.currency).toUpperCase()
+      : "USD";
+    const expectedVolume = document.getElementById("expectedVolume");
+    const volumeRanges = [
+      `Under ${accountCurrency} 10,000`,
+      `${accountCurrency} 10,000 - ${accountCurrency} 50,000`,
+      `${accountCurrency} 50,001 - ${accountCurrency} 100,000`,
+      `Over ${accountCurrency} 100,000`
+    ];
+    volumeRanges.forEach((range) => {
+      const option = document.createElement("option");
+      option.value = range;
+      option.textContent = range;
+      expectedVolume.appendChild(option);
+    });
+
+    const fieldIds = [
+      "title", "legalFirstName", "middleNames", "legalLastName", "dateOfBirth", "gender",
+      "mobileNumber", "preferred2fa", "streetAddress", "suburb", "postcode", "state", "country",
+      "idType", "documentNumber", "issuingCountry", "expiryDate", "taxReference", "businessNumber",
+      "taxResidency", "additionalTaxResidencies", "sourceOfFunds", "expectedVolume"
+    ];
+    const checkboxIds = ["isPep", "sanctionsConfirmed", "consentAccuracy", "consentPrivacy", "consentAml"];
+
+    function labelForStatus(status) {
+      return status === "verified" ? "Verified" : status === "under_review" ? "Under review" : "Unverified";
+    }
+
+    function renderStatus(aml) {
+      const status = aml?.status || "unverified";
+      statusBadge.className = `status status-${status}`;
+      statusBadge.textContent = labelForStatus(status);
+      if (status === "verified") {
+        statusTitle.textContent = "AML verification complete";
+        statusText.textContent = "Your HarbourX account is eligible to proceed to bank withdrawal.";
+        submitBtn.disabled = true;
+        submitBtn.textContent = "AML verified";
+        statusCard.hidden = true;
+        form.hidden = true;
+        verifiedSummary.hidden = false;
+        identitySummary.hidden = false;
+        privacySummary.hidden = false;
+        document.getElementById("reviewStepStatus").textContent = "Complete";
+        renderMaskedSummary(aml?.data || {}, aml);
+      } else if (status === "under_review") {
+        statusTitle.textContent = "AML submission under review";
+        statusText.textContent = "HarbourX administration is reviewing your details. Bank withdrawal remains locked until approval.";
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Submission under review";
+        statusCard.hidden = false;
+        form.hidden = false;
+        verifiedSummary.hidden = true;
+        identitySummary.hidden = true;
+        privacySummary.hidden = true;
+        document.getElementById("reviewStepStatus").textContent = "Under review";
+      } else {
+        statusTitle.textContent = aml?.submittedAt ? "AML verification requires changes" : "AML verification required";
+        statusText.textContent = aml?.reviewNote || "Complete all required fields and submit them for HarbourX review before withdrawing to a bank.";
+        submitBtn.disabled = false;
+        submitBtn.textContent = aml?.submittedAt ? "Resubmit for AML review" : "Submit for AML review";
+        statusCard.hidden = false;
+        form.hidden = false;
+        verifiedSummary.hidden = true;
+        identitySummary.hidden = true;
+        privacySummary.hidden = true;
+        document.getElementById("reviewStepStatus").textContent = "Required";
+      }
+    }
+
+    function maskWord(value) {
+      const text = String(value || "").trim();
+      if (!text) return "Not provided";
+      return text.length <= 2 ? `${text[0] || ""}*` : `${text[0]}${"*".repeat(Math.min(4, text.length - 1))}`;
+    }
+
+    function maskEmail(value) {
+      const [local = "", domain = ""] = String(value || "").split("@");
+      if (!domain) return "Not provided";
+      return `${local.slice(0, 1)}***@${domain}`;
+    }
+
+    function maskPhone(value) {
+      const text = String(value || "").trim();
+      if (!text) return "Not provided";
+      return `${text.slice(0, 4)} ${"*".repeat(5)}${text.slice(-3)}`;
+    }
+
+    function maskDocument(value) {
+      const text = String(value || "").trim();
+      return text ? `${"*".repeat(Math.max(4, text.length - 4))}${text.slice(-4)}` : "Not provided";
+    }
+
+    function summaryRows(elementId, rows) {
+      const list = document.getElementById(elementId);
+      list.innerHTML = "";
+      rows.forEach(([label, value]) => {
+        const wrap = document.createElement("div");
+        wrap.className = "identity-row";
+        const term = document.createElement("dt");
+        const detail = document.createElement("dd");
+        term.textContent = label;
+        detail.textContent = value || "Not provided";
+        wrap.append(term, detail);
+        list.appendChild(wrap);
+      });
+    }
+
+    function renderMaskedSummary(data, aml) {
+      summaryRows("personalSummary", [
+        ["Title", data.title || "Not provided"], ["Legal first name", maskWord(data.legalFirstName)],
+        ["Middle name(s)", maskWord(data.middleNames)], ["Legal last name", maskWord(data.legalLastName)],
+        ["Date of birth", data.dateOfBirth ? `${data.dateOfBirth.slice(0, 4).replace(/\d{2}$/, "**")}-${data.dateOfBirth.slice(5)}` : "Not provided"],
+        ["Gender", data.gender || "Not provided"]
+      ]);
+      summaryRows("contactSummary", [["Email address", maskEmail(currentUser.email)], ["Mobile number", maskPhone(data.mobileNumber)], ["Preferred 2FA method", data.preferred2fa || "Authenticator app"]]);
+      summaryRows("addressSummary", [["Address line 1", maskWord(data.streetAddress)], ["Town / City", maskWord(data.suburb)], ["State", maskWord(data.state)], ["Postcode", maskWord(data.postcode)], ["Country", data.country || "Not provided"]]);
+      summaryRows("documentSummary", [["Identity document", data.idType || "Not provided"], ["Document number", maskDocument(data.documentNumber)], ["Issuing country", data.issuingCountry || "Not provided"], ["Verification method", "HarbourX compliance review"], ["Status", "Verified"]]);
+      const completed = aml?.reviewedAt || aml?.submittedAt;
+      document.getElementById("verifiedDate").textContent = completed ? `Verified ${new Date(completed).toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" })}` : "Identity review completed";
+    }
+
+    function fillForm(data = {}) {
+      fieldIds.forEach((id) => {
+        if (Object.prototype.hasOwnProperty.call(data, id)) document.getElementById(id).value = data[id] ?? "";
+      });
+      checkboxIds.forEach((id) => {
+        if (Object.prototype.hasOwnProperty.call(data, id)) document.getElementById(id).checked = Boolean(data[id]);
+      });
+    }
+
+    async function loadAml() {
+      try {
+        const response = await fetch("aml.php", { cache: "no-store" });
+        const result = await response.json();
+        if (response.status === 401) {
+          localStorage.removeItem("user");
+          window.location.replace("login.html");
+          return;
+        }
+        if (!result.success) throw new Error(result.message || "Unable to load AML status.");
+        fillForm(result.aml.data);
+        renderStatus(result.aml);
+      } catch (error) {
+        message.className = "message error";
+        message.textContent = error.message || "Unable to load AML status.";
+      }
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!form.reportValidity()) return;
+      message.className = "message";
+      message.textContent = "";
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Submitting...";
+
+      const payload = {};
+      fieldIds.forEach((id) => payload[id] = document.getElementById(id).value.trim());
+      checkboxIds.forEach((id) => payload[id] = document.getElementById(id).checked);
+
+      try {
+        const response = await fetch("aml.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message || "Unable to submit AML details.");
+        currentUser.amlStatus = result.aml.status;
+        localStorage.setItem("user", JSON.stringify(currentUser));
+        renderStatus(result.aml);
+        message.className = "message success";
+        message.textContent = result.message;
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } catch (error) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Submit for AML review";
+        message.className = "message error";
+        message.textContent = error.message || "Unable to submit AML details.";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    });
+
+    const accountName = String(currentUser?.name || "HarbourX client").trim();
+    document.getElementById("userName").textContent = accountName;
+    document.getElementById("userInitials").textContent = accountName.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join("").toUpperCase() || "HX";
+    document.getElementById("portalMenu").addEventListener("click", () => document.body.classList.toggle("nav-open"));
+    document.querySelectorAll("[data-edit-verification]").forEach((button) => button.addEventListener("click", () => {
+      form.hidden = false;
+      form.scrollIntoView({ behavior: "smooth", block: "start" });
+    }));
+
+    loadAml();
+  </script>
+</body>
+</html>

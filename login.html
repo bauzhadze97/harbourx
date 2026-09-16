@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+<title>HarbourX · Sign in</title>
+<meta name="description" content="Secure access to your HarbourX digital asset portfolio.">
+<script src="theme.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: light;
+    --navy-900: #071829;
+    --navy-800: #0b2545;
+    --teal-600: #0e938e;
+    --teal-500: #14b8ad;
+    --ink: #0d1f30;
+    --text: #1c2b39;
+    --muted: #5c6b7a;
+    --faint: #8b98a5;
+    --line: #e4eaee;
+    --field-bd: #d7e0e4;
+    --field-bg: #ffffff;
+    --panel: #ffffff;
+    --main-bg: #f6f8f9;
+    --main-glow: rgba(20,184,173,.08);
+    --card-bd: transparent;
+    --card-sh: none;
+    --submit-bg: var(--navy-800);
+    --submit-bg-hover: #0f2f56;
+    --submit-fg: #ffffff;
+    --submit-sh: 0 12px 26px rgba(11,37,69,.24);
+    --submit-sh-hover: 0 16px 32px rgba(11,37,69,.30);
+    --toggle-bg: rgba(255,255,255,.72);
+    --toggle-bd: #e1e8ec;
+    --toggle-fg: #47586a;
+    --err-bg: #fdeced;
+    --err-bd: #f4c9cc;
+    --err-fg: #b5323a;
+    --ring: 0 0 0 4px rgba(20,184,173,.18);
+    --ease: 220ms cubic-bezier(.2,.7,.2,1);
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ink: #f1f6f8;
+    --text: #c4d2dc;
+    --muted: #93a5b2;
+    --faint: #6d7f8c;
+    --line: #223442;
+    --field-bd: #2b4150;
+    --field-bg: #0e1c29;
+    --panel: #0f1d2b;
+    --main-bg: #070f18;
+    --main-glow: rgba(30,200,187,.12);
+    --card-bd: #1b2b38;
+    --card-sh: 0 40px 90px -40px rgba(0,0,0,.7);
+    --submit-bg: linear-gradient(135deg, #14c4b7, #0e938e);
+    --submit-bg-hover: linear-gradient(135deg, #1ad4c6, #11a89c);
+    --submit-fg: #04211f;
+    --submit-sh: 0 14px 34px -8px rgba(20,200,187,.5);
+    --submit-sh-hover: 0 18px 44px -10px rgba(20,200,187,.62);
+    --toggle-bg: rgba(255,255,255,.06);
+    --toggle-bd: rgba(255,255,255,.14);
+    --toggle-fg: #c4d2dc;
+    --err-bg: rgba(197,50,58,.16);
+    --err-bd: rgba(244,201,204,.26);
+    --err-fg: #ff9ea3;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    min-height: 100%;
+    font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    color: var(--text);
+    background: var(--main-bg);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body { transition: background-color .35s ease, color .35s ease; }
+
+  h1, h2, h3 { letter-spacing: -0.03em; color: var(--ink); }
+
+  .auth {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+  }
+
+  /* ---------------- left showcase panel ---------------- */
+  .auth-aside {
+    position: relative;
+    overflow: hidden;
+    padding: clamp(36px, 5vw, 64px);
+    display: flex;
+    flex-direction: column;
+    color: #eaf1f3;
+    background:
+      radial-gradient(760px 520px at 88% 8%, rgba(20,184,173,.28), transparent 62%),
+      radial-gradient(680px 620px at 8% 100%, rgba(58,90,160,.30), transparent 60%),
+      linear-gradient(160deg, #0a1f36 0%, #071829 60%, #06131f 100%);
+  }
+
+  .auth-aside::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px);
+    background-size: 46px 46px;
+    mask-image: radial-gradient(700px 700px at 20% 15%, #000 30%, transparent 78%);
+    pointer-events: none;
+  }
+
+  .auth-aside::after {
+    content: "";
+    position: absolute;
+    width: 460px; height: 460px;
+    right: -140px; top: 34%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 40%, rgba(20,184,173,.32), transparent 66%);
+    filter: blur(24px);
+    animation: drift 16s ease-in-out infinite alternate;
+    pointer-events: none;
+  }
+  @keyframes drift {
+    from { transform: translate3d(0, 0, 0) scale(1); }
+    to   { transform: translate3d(-46px, -38px, 0) scale(1.14); }
+  }
+
+  .auth-aside > * { position: relative; z-index: 1; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .auth-aside::after { animation: none; }
+  }
+
+  .a-brand { display: flex; align-items: center; gap: 13px; }
+  .a-mark {
+    width: 46px; height: 46px; flex: 0 0 auto;
+    border-radius: 14px;
+    display: grid; place-items: center;
+    color: #fff;
+    background: linear-gradient(135deg, #10365f, #14b8ad);
+    box-shadow: 0 12px 30px rgba(20,184,173,.35), inset 0 1px 0 rgba(255,255,255,.28);
+  }
+  .a-mark svg { width: 24px; height: 24px; }
+  .a-brand b { font-size: 18px; font-weight: 800; letter-spacing: -0.02em; color: #fff; }
+  .a-brand span { display: block; font-size: 12px; color: rgba(234,241,243,.6); margin-top: 1px; }
+
+  .a-hero { margin-top: auto; padding-top: 48px; }
+  .a-hero h2 {
+    color: #fff;
+    font-size: clamp(1.9rem, 3vw, 2.7rem);
+    line-height: 1.12;
+    font-weight: 800;
+    margin: 0 0 16px;
+    max-width: 15ch;
+  }
+  .a-hero p {
+    margin: 0;
+    font-size: 15.5px;
+    line-height: 1.6;
+    color: rgba(234,241,243,.72);
+    max-width: 44ch;
+  }
+
+  .a-features {
+    margin: 34px 0 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .a-features li { display: flex; gap: 13px; align-items: flex-start; }
+  .a-ficon {
+    width: 34px; height: 34px; flex: 0 0 auto;
+    border-radius: 10px;
+    display: grid; place-items: center;
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.12);
+    color: #7fe3db;
+  }
+  .a-ficon svg { width: 17px; height: 17px; }
+  .a-features b { display: block; color: #fff; font-size: 14px; font-weight: 700; }
+  .a-features span { color: rgba(234,241,243,.62); font-size: 13px; line-height: 1.5; }
+
+  .a-ticker {
+    margin-top: 34px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 26px;
+    padding: 16px 18px;
+    border-radius: 14px;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.10);
+    backdrop-filter: blur(6px);
+  }
+  .a-ticker div { min-width: 110px; }
+  .a-ticker small { display: block; font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: rgba(234,241,243,.5); margin-bottom: 4px; }
+  .a-ticker strong { font-size: 15px; font-weight: 800; color: #fff; font-variant-numeric: tabular-nums; }
+  .a-ticker .up { color: #56d6a0; }
+
+  .a-foot {
+    margin-top: 30px;
+    font-size: 12px;
+    color: rgba(234,241,243,.45);
+  }
+
+  /* ---------------- right sign-in panel ---------------- */
+  .auth-main {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(28px, 5vw, 56px);
+    background:
+      radial-gradient(620px 360px at 100% 0%, var(--main-glow), transparent 60%),
+      radial-gradient(520px 420px at 0% 100%, var(--main-glow), transparent 64%),
+      var(--main-bg);
+    transition: background-color .35s ease;
+  }
+
+  .theme-fab {
+    position: absolute;
+    top: 20px; right: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid var(--toggle-bd);
+    background: var(--toggle-bg);
+    color: var(--toggle-fg);
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    transition: transform var(--ease), border-color var(--ease), color var(--ease), background var(--ease);
+  }
+  .theme-fab:hover { transform: translateY(-1px); color: var(--ink); border-color: var(--teal-500); }
+  .theme-fab:active { transform: translateY(0) scale(.96); }
+  .theme-fab:focus-visible { outline: none; box-shadow: var(--ring); }
+  .theme-fab .t-ico { position: relative; width: 16px; height: 16px; flex: 0 0 auto; }
+  .theme-fab .t-ico svg {
+    position: absolute; inset: 0; width: 16px; height: 16px; display: block;
+    transition: opacity .3s ease, transform .45s cubic-bezier(.2,.7,.2,1);
+  }
+  .theme-fab .t-sun  { opacity: 0; transform: rotate(-90deg) scale(.4); }
+  .theme-fab .t-moon { opacity: 1; transform: none; }
+  :root[data-theme="dark"] .theme-fab .t-sun  { opacity: 1; transform: none; }
+  :root[data-theme="dark"] .theme-fab .t-moon { opacity: 0; transform: rotate(90deg) scale(.4); }
+
+  .auth-card {
+    width: 100%;
+    max-width: 404px;
+    position: relative;
+    padding: clamp(22px, 3vw, 34px);
+    border-radius: 22px;
+    background: var(--panel);
+    border: 1px solid var(--card-bd);
+    box-shadow: var(--card-sh);
+    transition: background-color .35s ease, border-color .35s ease, box-shadow .35s ease;
+  }
+  :root:not([data-theme="dark"]) .auth-card {
+    background: transparent;
+    padding: 0;
+    border: 0;
+  }
+
+  .m-brand {
+    display: none;
+    align-items: center;
+    gap: 11px;
+    margin-bottom: 26px;
+  }
+  .m-brand .a-mark { width: 42px; height: 42px; border-radius: 13px; }
+  .m-brand b { color: var(--ink); font-size: 17px; font-weight: 800; }
+
+  .auth-card h1 { font-size: 26px; margin: 0 0 6px; font-weight: 800; }
+  .auth-card .sub { margin: 0 0 26px; color: var(--muted); font-size: 14.5px; }
+
+  .fld { margin-bottom: 15px; }
+  .fld label {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--muted);
+    margin-bottom: 7px;
+  }
+  .fld .wrap { position: relative; }
+  .fld input {
+    width: 100%;
+    height: 52px;
+    border-radius: 13px;
+    border: 1px solid var(--field-bd);
+    background: var(--field-bg);
+    padding: 0 15px;
+    font: inherit;
+    font-size: 15px;
+    color: var(--text);
+    outline: none;
+    transition: border-color var(--ease), box-shadow var(--ease), background var(--ease);
+  }
+  .fld input::placeholder { color: var(--faint); }
+  .fld input:focus { border-color: var(--teal-500); box-shadow: var(--ring); }
+  .fld input.has-toggle { padding-right: 52px; }
+
+  .toggle-pw {
+    position: absolute;
+    right: 6px; top: 50%;
+    transform: translateY(-50%);
+    width: 40px; height: 40px;
+    border: 0; background: transparent;
+    display: grid; place-items: center;
+    color: var(--faint);
+    cursor: pointer;
+    border-radius: 9px;
+  }
+  .toggle-pw:hover { color: var(--muted); background: rgba(127,127,127,.12); }
+  .toggle-pw svg { width: 19px; height: 19px; }
+
+  .submit {
+    width: 100%;
+    height: 52px;
+    margin-top: 6px;
+    border: 0;
+    border-radius: 13px;
+    background: var(--submit-bg);
+    color: var(--submit-fg);
+    font: inherit;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    box-shadow: var(--submit-sh);
+    transition: transform var(--ease), box-shadow var(--ease), background var(--ease), filter var(--ease);
+  }
+  .submit:hover { transform: translateY(-1px); background: var(--submit-bg-hover); box-shadow: var(--submit-sh-hover); }
+  .submit:active:not([disabled]) { transform: translateY(0) scale(.985); }
+  .submit:focus-visible { outline: none; box-shadow: var(--ring); }
+  .submit[disabled] { opacity: .72; cursor: progress; transform: none; }
+  .submit .arrow { transition: transform var(--ease); }
+  .submit:hover .arrow { transform: translateX(3px); }
+
+  .spinner {
+    width: 17px; height: 17px;
+    border: 2.5px solid currentColor;
+    border-top-color: transparent;
+    opacity: .55;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    display: none;
+  }
+  .submit.loading .spinner { display: block; }
+  .submit.loading .arrow { display: none; }
+  .submit.loading .label { opacity: .85; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .auth-error {
+    display: none;
+    margin-top: 14px;
+    padding: 11px 13px;
+    border-radius: 11px;
+    background: var(--err-bg);
+    border: 1px solid var(--err-bd);
+    color: var(--err-fg);
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .auth-alt {
+    margin-top: 22px;
+    font-size: 13.5px;
+    color: var(--muted);
+    text-align: center;
+  }
+  .auth-alt a { color: var(--teal-600); font-weight: 700; text-decoration: none; }
+  .auth-alt a:hover { text-decoration: underline; }
+  :root[data-theme="dark"] .auth-alt a { color: #33d6c8; }
+
+  .auth-legal {
+    margin-top: 26px;
+    font-size: 11.5px;
+    color: var(--faint);
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  /* ---------------- responsive ---------------- */
+  @media (max-width: 920px) {
+    .auth { grid-template-columns: 1fr; }
+    .auth-aside { display: none; }
+    .m-brand { display: flex; }
+    .auth-main { min-height: 100vh; }
+  }
+
+  /* ---------------- entrance animations ---------------- */
+  @keyframes hx-enter {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: none; }
+  }
+  @keyframes hx-enter-left {
+    from { opacity: 0; transform: translateX(-22px); }
+    to   { opacity: 1; transform: none; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .a-brand      { animation: hx-enter-left .55s cubic-bezier(.2,.7,.2,1) backwards .05s; }
+    .a-hero h2    { animation: hx-enter .6s cubic-bezier(.2,.7,.2,1) backwards .14s; }
+    .a-hero > p   { animation: hx-enter .6s cubic-bezier(.2,.7,.2,1) backwards .22s; }
+    .a-features li:nth-child(1) { animation: hx-enter .5s cubic-bezier(.2,.7,.2,1) backwards .30s; }
+    .a-features li:nth-child(2) { animation: hx-enter .5s cubic-bezier(.2,.7,.2,1) backwards .37s; }
+    .a-features li:nth-child(3) { animation: hx-enter .5s cubic-bezier(.2,.7,.2,1) backwards .44s; }
+    .a-ticker     { animation: hx-enter .55s cubic-bezier(.2,.7,.2,1) backwards .52s; }
+    .a-foot       { animation: hx-enter .55s cubic-bezier(.2,.7,.2,1) backwards .58s; }
+    .auth-card    { animation: hx-enter .6s cubic-bezier(.2,.7,.2,1) backwards .2s; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .theme-fab .t-ico svg { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="auth">
+
+  <aside class="auth-aside">
+    <div class="a-brand">
+      <span class="a-mark">
+        <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+          <path d="M7 20.5 16 11l9 9.5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M11 25.5 16 20.5l5 5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/>
+        </svg>
+      </span>
+      <div><b>HarbourX</b><span>harbourx.org</span></div>
+    </div>
+
+    <div class="a-hero">
+      <h2>Your digital assets, under control.</h2>
+      <p>A private portfolio workspace for holding Bitcoin, converting to your local currency, and withdrawing to your bank — with compliance built in.</p>
+
+      <ul class="a-features">
+        <li>
+          <span class="a-ficon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+          <div><b>Bank-grade protection</b><span>AML/KYC verification, session security, and audited withdrawal controls.</span></div>
+        </li>
+        <li>
+          <span class="a-ficon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg></span>
+          <div><b>Multi-currency portfolio</b><span>Hold your balance in USD, EUR, GBP and more — priced live against BTC.</span></div>
+        </li>
+        <li>
+          <span class="a-ficon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M4 10h16M12 3 3 8h18l-9-5zM6 10v11M18 10v11M10 10v11M14 10v11"/></svg></span>
+          <div><b>Straight to your bank</b><span>Convert and cash out to a connected payout account in a few steps.</span></div>
+        </li>
+      </ul>
+
+      <div class="a-ticker" id="ticker">
+        <div><small>BTC / USD · live</small><strong id="tkPrice">—</strong></div>
+        <div><small>Assets supported</small><strong>BTC · ETH · USDC</strong></div>
+        <div><small>Settlement</small><strong>Local bank payout</strong></div>
+      </div>
+
+      <div class="a-foot">© <span id="yr">2026</span> HarbourX · Encrypted in transit · harbourx.org</div>
+    </div>
+  </aside>
+
+  <main class="auth-main">
+    <button type="button" class="theme-fab" data-theme-toggle aria-label="Switch theme">
+      <span class="t-ico">
+        <svg class="t-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="t-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8 6 18M18 6l1.8-1.8"/></svg>
+      </span>
+      <span data-theme-label>Dark</span>
+    </button>
+
+    <div class="auth-card">
+      <div class="m-brand">
+        <span class="a-mark">
+          <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <path d="M7 20.5 16 11l9 9.5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M11 25.5 16 20.5l5 5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/>
+          </svg>
+        </span>
+        <b>HarbourX</b>
+      </div>
+
+      <h1>Sign in</h1>
+      <p class="sub">Access your HarbourX portfolio.</p>
+
+      <form id="loginForm" novalidate>
+        <div class="fld">
+          <label for="email">Email</label>
+          <div class="wrap">
+            <input id="email" type="email" inputmode="email" autocomplete="username" placeholder="you@example.com" required>
+          </div>
+        </div>
+
+        <div class="fld">
+          <label for="password">Password</label>
+          <div class="wrap">
+            <input id="password" type="password" class="has-toggle" autocomplete="current-password" placeholder="Enter your password" required>
+            <button type="button" class="toggle-pw" id="togglePw" aria-label="Show password">
+              <svg id="eyeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="submit" id="submitBtn">
+          <span class="spinner" aria-hidden="true"></span>
+          <span class="label">Sign in</span>
+          <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="17" height="17"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+
+        <div class="auth-error" id="error">Wrong email or password</div>
+      </form>
+
+      <p class="auth-alt">New to HarbourX? <a href="register.php">Create an account</a></p>
+
+      <p class="auth-legal">By signing in you agree to HarbourX's terms and acknowledge the privacy notice. This is a private client workspace.</p>
+    </div>
+  </main>
+
+</div>
+
+<script>
+  document.getElementById("yr").textContent = new Date().getFullYear();
+
+  /* password visibility toggle */
+  const pw = document.getElementById("password");
+  const togglePw = document.getElementById("togglePw");
+  const eyeIcon = document.getElementById("eyeIcon");
+  togglePw.addEventListener("click", () => {
+    const show = pw.type === "password";
+    pw.type = show ? "text" : "password";
+    togglePw.setAttribute("aria-label", show ? "Hide password" : "Show password");
+    eyeIcon.innerHTML = show
+      ? '<path d="M2 12s3.5-7 10-7c2 0 3.8.6 5.3 1.5M22 12s-3.5 7-10 7c-2 0-3.8-.6-5.3-1.5"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="m3 3 18 18"/>'
+      : '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>';
+  });
+
+  /* sign in */
+  const form = document.getElementById("loginForm");
+  const submitBtn = document.getElementById("submitBtn");
+  const errorEl = document.getElementById("error");
+
+  async function login() {
+    const email = document.getElementById("email").value.trim().toLowerCase();
+    const password = pw.value;
+    errorEl.style.display = "none";
+
+    if (!email || !password) {
+      errorEl.textContent = "Enter your email and password.";
+      errorEl.style.display = "block";
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.classList.add("loading");
+
+    try {
+      const response = await fetch("login.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+      const result = await response.json();
+
+      if (!result.success) {
+        errorEl.textContent = result.message || "Wrong email or password";
+        errorEl.style.display = "block";
+        submitBtn.disabled = false;
+        submitBtn.classList.remove("loading");
+        return;
+      }
+
+      localStorage.setItem("user", JSON.stringify(result.user));
+      window.location.href = "dashboard.html";
+    } catch (e) {
+      errorEl.textContent = "Server error. Please try again.";
+      errorEl.style.display = "block";
+      submitBtn.disabled = false;
+      submitBtn.classList.remove("loading");
+    }
+  }
+
+  form.addEventListener("submit", (e) => { e.preventDefault(); login(); });
+
+  /* live BTC price for the showcase ticker (best-effort) */
+  (async function ticker() {
+    const price = document.getElementById("tkPrice");
+    const endpoints = [
+      { url: "https://api.coinbase.com/v2/prices/BTC-USD/spot", parse: d => Number(d?.data?.amount || 0) },
+      { url: "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd", parse: d => Number(d?.bitcoin?.usd || 0) }
+    ];
+    for (const ep of endpoints) {
+      try {
+        const r = await fetch(ep.url, { cache: "no-store" });
+        if (!r.ok) continue;
+        const v = ep.parse(await r.json());
+        if (v > 0) {
+          price.textContent = "$" + v.toLocaleString(undefined, { maximumFractionDigits: 0 });
+          return;
+        }
+      } catch (e) { /* try next */ }
+    }
+    price.textContent = "$95,000";
+  })();
+</script>
+</body>
+</html>
