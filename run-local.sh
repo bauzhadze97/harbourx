@@ -50,8 +50,8 @@ else
 fi
 
 # --- 3. Serve ---------------------------------------------------------------
-URL="http://localhost:${PORT}/login.html"
-printf '  Serving on http://localhost:%s\n' "$PORT"
+URL="http://localhost:${PORT}/"
+printf '  Serving on %s\n' "$URL"
 printf '        client   %s\n' "$URL"
 printf '        admin    http://localhost:%s/admin.php\n\n' "$PORT"
 printf '  Press Ctrl+C to stop.\n\n'

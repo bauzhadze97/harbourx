@@ -138,6 +138,27 @@ try {
     await context.close();
   }
 
+  // ------------------------------------------------------------ front door
+  console.log('\nSite root');
+  {
+    const context = await browser.newContext();
+
+    // Anonymous: "/" must land on the sign-in page. Before index.php existed it
+    // 404'd on PHP's server and listed the whole directory on Apache.
+    const anon = await context.request.get(`${BASE}/`, { maxRedirects: 0 });
+    check(anon.status() === 302, 'anonymous / redirects', `status ${anon.status()}`);
+    check((anon.headers()['location'] || '').includes('login.html'),
+      'anonymous / points at the sign-in page', anon.headers()['location']);
+
+    // Signed in: straight to the dashboard.
+    await signIn(context);
+    const authed = await context.request.get(`${BASE}/`, { maxRedirects: 0 });
+    check((authed.headers()['location'] || '').includes('dashboard.html'),
+      'signed-in / points at the dashboard', authed.headers()['location']);
+
+    await context.close();
+  }
+
   // ------------------------------------------------------------ flows
   console.log('\nDialogs and progress rails');
   {

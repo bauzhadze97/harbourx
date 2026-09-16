@@ -29,7 +29,8 @@ no build step, no npm install, no database.
 
      php -S localhost:8000 -t .
 
-   then open http://localhost:8000/login.html
+   then open http://localhost:8000 — index.php sends you to the sign-in page,
+   or straight to the dashboard if you already have a session.
 
 3. Signing in. The app reads data/users.json, which is NOT in the repository —
    it holds real client details and passwords, so it is deliberately untracked.

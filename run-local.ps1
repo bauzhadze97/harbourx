@@ -93,8 +93,8 @@ if (-not (Test-Path -LiteralPath 'data\users.json')) {
 }
 
 # --- 3. Serve ---------------------------------------------------------------
-$url = "http://localhost:$Port/login.html"
-Write-Step "Serving on http://localhost:$Port"
+$url = "http://localhost:$Port/"
+Write-Step "Serving on $url"
 Write-Host "        client   $url" -ForegroundColor DarkGray
 Write-Host "        admin    http://localhost:$Port/admin.php" -ForegroundColor DarkGray
 Write-Host ''
