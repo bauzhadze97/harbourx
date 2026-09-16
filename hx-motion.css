@@ -168,7 +168,10 @@ html.hx-js [data-reveal].is-revealed {
   content: "";
   position: absolute;
   inset: 0;
-  z-index: 1;
+  /* Negative index inside the host's own stacking context (that is what the
+     `isolation` above is for): the highlight lands on the card's background but
+     under its text, so nothing is tinted by it. */
+  z-index: -1;
   border-radius: inherit;
   opacity: 0;
   pointer-events: none;

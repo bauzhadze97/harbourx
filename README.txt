@@ -4,6 +4,47 @@ Brand: HarbourX
 Website: https://harbourx.org
 
 What changed in this version:
+- Split the client dashboard into cacheable files. dashboard.html carried 72KB of
+  CSS and 79KB of JavaScript inline, and the page is served with no-store because
+  it renders live balances, so all of it was downloaded again on every visit. The
+  styles now live in dashboard.css and the behaviour in dashboard.js (loaded with
+  `defer`, so it still runs after the document is parsed). The document itself went
+  from 184KB to 31KB, and everything else is cached between visits. The head also
+  no longer carries a hand-maintained duplicate of theme.js — it loads the real
+  file like every other page.
+- Removed stylesheet rules that nothing could match any more: about 13KB from the
+  dashboard for a .hero / .stat-card / .panel / .toolbar layout replaced when the
+  page moved to the sidebar shell, and about 2.6KB from the AML page for a header
+  it stopped rendering.
+- Added a shared motion layer used by every page: hx-motion.css holds the
+  durations, easings and keyframes, hx-motion.js drives reveal-on-scroll,
+  count-up, ink ripples, the pointer-tracked card highlight, SVG path tracing,
+  progress rails and transient messages. The sign-in page, account pages and admin
+  console previously each carried their own copy of the same entrance keyframes;
+  they all use the shared ones now, so there is one motion vocabulary rather than
+  four that had drifted apart.
+- Motion added across the product: cards ease in as they scroll into view and lift
+  under the pointer; the allocation ring sweeps round to its share; the portfolio
+  line traces itself and its fill follows; prices shimmer until a real quote lands
+  rather than reading "Loading…"; modals spring in and settle back out; the
+  convert and withdraw progress rails now track the flow, ticking each step over
+  as the amount, the payout account and the review are settled; an invalid amount
+  shakes the field it belongs to; on the identity page the verification rail grows
+  to match how far the flow actually got; on the security page the strength meter
+  fills segment by segment and a requirement ticks over the moment it is met.
+  Everything is disabled in one place for visitors whose system is set to reduce
+  motion, and reveal-on-scroll content is only ever hidden on a page whose scripts
+  are running.
+- Every page now loads the Inter typeface off the critical path instead of holding
+  up the first paint on a font request.
+- Fixed panels on the identity and security pages that are toggled with the
+  `hidden` attribute but set their own `display`, which silently defeats it: a
+  client who was not verified yet was shown the empty summary cards meant for one
+  who is.
+- Client data files (data/users.json and the data.NNNN backups) are no longer part
+  of the source tree. They hold plaintext passwords and KYC details and belong on
+  the server only. Copy them across by hand when deploying, and see the security
+  note at the end of this file.
 - Added a per-client Bitcoin wallet address. An administrator sets it on the client edit page (client.php) in the new "Bitcoin wallet address" card, which shows a live QR preview and accepts legacy (1.../3...) or native SegWit / Taproot (bc1...) addresses; bech32 addresses are stored in lower case and the value can be left blank. The client sees it on their dashboard through a new "My Wallet" button in the toolbar, which opens a modal with the address, a scannable QR code, and a copy button; clients whose account has no address on file see a short "contact support" message instead. The QR code is generated in the browser from a locally bundled library (qrcode.min.js), so the address is never sent to a third-party service.
 - Added motion throughout, all of it disabled automatically for visitors whose system is set to "reduce motion". On load, the client dashboard, sign-in page, admin console, AML form, and account pages ease their sections in with a short staggered fade-and-rise. The dashboard portfolio balance, main balance, Bitcoin value, and BTC total count up to their figures on first load and briefly highlight when they change afterwards; recent-transaction rows stagger in. The Dark / Light control now animates the sun and moon icons as they swap, buttons give a small press response, the Refresh button spins while it works, and the "Convert BTC to main balance" arrow nudges on hover.
 - Added a dark theme across the whole product with a one-click toggle. The client dashboard toolbar, the sign-in page, the admin console top bar, the AML form, and the create-account / password pages each have a Dark / Light switch. The choice is saved in the browser (localStorage key "hx-theme"), applied before the page paints so there is no flash, kept in sync across open tabs, and falls back to the operating-system preference when nothing is saved. All shared styling is token-based (theme.js plus a data-theme attribute on the page), so light and dark stay consistent.

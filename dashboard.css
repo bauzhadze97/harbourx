@@ -1779,14 +1779,19 @@ button:focus-visible, a:focus-visible, input:focus-visible {
    A modal should arrive from where it was summoned: the backdrop fades, the
    card springs up. Closing reverses it instead of cutting to black. */
 
-.modal {
-  opacity: 0;
-  transition: opacity var(--hx-dur-base) var(--hx-ease-out);
-  /* Blur is expensive on large surfaces; promote it once rather than on every frame. */
-  will-change: opacity;
+/* The backdrop opens with an animation and closes with a transition, and that
+   asymmetry is deliberate: a transition cannot run on an element coming out of
+   display:none, but an animation can. Closing starts from a displayed element,
+   where a transition is the cheaper of the two. */
+.modal { opacity: 0; }
+.modal.show {
+  opacity: 1;
+  animation: hx-fade var(--hx-dur-base) var(--hx-ease-out);
 }
-.modal.show { opacity: 1; animation: none; }
-.modal.is-closing { opacity: 0; }
+.modal.is-closing {
+  opacity: 0;
+  transition: opacity var(--hx-dur-fast) var(--hx-ease-in);
+}
 
 .modal-card {
   border-radius: 18px;

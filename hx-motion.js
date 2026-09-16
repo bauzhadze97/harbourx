@@ -156,36 +156,41 @@
   }
 
   /* Declarative counters: <strong data-count-to="286617.60" data-count-prefix="A$"> */
+
+  function runCounter(el) {
+    count(el, el.getAttribute("data-count-to"), {
+      decimals: el.getAttribute("data-count-decimals"),
+      prefix: el.getAttribute("data-count-prefix") || "",
+      suffix: el.getAttribute("data-count-suffix") || "",
+      duration: el.getAttribute("data-count-duration")
+    });
+  }
+
+  var counterObserver = null;
+
   function bindCounters(scope) {
     var nodes = $all("[data-count-to]", scope);
     if (!nodes.length) return;
 
-    function run(el) {
-      count(el, el.getAttribute("data-count-to"), {
-        decimals: el.getAttribute("data-count-decimals"),
-        prefix: el.getAttribute("data-count-prefix") || "",
-        suffix: el.getAttribute("data-count-suffix") || "",
-        duration: el.getAttribute("data-count-duration")
-      });
-    }
-
     if (reduced() || !("IntersectionObserver" in window)) {
-      each(nodes, run);
+      each(nodes, runCounter);
       return;
     }
 
-    var observer = new IntersectionObserver(function (entries) {
-      each(entries, function (entry) {
-        if (!entry.isIntersecting) return;
-        run(entry.target);
-        observer.unobserve(entry.target);
-      });
-    }, { threshold: 0.25 });
+    if (!counterObserver) {
+      counterObserver = new IntersectionObserver(function (entries) {
+        each(entries, function (entry) {
+          if (!entry.isIntersecting) return;
+          runCounter(entry.target);
+          counterObserver.unobserve(entry.target);
+        });
+      }, { threshold: 0.25 });
+    }
 
     each(nodes, function (el) {
       if (el.__hxCountBound) return;
       el.__hxCountBound = true;
-      observer.observe(el);
+      counterObserver.observe(el);
     });
   }
 
@@ -274,10 +279,13 @@
   function draw(scope) {
     each($all(".hx-draw", scope), function (path) {
       if (path.__hxDrawBound || typeof path.getTotalLength !== "function") return;
-      path.__hxDrawBound = true;
       try {
         var length = Math.ceil(path.getTotalLength());
-        if (length) path.style.setProperty("--hx-len", length);
+        /* A card skipped by content-visibility measures as zero; leave it
+           unbound so a later scan can try again once it is rendered. */
+        if (!length) return;
+        path.style.setProperty("--hx-len", length);
+        path.__hxDrawBound = true;
       } catch (e) { /* detached or display:none — leave the CSS default */ }
     });
   }
@@ -406,8 +414,21 @@
        picks up the same behaviour without every caller remembering to ask. */
     if ("MutationObserver" in window) {
       var pending = false;
-      new MutationObserver(function () {
+      new MutationObserver(function (records) {
         if (pending) return;
+
+        /* Text-only changes — a ticking clock, a refreshed price — can never
+           introduce a new motion hook, and the dashboard produces one every
+           second. Only an added element is worth a rescan. */
+        var sawElement = false;
+        for (var i = 0; i < records.length && !sawElement; i++) {
+          var added = records[i].addedNodes;
+          for (var j = 0; j < added.length; j++) {
+            if (added[j].nodeType === 1) { sawElement = true; break; }
+          }
+        }
+        if (!sawElement) return;
+
         pending = true;
         requestAnimationFrame(function () {
           pending = false;
