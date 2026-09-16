@@ -39,7 +39,9 @@ no build step, no npm install, no database.
      - Otherwise the script seeds the synthetic demo account used by the tests:
          demo.client@example.invalid / CiSmokeTest!2026
 
-   Client sign-in is at /login.html, the admin console at /admin.php.
+   Client sign-in is at /login.html, the admin console at /admin.php, and the
+   support centre at /support.html. Tickets are stored in data/tickets.json,
+   which like data/users.json is untracked and lives on the server only.
 
    Everything is written straight back to data/users.json, so a local run edits
    whichever file you put there. Keep a copy before experimenting.
@@ -48,11 +50,14 @@ Running the checks locally
 --------------------------
 The same suite CI runs (see .github/workflows/ci.yml):
 
-     php -l <file>                 syntax-check a PHP file
-     python3 tests/css-check.py    stylesheet braces and keyframe references
-     node tests/smoke.mjs          full browser pass over every page
+     php -l <file>                  syntax-check a PHP file
+     php tests/totp-test.php        TOTP against the RFC 6238 vectors
+     python3 tests/css-check.py     stylesheet braces and keyframe references
+     node tests/smoke.mjs           full browser pass over every page
+     node tests/twofactor-test.js   enrol, sign in, replay, backup codes
+     node tests/support-test.js     open a ticket, answer it, read it back
 
-The smoke test needs the server already running, plus Playwright:
+The browser tests need the server already running, plus Playwright:
 
      npm install playwright && npx playwright install chromium
      node tests/smoke.mjs
@@ -61,6 +66,36 @@ It writes tests/screenshots/ as it goes. Set CHROMIUM_EXECUTABLE=<path> to point
 it at a Chromium you already have instead of downloading one.
 
 What changed in this version:
+- Added two-factor authentication that actually works. The Security page used to
+  claim 2FA was enabled and offer a button that did nothing; it now enrols a real
+  authenticator. Standard TOTP (RFC 6238, six digits, thirty-second step), so
+  Google Authenticator, Authy, 1Password and Aegis all work. Scan the QR code or
+  type the key, confirm with a code, and save the ten backup codes shown once.
+  Sign-in then asks for a code, and a code works for exactly one sign-in — the
+  counter it matched is recorded, so one captured inside its thirty seconds
+  cannot be replayed. A backup code signs in once and is then spent. Turning it
+  off needs a current code or a backup code. Accounts that have not enrolled sign
+  in exactly as before.
+- Added a support centre. Support was a mailto: link; clients now open tickets at
+  support.html with a topic and follow the replies, each ticket carrying a short
+  reference like HX-8F3K2Q. Staff answer from a queue in the admin console that
+  puts anything awaiting a reply first, and the open count sits beside the other
+  figures on the dashboard. A client only ever sees their own tickets.
+- Fixed the client dashboard rendering half light and half dark. The shell forces
+  the page dark and the page has no theme toggle, but its dialogs still followed
+  the system preference — so on a light system the Connected-bank banner came out
+  white and the Authorisation heading was navy on navy. The dashboard palette is
+  unconditional now.
+- Removed the first-name authorisation step from bank withdrawal. The review
+  screen is the confirmation, so the dialog submits straight from it. Withdrawals
+  recorded before this keep their first name and the admin console still shows
+  it; nothing writes a new one.
+- Fixed the Add bank button, whose label was clipped by a fixed-width column.
+- Changed the typeface to Plus Jakarta Sans, set once as --hx-font in
+  hx-motion.css and read by every stylesheet.
+- Gave the site root a real response. Nothing answered "/", so the domain root
+  served a directory listing of the whole application on Apache. index.php now
+  sends visitors to the sign-in page, or to the dashboard if already signed in.
 - Split the client dashboard into cacheable files. dashboard.html carried 72KB of
   CSS and 79KB of JavaScript inline, and the page is served with no-store because
   it renders live balances, so all of it was downloaded again on every visit. The
