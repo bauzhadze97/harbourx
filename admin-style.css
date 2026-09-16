@@ -468,3 +468,37 @@ h1, h2, h3 { letter-spacing: -0.02em; color: var(--ink); }
   .page { padding: 16px 12px 40px; }
   .topbar { padding: 12px 13px; }
 }
+
+/* ---------- support tickets --------------------------------------------- */
+
+.ticket-thread { display: grid; gap: 8px; margin: 12px 0; }
+.ticket-msg {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel-2);
+}
+/* A staff reply reads differently from the client's own words at a glance. */
+.ticket-msg.is-staff { border-color: rgba(20, 184, 173, .38); background: rgba(20, 184, 173, .08); }
+.ticket-msg small { display: block; margin-bottom: 4px; color: var(--muted); font-size: 11px; font-weight: 700; }
+.ticket-msg.is-staff small { color: var(--blue); }
+.ticket-msg p { margin: 0; color: var(--text); font-size: 13px; line-height: 1.6; word-break: break-word; }
+
+.ticket-reply-form textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  resize: vertical;
+}
+.ticket-reply-form textarea:focus { border-color: var(--blue); outline: none; box-shadow: var(--ring); }
+.ticket-reply-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+
+@media (max-width: 560px) {
+  .ticket-reply-actions .btn { flex: 1; }
+}

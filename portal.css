@@ -565,3 +565,105 @@ input, select, textarea {
 
 /* A control waiting on the network says so, rather than looking inert. */
 [aria-busy="true"] { opacity: .6; cursor: progress; }
+
+/* ============================================================================
+   Support centre
+   ========================================================================== */
+
+.support-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 15px; align-items: start; }
+.support-compose { padding: 22px; }
+.support-compose form { display: grid; }
+.support-compose textarea {
+  width: 100%;
+  min-height: 132px;
+  padding: 11px 12px;
+  border: 1px solid #254c63;
+  border-radius: 8px;
+  background: #0c2639;
+  color: var(--hx-text);
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.55;
+  resize: vertical;
+}
+.support-compose textarea:focus { border-color: var(--hx-teal); outline: none; box-shadow: 0 0 0 3px rgba(32,215,208,.09); }
+.support-counter { margin: 6px 0 14px; color: #7f9caf; font-size: 9px; text-align: right; }
+
+.support-warning {
+  margin-bottom: 16px;
+  padding: 11px 13px;
+  border: 1px solid rgba(246,184,63,.25);
+  border-radius: 8px;
+  background: rgba(246,184,63,.07);
+  color: #dbbd7d;
+  font-size: 10px;
+  line-height: 1.55;
+}
+.support-warning strong { display: block; margin-bottom: 3px; color: var(--hx-amber); }
+
+.support-stream-head { display: flex; align-items: center; gap: 12px; margin: 2px 2px 12px; }
+.support-stream-head h2 { margin: 0; color: var(--hx-text); font-size: 15px; }
+.support-count {
+  min-width: 26px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #15344b;
+  color: white;
+  font-size: 10px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.support-ticket { padding: 16px 18px; margin-bottom: 12px; }
+.support-ticket-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.support-ticket-head strong { display: block; color: var(--hx-text); font-size: 13px; }
+.support-ticket-head small { display: block; margin-top: 4px; color: #7f9caf; font-size: 9px; }
+
+.support-thread { display: grid; gap: 9px; margin-top: 13px; }
+.support-msg {
+  padding: 10px 12px;
+  border: 1px solid var(--hx-line-soft);
+  border-radius: 9px;
+  background: rgba(10, 33, 50, .6);
+}
+/* A staff reply should be unmistakable at a glance, so nobody mistakes their
+   own words for an answer from HarbourX. */
+.support-msg.is-staff { border-color: rgba(32,215,208,.3); background: rgba(32,215,208,.07); }
+.support-msg small { display: block; margin-bottom: 5px; color: #8aa6b7; font-size: 9px; font-weight: 700; }
+.support-msg.is-staff small { color: var(--hx-teal); }
+.support-msg p { margin: 0; color: #c8dae4; font-size: 11px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+
+.support-reply { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; margin-top: 12px; }
+.support-reply input { height: 40px; font-size: 11px; }
+.support-reply .wide-secondary { width: auto; min-height: 40px; margin-top: 0; padding: 0 15px; }
+
+.support-empty { padding: 26px 20px; border: 1px dashed var(--hx-line); border-radius: 12px; text-align: center; }
+.support-empty strong { display: block; color: #c3d6e0; font-size: 12px; }
+.support-empty p { margin: 5px 0 0; color: #7f9caf; font-size: 10px; }
+
+.support-faq { margin-top: 15px; padding: 20px 22px; }
+.support-faq details { border-top: 1px solid var(--hx-line-soft); }
+.support-faq details:first-of-type { border-top: 0; }
+.support-faq summary {
+  padding: 12px 0;
+  color: #d3e3ec;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+  list-style: none;
+  transition: color var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease);
+}
+.support-faq summary::-webkit-details-marker { display: none; }
+.support-faq summary::before { content: "+"; display: inline-block; width: 16px; color: var(--hx-teal); font-weight: 800; }
+.support-faq details[open] summary::before { content: "−"; }
+.support-faq summary:hover { color: var(--hx-teal); }
+.support-faq details p { margin: 0 0 14px 16px; color: #93aec0; font-size: 11px; line-height: 1.65; }
+
+@media (max-width: 1040px) {
+  .support-layout { grid-template-columns: 1fr; }
+}
+@media (max-width: 620px) {
+  .support-reply { grid-template-columns: 1fr; }
+  .support-reply .wide-secondary { width: 100%; }
+  .support-ticket-head { flex-direction: column; }
+}

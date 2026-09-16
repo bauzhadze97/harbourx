@@ -133,6 +133,61 @@ if (isset($_POST['delete_bank_account'])) {
     }
 }
 
+/* ---------------------------------------------------------------------------
+   Support tickets
+
+   Clients open them through support.php; staff answer them here. Both sides
+   read and write the same data/tickets.json.
+   --------------------------------------------------------------------------- */
+$ticketsFile = __DIR__ . '/data/tickets.json';
+
+function loadTickets($file) {
+    if (!file_exists($file)) return [];
+    $data = json_decode((string)file_get_contents($file), true);
+    return is_array($data) ? $data : [];
+}
+
+function saveTickets($file, $tickets) {
+    if (!is_dir(dirname($file))) mkdir(dirname($file), 0755, true);
+    file_put_contents($file, json_encode(array_values($tickets), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+}
+
+if (isset($_POST['ticket_reply']) || isset($_POST['ticket_close'])) {
+    $ticketList = loadTickets($ticketsFile);
+    $ticketId = cleanText($_POST['ticket_id'] ?? '');
+
+    foreach ($ticketList as $i => $ticket) {
+        if ((string)($ticket['id'] ?? '') !== $ticketId) continue;
+
+        if (isset($_POST['ticket_close'])) {
+            $ticketList[$i]['status'] = 'closed';
+            $ticketList[$i]['updatedAt'] = gmdate('c');
+        } else {
+            $body = trim((string)($_POST['ticket_body'] ?? ''));
+            $body = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $body);
+            $body = function_exists('mb_substr') ? mb_substr($body, 0, 4000) : substr($body, 0, 4000);
+            if ($body === '') break;
+            $ticketList[$i]['messages'][] = ['from' => 'staff', 'body' => $body, 'at' => gmdate('c')];
+            $ticketList[$i]['status'] = 'answered';
+            $ticketList[$i]['updatedAt'] = gmdate('c');
+        }
+        saveTickets($ticketsFile, $ticketList);
+        break;
+    }
+    header('Location: admin.php#support');
+    exit;
+}
+
+$supportTickets = loadTickets($ticketsFile);
+usort($supportTickets, static function ($a, $b) {
+    // Anything still waiting on us first, then most recently touched.
+    $aOpen = ($a['status'] ?? '') === 'open' ? 0 : 1;
+    $bOpen = ($b['status'] ?? '') === 'open' ? 0 : 1;
+    if ($aOpen !== $bOpen) return $aOpen - $bOpen;
+    return strcmp((string)($b['updatedAt'] ?? ''), (string)($a['updatedAt'] ?? ''));
+});
+$openTicketCount = count(array_filter($supportTickets, static fn($t) => ($t['status'] ?? '') === 'open'));
+
 $users = loadUsers($usersFile);
 $totalUsers = count($users);
 $totalBtc = 0; $totalTransactions = 0; $verifiedAml = 0; $pendingAml = 0; $connectedBanks = 0; $withdrawalAuthorisations = [];
@@ -180,6 +235,7 @@ $registrationLink = publicAppBaseUrl() . '/register.php';
     <div class="stat"><small>AML Verified</small><strong><?= $verifiedAml ?></strong></div>
     <div class="stat"><small>AML Reviews</small><strong><?= $pendingAml ?></strong></div>
     <div class="stat"><small>Connected Banks</small><strong><?= $connectedBanks ?></strong></div>
+    <div class="stat"><small>Open Tickets</small><strong><?= $openTicketCount ?></strong></div>
     <div class="stat"><small>Withdrawal Auth</small><strong><?= count($withdrawalAuthorisations) ?></strong></div>
   </div>
 </div>
@@ -331,6 +387,60 @@ $registrationLink = publicAppBaseUrl() . '/register.php';
         <?php endforeach; ?>
       <?php endforeach; ?>
     </div>
+  <?php endif; ?>
+</div>
+
+<div class="card" id="support">
+  <div class="section-title">
+    <div>
+      <h2>Support tickets</h2>
+      <p class="hint" style="margin:0">Opened by clients from the support centre. A reply here shows up on their ticket.</p>
+    </div>
+    <span class="bank-connected-badge"><?= (int)$openTicketCount ?> awaiting reply</span>
+  </div>
+
+  <?php if (!$supportTickets): ?>
+    <p class="hint">No tickets yet.</p>
+  <?php else: ?>
+    <?php foreach ($supportTickets as $ticket): ?>
+      <?php
+        $status = (string)($ticket['status'] ?? 'open');
+        $badge = $status === 'open' ? 'status-under_review' : ($status === 'closed' ? 'status-unverified' : 'status-verified');
+        $label = $status === 'open' ? 'Awaiting reply' : ($status === 'closed' ? 'Closed' : 'Answered');
+      ?>
+      <div class="aml-card" style="margin-bottom:12px">
+        <div class="aml-head">
+          <div>
+            <strong><?= htmlspecialchars((string)($ticket['subject'] ?? '')) ?></strong>
+            <small><?= htmlspecialchars((string)($ticket['reference'] ?? '')) ?> ·
+              <?= htmlspecialchars((string)($ticket['topicLabel'] ?? 'Support')) ?> ·
+              <?= htmlspecialchars((string)($ticket['email'] ?? '')) ?></small>
+          </div>
+          <span class="status <?= $badge ?>"><?= $label ?></span>
+        </div>
+
+        <div class="ticket-thread">
+          <?php foreach (($ticket['messages'] ?? []) as $entry): ?>
+            <div class="ticket-msg<?= ($entry['from'] ?? '') === 'staff' ? ' is-staff' : '' ?>">
+              <small><?= ($entry['from'] ?? '') === 'staff' ? 'HarbourX support' : 'Client' ?> ·
+                <?= htmlspecialchars((string)($entry['at'] ?? '')) ?></small>
+              <p><?= nl2br(htmlspecialchars((string)($entry['body'] ?? ''))) ?></p>
+            </div>
+          <?php endforeach; ?>
+        </div>
+
+        <?php if ($status !== 'closed'): ?>
+          <form method="post" class="ticket-reply-form">
+            <input type="hidden" name="ticket_id" value="<?= htmlspecialchars((string)($ticket['id'] ?? '')) ?>">
+            <textarea name="ticket_body" rows="2" placeholder="Reply to this client…"></textarea>
+            <div class="ticket-reply-actions">
+              <button class="btn btn-blue" name="ticket_reply" type="submit">Send reply</button>
+              <button class="btn" name="ticket_close" type="submit">Close ticket</button>
+            </div>
+          </form>
+        <?php endif; ?>
+      </div>
+    <?php endforeach; ?>
   <?php endif; ?>
 </div>
 

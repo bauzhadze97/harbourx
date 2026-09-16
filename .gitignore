@@ -5,6 +5,7 @@ node_modules/
 # Never commit these; they live on the server only.
 data/users.json
 data.*/users.json
+data/tickets.json
 *.zip
 
 # local screenshot/verification scratch (root only — tests/ has its own

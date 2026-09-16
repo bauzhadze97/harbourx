@@ -97,7 +97,8 @@ const PAGES = [
   { url: 'aml.html', shot: '3-identity', auth: true },
   { url: 'change_password.php?email=demo.client%40example.invalid', shot: '4-security', auth: true },
   { url: 'register.php', shot: '5-create-account', auth: false },
-  { url: 'admin.php', shot: '6-admin-sign-in', auth: false }
+  { url: 'admin.php', shot: '6-admin-sign-in', auth: false },
+  { url: 'support.html', shot: '7-support', auth: true }
 ];
 
 // CI installs its own Chromium; CHROMIUM_EXECUTABLE lets a workstation or
@@ -180,10 +181,10 @@ try {
       const opened = await page.$eval(`#${id}`, el => el.classList.contains('show'));
       check(opened, `${id} opens`);
       if (id === 'convertModal') {
-        await page.screenshot({ path: `${SHOTS}7-convert-flow.png` });
+        await page.screenshot({ path: `${SHOTS}8-convert-flow.png` });
       }
       if (id === 'withdrawModal') {
-        await page.screenshot({ path: `${SHOTS}8-withdraw-flow.png` });
+        await page.screenshot({ path: `${SHOTS}9-withdraw-flow.png` });
         const step = await page.$eval('#withdrawSteps', el => el.getAttribute('data-step'));
         check(step === '1', 'withdraw rail advances once a payout account is connected', `step=${step}`);
       }
@@ -230,7 +231,7 @@ try {
     await seed(page, user);
     await page.goto(`${BASE}/dashboard.html`, { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(1500);
-    await page.screenshot({ path: `${SHOTS}9-reduced-motion.png`, fullPage: true });
+    await page.screenshot({ path: `${SHOTS}10-reduced-motion.png`, fullPage: true });
 
     const a = await audit(page);
     check(a.hiddenReveals === 0, 'content is shown, not animated in', `${a.hiddenReveals} stuck hidden`);
@@ -263,7 +264,7 @@ try {
     await seed(page, user);
     await page.goto(`${BASE}/dashboard.html`, { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(2500);
-    await page.screenshot({ path: `${SHOTS}10-mobile-dashboard.png`, fullPage: true });
+    await page.screenshot({ path: `${SHOTS}11-mobile-dashboard.png`, fullPage: true });
 
     const a = await audit(page);
     check(a.overflow === 0, 'no horizontal overflow at 390px', `${a.overflow}px`);

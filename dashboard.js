@@ -1711,7 +1711,7 @@ function initialiseDashboardChrome() {
     { terms: ["convert", "bitcoin", "btc"], action: () => openConvertBtn.click() },
     { terms: ["password", "security", "2fa"], action: () => { window.location.href = "change_password.php"; } },
     { terms: ["identity", "aml", "kyc", "verification"], action: () => { window.location.href = "aml.html"; } },
-    { terms: ["help", "support"], action: () => { window.location.href = "mailto:support@harbourx.org"; } }
+    { terms: ["help", "support"], action: () => { window.location.href = "support.html"; } }
   ];
 
   const runSearch = () => {
