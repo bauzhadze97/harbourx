@@ -3,6 +3,62 @@ HarbourX Wallet Admin Panel — Country and Local-Currency Edition
 Brand: HarbourX
 Website: https://harbourx.org
 
+Running it on your own computer
+-------------------------------
+The portal is plain PHP + HTML, so it needs a PHP interpreter and nothing else —
+no build step, no npm install, no database.
+
+1. Install PHP 8 (7.3 is the minimum; 8.3 is what CI uses).
+
+     Windows      winget install PHP.PHP.8.3
+     macOS        brew install php
+     Ubuntu       sudo apt install php-cli
+
+   On Windows, close and reopen the terminal afterwards so PATH refreshes.
+
+2. From the project folder, start it:
+
+     Windows      .\run-local.ps1
+     macOS/Linux  ./run-local.sh
+
+   The script finds PHP, makes sure there is a data file to sign in against,
+   starts the server and opens the sign-in page. Pass a port to use a different
+   one: `.\run-local.ps1 -Port 3000` or `./run-local.sh 3000`.
+
+   If you would rather not use the script, this is all it does:
+
+     php -S localhost:8000 -t .
+
+   then open http://localhost:8000/login.html
+
+3. Signing in. The app reads data/users.json, which is NOT in the repository —
+   it holds real client details and passwords, so it is deliberately untracked.
+
+     - To work against real data, copy your own data/users.json into data/.
+     - Otherwise the script seeds the synthetic demo account used by the tests:
+         demo.client@example.invalid / CiSmokeTest!2026
+
+   Client sign-in is at /login.html, the admin console at /admin.php.
+
+   Everything is written straight back to data/users.json, so a local run edits
+   whichever file you put there. Keep a copy before experimenting.
+
+Running the checks locally
+--------------------------
+The same suite CI runs (see .github/workflows/ci.yml):
+
+     php -l <file>                 syntax-check a PHP file
+     python3 tests/css-check.py    stylesheet braces and keyframe references
+     node tests/smoke.mjs          full browser pass over every page
+
+The smoke test needs the server already running, plus Playwright:
+
+     npm install playwright && npx playwright install chromium
+     node tests/smoke.mjs
+
+It writes tests/screenshots/ as it goes. Set CHROMIUM_EXECUTABLE=<path> to point
+it at a Chromium you already have instead of downloading one.
+
 What changed in this version:
 - Split the client dashboard into cacheable files. dashboard.html carried 72KB of
   CSS and 79KB of JavaScript inline, and the page is served with no-store because
