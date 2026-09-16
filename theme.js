@@ -16,6 +16,11 @@
   var initial = stored();
   apply(initial === "dark" || initial === "light" ? initial : systemPref());
 
+  /* Marks the document as script-enabled before the first paint. hx-motion.css
+     only hides reveal-on-scroll content behind this class, so a browser with
+     scripting off never ends up with content it cannot reveal. */
+  root.classList.add("hx-js");
+
   window.hxCurrentTheme = function () {
     return root.getAttribute("data-theme") === "dark" ? "dark" : "light";
   };
