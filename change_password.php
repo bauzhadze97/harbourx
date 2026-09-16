@@ -27,6 +27,27 @@ $error = '';
 $message = '';
 $email = cleanText($_POST['email'] ?? '');
 
+// The two-factor card used to claim "Enabled" unconditionally. Read the real
+// state so it tells the truth before any script runs.
+require_once __DIR__ . '/totp.php';
+
+$secureCookie = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+session_set_cookie_params(['httponly' => true, 'secure' => $secureCookie, 'samesite' => 'Lax']);
+session_start();
+
+$sessionEmail = strtolower((string)($_SESSION['client_email'] ?? ''));
+if ($email === '' && $sessionEmail !== '') $email = $sessionEmail;
+
+$twoFactor = ['enabled' => false, 'backupCodes' => [], 'confirmedAt' => ''];
+$signedIn = $sessionEmail !== '';
+if ($signedIn) {
+    $allUsers = loadUsers($usersFile);
+    $meIndex = findUserIndex($allUsers, $sessionEmail);
+    if ($meIndex !== -1) $twoFactor = hx_totp_state($allUsers[$meIndex]);
+}
+$twoFactorOn = !empty($twoFactor['enabled']);
+$backupLeft = count($twoFactor['backupCodes'] ?? []);
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $users = loadUsers($usersFile);
     $idx = findUserIndex($users, $email);
@@ -71,6 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <link rel="stylesheet" href="hx-motion.css">
 <link rel="stylesheet" href="portal.css">
 <script src="hx-motion.js" defer></script>
+<script src="qrcode.min.js" defer></script>
 </head>
 <body>
 <div class="portal-shell">
@@ -113,10 +135,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </section>
 
         <div class="security-stack hx-stagger">
-          <section class="portal-card security-side-card" data-reveal>
-            <div class="security-side-head"><span class="security-icon">◇</span><div><h2>Two-factor authentication</h2><p>Add an extra layer of security.</p></div><span class="status status-verified">● Enabled</span></div>
-            <div class="settings-list"><div class="settings-row">Authentication app<strong>Enabled</strong></div><div class="settings-row">Backup codes<strong>10 codes ›</strong></div></div>
-            <button class="wide-secondary" type="button" data-ripple>Manage two-factor authentication</button>
+          <section class="portal-card security-side-card" id="twoFactorCard" data-reveal>
+            <div class="security-side-head">
+              <span class="security-icon">◇</span>
+              <div><h2>Two-factor authentication</h2><p>A code from your phone, on top of your password.</p></div>
+              <span class="status <?= $twoFactorOn ? 'status-verified' : 'status-unverified' ?>" id="tfaStatusBadge"><?= $twoFactorOn ? '● On' : '● Off' ?></span>
+            </div>
+
+            <div class="settings-list">
+              <div class="settings-row">Authenticator app<strong id="tfaAppState"><?= $twoFactorOn ? 'Enabled' : 'Not set up' ?></strong></div>
+              <div class="settings-row">Backup codes<strong id="tfaBackupState"><?= $twoFactorOn ? (int)$backupLeft . ' left' : '—' ?></strong></div>
+            </div>
+
+            <div class="tfa-message" id="tfaMessage" hidden></div>
+
+            <!-- Enrolment. Hidden until asked for; the secret is minted per attempt
+                 and lives in the session until a code confirms it. -->
+            <div class="tfa-setup" id="tfaSetup" hidden>
+              <p class="tfa-step">1. Scan this with Google Authenticator, Authy, 1Password or any TOTP app.</p>
+              <div class="tfa-qr" id="tfaQr" aria-label="Enrolment QR code"></div>
+              <p class="tfa-step">Can't scan? Enter this key by hand:</p>
+              <code class="tfa-secret" id="tfaSecret"></code>
+              <p class="tfa-step">2. Enter the 6-digit code it shows.</p>
+              <div class="tfa-confirm">
+                <input id="tfaCode" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="000000" autocomplete="one-time-code">
+                <button class="submit-primary" type="button" id="tfaConfirmBtn" data-ripple>Turn on</button>
+              </div>
+            </div>
+
+            <!-- Shown once, immediately after enrolment. Only hashes are stored. -->
+            <div class="tfa-codes" id="tfaCodes" hidden>
+              <strong>Save these backup codes</strong>
+              <p>Each one signs you in once if you lose your phone. They are shown only now.</p>
+              <ul id="tfaCodeList"></ul>
+              <button class="wide-secondary" type="button" id="tfaCopyCodes" data-ripple>Copy codes</button>
+            </div>
+
+            <!-- Turning it off needs proof of possession, same as turning it on. -->
+            <div class="tfa-confirm" id="tfaDisableRow" hidden>
+              <input id="tfaDisableCode" type="text" inputmode="numeric" maxlength="14" placeholder="Code or backup code" autocomplete="one-time-code">
+              <button class="submit-primary danger" type="button" id="tfaDisableConfirmBtn" data-ripple>Turn off</button>
+            </div>
+
+            <button class="wide-secondary" type="button" id="tfaPrimaryBtn" data-ripple><?= $twoFactorOn ? 'Turn off two-factor authentication' : 'Set up two-factor authentication' ?></button>
+            <button class="wide-secondary" type="button" id="tfaNewCodesBtn" data-ripple <?= $twoFactorOn ? '' : 'hidden' ?>>Issue new backup codes</button>
           </section>
 
           <section class="portal-card security-side-card" data-reveal>
@@ -192,6 +254,174 @@ document.querySelectorAll('[data-toggle-password]').forEach((button) => button.a
   button.textContent = input.type === 'password' ? '◉' : '○';
 }));
 document.getElementById('portalMenu').addEventListener('click', () => document.body.classList.toggle('nav-open'));
+
+/* ---------------------------------------------------------------------------
+   Two-factor enrolment
+
+   Every decision is the server's: twofactor.php mints the secret, verifies the
+   code and issues the backup codes. This only draws what it says.
+   --------------------------------------------------------------------------- */
+(function () {
+  const card = document.getElementById('twoFactorCard');
+  if (!card) return;
+
+  const el = (id) => document.getElementById(id);
+  const setup = el('tfaSetup'), codesBox = el('tfaCodes'), codeList = el('tfaCodeList');
+  const disableRow = el('tfaDisableRow'), message = el('tfaMessage');
+  const primaryBtn = el('tfaPrimaryBtn'), newCodesBtn = el('tfaNewCodesBtn');
+  const codeInput = el('tfaCode'), qrBox = el('tfaQr'), secretBox = el('tfaSecret');
+  const statusBadge = el('tfaStatusBadge'), appState = el('tfaAppState'), backupState = el('tfaBackupState');
+
+  let enabled = statusBadge.classList.contains('status-verified');
+  let issuedCodes = [];
+
+  function say(text, tone) {
+    if (!text) { message.hidden = true; return; }
+    message.hidden = false;
+    message.textContent = text;
+    message.setAttribute('data-tone', tone || 'success');
+  }
+
+  /** Disables a button and marks it busy for the length of an await. */
+  async function whileBusy(button, work) {
+    if (button) { button.disabled = true; button.setAttribute('aria-busy', 'true'); }
+    try {
+      return await work();
+    } finally {
+      if (button) { button.disabled = false; button.removeAttribute('aria-busy'); }
+    }
+  }
+
+  async function call(action, extra) {
+    const response = await fetch('twofactor.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.assign({ action }, extra || {}))
+    });
+    if (response.status === 401) {
+      window.location.replace('login.html');
+      throw new Error('signed out');
+    }
+    return response.json();
+  }
+
+  function paint() {
+    statusBadge.textContent = enabled ? '● On' : '● Off';
+    statusBadge.className = 'status ' + (enabled ? 'status-verified' : 'status-unverified');
+    appState.textContent = enabled ? 'Enabled' : 'Not set up';
+    primaryBtn.textContent = enabled ? 'Turn off two-factor authentication' : 'Set up two-factor authentication';
+    newCodesBtn.hidden = !enabled;
+  }
+
+  function drawQr(uri) {
+    qrBox.innerHTML = '';
+    if (typeof window.QRCode === 'undefined') {
+      // The library is deferred; if it has not landed, the typed key still works.
+      qrBox.textContent = '';
+      qrBox.hidden = true;
+      return;
+    }
+    qrBox.hidden = false;
+    new window.QRCode(qrBox, { text: uri, width: 156, height: 156, correctLevel: window.QRCode.CorrectLevel.M });
+  }
+
+  async function beginSetup() {
+    say('');
+    const result = await whileBusy(primaryBtn, () => call('begin'));
+    if (!result.success) { say(result.message || 'Unable to start setup.', 'error'); return; }
+    secretBox.textContent = result.secretGrouped || result.secret;
+    drawQr(result.uri);
+    setup.hidden = false;
+    codesBox.hidden = true;
+    codeInput.value = '';
+    codeInput.focus();
+  }
+
+  async function confirmSetup() {
+    const code = codeInput.value.trim();
+    if (!/^\d{6}$/.test(code)) { say('Enter the 6 digits your app is showing.', 'error'); return; }
+    const result = await whileBusy(el('tfaConfirmBtn'), () => call('enable', { code }));
+    if (!result.success) {
+      say(result.message || 'That code is not right.', 'error');
+      if (window.hxMotion) window.hxMotion.shake(codeInput);
+      codeInput.select();
+      return;
+    }
+
+    enabled = true;
+    paint();
+    setup.hidden = true;
+    issuedCodes = result.backupCodes || [];
+    codeList.innerHTML = '';
+    issuedCodes.forEach((c) => {
+      const li = document.createElement('li');
+      li.textContent = c;
+      codeList.appendChild(li);
+    });
+    backupState.textContent = issuedCodes.length + ' left';
+    codesBox.hidden = false;
+    say(result.message || 'Two-factor authentication is on.', 'success');
+  }
+
+  async function disable() {
+    const input = el('tfaDisableCode');
+    const code = input.value.trim();
+    if (!code) { say('Enter a current code, or one of your backup codes.', 'error'); return; }
+
+    const result = await whileBusy(el('tfaDisableConfirmBtn'), () => call('disable', { code }));
+    if (!result.success) {
+      say(result.message || 'Unable to turn it off.', 'error');
+      if (window.hxMotion) window.hxMotion.shake(input);
+      return;
+    }
+    enabled = false;
+    paint();
+    disableRow.hidden = true;
+    codesBox.hidden = true;
+    input.value = '';
+    backupState.textContent = '—';
+    say(result.message || 'Two-factor authentication is off.', 'success');
+  }
+  primaryBtn.addEventListener('click', () => {
+    if (enabled) {
+      disableRow.hidden = !disableRow.hidden;
+      if (!disableRow.hidden) el('tfaDisableCode').focus();
+      return;
+    }
+    setup.hidden ? beginSetup() : (setup.hidden = true);
+  });
+  el('tfaConfirmBtn').addEventListener('click', confirmSetup);
+  el('tfaDisableConfirmBtn').addEventListener('click', disable);
+  codeInput.addEventListener('input', () => {
+    codeInput.value = codeInput.value.replace(/\D/g, '').slice(0, 6);
+    if (codeInput.value.length === 6) confirmSetup();
+  });
+
+  newCodesBtn.addEventListener('click', async () => {
+    const code = window.prompt('Enter a current code from your authenticator app to issue new backup codes:');
+    if (!code) return;
+    const result = await whileBusy(newCodesBtn, () => call('codes', { code: code.trim() }));
+    if (!result.success) { say(result.message || 'Unable to issue new codes.', 'error'); return; }
+    issuedCodes = result.backupCodes || [];
+    codeList.innerHTML = '';
+    issuedCodes.forEach((c) => {
+      const li = document.createElement('li');
+      li.textContent = c;
+      codeList.appendChild(li);
+    });
+    backupState.textContent = issuedCodes.length + ' left';
+    codesBox.hidden = false;
+    say(result.message || 'New backup codes issued.', 'success');
+  });
+  el('tfaCopyCodes').addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(issuedCodes.join('\n'));
+      say('Backup codes copied.', 'success');
+    } catch (e) {
+      say('Copy failed — select them and copy by hand.', 'error');
+    }
+  });
+})();
 </script>
 </body>
 </html>

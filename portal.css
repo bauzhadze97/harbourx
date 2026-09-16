@@ -472,3 +472,96 @@ input, select, textarea {
    attribute from JS — without this they stay on screen empty for a client who
    has not been verified yet. */
 [hidden] { display: none !important; }
+
+/* ============================================================================
+   Two-factor enrolment
+   ========================================================================== */
+
+.tfa-message {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  line-height: 1.5;
+  animation: hx-rise var(--hx-dur-base, 240ms) var(--hx-ease-out, ease);
+}
+.tfa-message[data-tone="error"] { border: 1px solid rgba(241,113,120,.32); background: rgba(241,113,120,.1); color: #ffadb2; }
+.tfa-message[data-tone="success"] { border: 1px solid rgba(54,229,165,.32); background: rgba(54,229,165,.1); color: var(--hx-green); }
+
+.tfa-setup,
+.tfa-codes { margin-top: 14px; animation: hx-rise var(--hx-dur-slow, 380ms) var(--hx-ease-out, ease); }
+
+.tfa-step { margin: 0 0 8px; color: #9db8c9; font-size: 11px; line-height: 1.5; }
+.tfa-setup .tfa-step + .tfa-step { margin-top: 14px; }
+
+/* The QR needs a light plate: scanners read dark-on-light, and inverting it
+   here would make some phone cameras fail. */
+.tfa-qr {
+  width: 176px;
+  margin: 0 auto 14px;
+  padding: 10px;
+  border-radius: 10px;
+  background: #fff;
+  display: grid;
+  place-items: center;
+}
+.tfa-qr canvas,
+.tfa-qr img { display: block; width: 156px; height: 156px; }
+
+.tfa-secret {
+  display: block;
+  margin-bottom: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--hx-line);
+  border-radius: 8px;
+  background: #0a2132;
+  color: var(--hx-text);
+  font-family: var(--hx-font-mono, ui-monospace, Menlo, Consolas, monospace);
+  font-size: 12px;
+  letter-spacing: .12em;
+  word-break: break-all;
+  user-select: all;
+}
+
+.tfa-confirm { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 9px; margin-top: 10px; }
+.tfa-confirm input {
+  height: 44px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .24em;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+}
+.tfa-confirm .submit-primary { width: auto; min-height: 44px; padding: 0 18px; font-size: 12px; }
+.submit-primary.danger { background: linear-gradient(135deg, #e5484d, #c93b40); color: #fff; }
+
+.tfa-codes strong { display: block; color: var(--hx-text); font-size: 12px; }
+.tfa-codes p { margin: 5px 0 10px; color: #8ea9bb; font-size: 10px; line-height: 1.5; }
+.tfa-codes ul {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin: 0 0 11px;
+  padding: 12px;
+  list-style: none;
+  border: 1px solid var(--hx-line);
+  border-radius: 9px;
+  background: #0a2132;
+}
+.tfa-codes li {
+  color: var(--hx-text);
+  font-family: var(--hx-font-mono, ui-monospace, Menlo, Consolas, monospace);
+  font-size: 12px;
+  letter-spacing: .06em;
+}
+
+#tfaNewCodesBtn { margin-top: 8px; }
+
+@media (max-width: 540px) {
+  .tfa-confirm { grid-template-columns: 1fr; }
+  .tfa-confirm .submit-primary { width: 100%; }
+  .tfa-codes ul { grid-template-columns: 1fr; }
+}
+
+/* A control waiting on the network says so, rather than looking inert. */
+[aria-busy="true"] { opacity: .6; cursor: progress; }

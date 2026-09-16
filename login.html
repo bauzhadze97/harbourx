@@ -447,6 +447,31 @@
   .submit:hover:not(:disabled) .arrow { transform: translateX(4px); }
 
   .auth-error { animation: hx-rise var(--hx-dur-base) var(--hx-ease-out); }
+
+  /* ---- second factor ---- */
+  #twoFactorForm { animation: hx-rise var(--hx-dur-slow) var(--hx-ease-out); }
+  .tfa-lead { display: flex; gap: 12px; align-items: flex-start; margin: 0 0 18px; }
+  .tfa-lead strong { display: block; font-size: 15px; color: var(--ink); }
+  .tfa-lead p { margin: 4px 0 0; font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .tfa-badge {
+    width: 34px; height: 34px; flex: 0 0 auto; display: grid; place-items: center;
+    border-radius: 50%; background: rgba(20, 184, 173, .14); color: var(--teal-bright);
+    font-size: 11px;
+  }
+  /* A code is read back digit by digit — space it out and keep the figures even. */
+  .tfa-code {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: .38em;
+    text-align: center;
+    font-size: 19px;
+    font-weight: 700;
+  }
+  #tfaBackup { letter-spacing: .16em; font-size: 16px; }
+  .link-like {
+    border: 0; padding: 0; background: none; cursor: pointer;
+    color: var(--teal-bright); font: inherit; font-size: 13px; text-decoration: underline;
+  }
+  .link-like:hover { color: var(--teal-dark); }
   .a-features li .a-ficon { transition: transform var(--hx-dur-base) var(--hx-ease-spring); }
   .a-features li:hover .a-ficon { transform: scale(1.12) rotate(-6deg); }
 
@@ -555,6 +580,47 @@
         <div class="auth-error" id="error">Wrong email or password</div>
       </form>
 
+      <!-- Second factor. Only revealed when login.php answers requires2fa, so
+           an account without an authenticator never sees it. -->
+      <form id="twoFactorForm" novalidate hidden>
+        <div class="tfa-lead">
+          <span class="tfa-badge" aria-hidden="true">&#9679;</span>
+          <div>
+            <strong>Two-factor authentication</strong>
+            <p id="tfaHint">Enter the 6-digit code from your authenticator app.</p>
+          </div>
+        </div>
+
+        <div class="fld">
+          <label for="tfaCode">Authentication code</label>
+          <div class="wrap">
+            <input id="tfaCode" type="text" inputmode="numeric" autocomplete="one-time-code"
+                   pattern="[0-9]*" maxlength="6" placeholder="000000" class="tfa-code" required>
+          </div>
+        </div>
+
+        <div class="fld" id="tfaBackupField" hidden>
+          <label for="tfaBackup">Backup code</label>
+          <div class="wrap">
+            <input id="tfaBackup" type="text" autocomplete="off" placeholder="ABCDE-12345" class="tfa-code">
+          </div>
+        </div>
+
+        <button type="submit" class="submit" id="tfaSubmitBtn" data-ripple>
+          <span class="spinner" aria-hidden="true"></span>
+          <span class="label">Verify and sign in</span>
+          <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="17" height="17"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+
+        <div class="auth-error" id="tfaError"></div>
+
+        <p class="auth-alt">
+          <button type="button" class="link-like" id="useBackupBtn">Use a backup code instead</button>
+          &nbsp;·&nbsp;
+          <button type="button" class="link-like" id="tfaCancelBtn">Start over</button>
+        </p>
+      </form>
+
       <p class="auth-alt">New to HarbourX? <a href="register.php">Create an account</a></p>
 
       <p class="auth-legal">By signing in you agree to HarbourX's terms and acknowledge the privacy notice. This is a private client workspace.</p>
@@ -606,6 +672,13 @@
       });
       const result = await response.json();
 
+      if (result.requires2fa) {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove("loading");
+        showTwoFactor(result);
+        return;
+      }
+
       if (!result.success) {
         errorEl.textContent = result.message || "Wrong email or password";
         errorEl.style.display = "block";
@@ -614,8 +687,7 @@
         return;
       }
 
-      localStorage.setItem("user", JSON.stringify(result.user));
-      window.location.href = "dashboard.html";
+      enterDashboard(result.user);
     } catch (e) {
       errorEl.textContent = "Server error. Please try again.";
       errorEl.style.display = "block";
@@ -623,6 +695,114 @@
       submitBtn.classList.remove("loading");
     }
   }
+
+  /* ------------------------------------------------------------ 2FA step */
+
+  const loginForm = document.getElementById("loginForm");
+  const tfaForm = document.getElementById("twoFactorForm");
+  const tfaCode = document.getElementById("tfaCode");
+  const tfaBackup = document.getElementById("tfaBackup");
+  const tfaBackupField = document.getElementById("tfaBackupField");
+  const tfaError = document.getElementById("tfaError");
+  const tfaSubmitBtn = document.getElementById("tfaSubmitBtn");
+  const tfaHint = document.getElementById("tfaHint");
+
+  function enterDashboard(user) {
+    localStorage.setItem("user", JSON.stringify(user));
+    window.location.href = "dashboard.html";
+  }
+
+  function showTwoFactor(result) {
+    loginForm.hidden = true;
+    tfaForm.hidden = false;
+    tfaError.style.display = "none";
+    tfaCode.value = "";
+    tfaBackup.value = "";
+    tfaBackupField.hidden = true;
+    if (result && Number.isFinite(Number(result.backupCodesRemaining))) {
+      tfaHint.textContent = `Enter the 6-digit code from your authenticator app. ${result.backupCodesRemaining} backup code(s) left.`;
+    }
+    tfaCode.focus();
+  }
+
+  function resetToPassword() {
+    tfaForm.hidden = true;
+    loginForm.hidden = false;
+    tfaError.style.display = "none";
+    submitBtn.disabled = false;
+    submitBtn.classList.remove("loading");
+    pw.value = "";
+    pw.focus();
+  }
+
+  async function verifyTwoFactor() {
+    const usingBackup = !tfaBackupField.hidden;
+    const payload = usingBackup
+      ? { backupCode: tfaBackup.value.trim() }
+      : { code: tfaCode.value.trim() };
+
+    if (!usingBackup && !/^\d{6}$/.test(payload.code)) {
+      tfaError.textContent = "Enter the 6 digits from your authenticator app.";
+      tfaError.style.display = "block";
+      return;
+    }
+    if (usingBackup && payload.backupCode.length < 8) {
+      tfaError.textContent = "Enter one of your backup codes.";
+      tfaError.style.display = "block";
+      return;
+    }
+
+    tfaError.style.display = "none";
+    tfaSubmitBtn.disabled = true;
+    tfaSubmitBtn.classList.add("loading");
+
+    try {
+      const response = await fetch("login.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const result = await response.json();
+
+      if (!result.success) {
+        // 440 means the challenge expired — send them back to the password step.
+        if (response.status === 440) {
+          resetToPassword();
+          errorEl.textContent = result.message || "Your sign-in expired. Try again.";
+          errorEl.style.display = "block";
+          return;
+        }
+        tfaError.textContent = result.message || "That code is not right.";
+        tfaError.style.display = "block";
+        tfaCode.select();
+        return;
+      }
+
+      enterDashboard(result.user);
+    } catch (e) {
+      tfaError.textContent = "Server error. Please try again.";
+      tfaError.style.display = "block";
+    } finally {
+      tfaSubmitBtn.disabled = false;
+      tfaSubmitBtn.classList.remove("loading");
+    }
+  }
+
+  tfaForm.addEventListener("submit", (event) => { event.preventDefault(); verifyTwoFactor(); });
+  document.getElementById("tfaCancelBtn").addEventListener("click", resetToPassword);
+  document.getElementById("useBackupBtn").addEventListener("click", () => {
+    const toBackup = tfaBackupField.hidden;
+    tfaBackupField.hidden = !toBackup;
+    document.getElementById("useBackupBtn").textContent =
+      toBackup ? "Use my authenticator app instead" : "Use a backup code instead";
+    (toBackup ? tfaBackup : tfaCode).focus();
+  });
+
+  // Six digits is the whole code — submit as soon as they are in.
+  tfaCode.addEventListener("input", () => {
+    tfaCode.value = tfaCode.value.replace(/\D/g, "").slice(0, 6);
+    if (tfaCode.value.length === 6) verifyTwoFactor();
+  });
 
   form.addEventListener("submit", (e) => { e.preventDefault(); login(); });
 

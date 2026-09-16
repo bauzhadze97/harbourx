@@ -49,6 +49,9 @@ jobs:
       - name: Stylesheets are balanced and keyframes resolve
         run: python3 tests/css-check.py
 
+      - name: TOTP library (RFC 6238 vectors, backup codes)
+        run: php tests/totp-test.php
+
       - name: No client data committed
         run: |
           # data/users.json holds plaintext passwords and KYC details; it must
@@ -100,6 +103,9 @@ jobs:
 
       - name: Run smoke test
         run: node tests/smoke.mjs
+
+      - name: Two-factor flow
+        run: node tests/twofactor-test.js
 
       - name: Publish screenshots
         if: always()
