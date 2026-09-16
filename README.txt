@@ -32,6 +32,32 @@ no build step, no npm install, no database.
    then open http://localhost:8000 — index.php sends you to the sign-in page,
    or straight to the dashboard if you already have a session.
 
+   If Windows says "An Application Control policy has blocked this file":
+   Smart App Control (or a work machine's WDAC policy) will not run unsigned
+   executables out of the WinGet folder. PHP is installed fine — Windows just
+   will not start it from there. In order of least hassle:
+
+     a. Run it under WSL, where the policy does not apply:
+          wsl --install                     (once, then reboot)
+          wsl
+          sudo apt update && sudo apt install -y php-cli
+          cd /mnt/c/Users/<you>/Desktop/worked/harbourx-new
+          ./run-local.sh
+
+     b. Install PHP from a signed installer rather than WinGet — XAMPP
+        (apachefriends.org) or Laragon (laragon.org). run-local.ps1 finds both
+        automatically; just run it again afterwards.
+
+     c. To look at the interface only, with no PHP at all:
+          .\run-local.ps1 -Static
+        then open http://localhost:8000/tests/preview.html. It seeds a demo
+        account into the browser so the pages render. Signing in, two-factor,
+        tickets, converting and withdrawing all need PHP and will not work, and
+        a static server serves .php files as plain text — keep it on localhost.
+
+   Turning Smart App Control off also works, but Windows cannot turn it back on
+   without a full reset, so try the above first.
+
 3. Signing in. The app reads data/users.json, which is NOT in the repository —
    it holds real client details and passwords, so it is deliberately untracked.
 
