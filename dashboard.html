@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>HarbourX · Portfolio Dashboard</title>
   <meta name="description" content="HarbourX digital asset portfolio and withdrawal dashboard." />
-  <meta name="color-scheme" content="light dark" />
+  <meta name="color-scheme" content="dark" />
   <!-- Theme and pre-paint flags. Render-blocking on purpose: data-theme has to be
        on <html> before the first paint or the page flashes the wrong palette.
        This is the same file every other page loads, so after the first visit it
@@ -17,15 +17,15 @@
        dropped so there is only one version of the theme logic to maintain. -->
   <script src="theme.js"></script>
 
-  <!-- Inter as one variable font (wght 400..900) instead of six static weights: a single file
-       covers every weight the stylesheet asks for, including 650/750/850 which previously had to
-       snap to the nearest static cut. Loaded off the critical path - the page paints immediately
-       in the system fallback stack and swaps when Inter arrives. -->
+  <!-- Plus Jakarta Sans as one variable font rather than a set of static weights: a
+       single file covers every weight the stylesheets ask for. Loaded off the critical
+       path, so the page paints immediately in the system fallback stack and swaps when
+       the face arrives. The family itself is set once, as --hx-font in hx-motion.css. -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" media="print" onload="this.media='all'" />
-  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" /></noscript>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap" media="print" onload="this.media='all'" />
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap" /></noscript>
 
   <!-- Open the price-feed connections while the page is still parsing, so the first BTC quote
        does not pay for DNS + TLS after the script starts. -->
@@ -397,39 +397,7 @@
     </div>
   </div>
 
-  <div class="modal" id="authorisationModal" aria-hidden="true">
-    <div class="modal-card authorisation-card">
-      <div class="modal-head">
-        <h3>Authorisation required</h3>
-        <button class="close-btn" id="closeAuthorisationModalBtn" aria-label="Close">×</button>
-      </div>
-      <div class="modal-body">
-        <div class="authorisation-notice">First name confirmation is required for this withdrawal.</div>
-        <p class="authorisation-summary">
-          Enter the first name to attach to the withdrawal request for
-          <strong id="authorisationBankLabel">your selected payout bank</strong>
-          before proceeding with <strong id="authorisationAmountLabel">0.00</strong>.
-          No SMS code is sent for this confirmation.
-        </p>
-
-        <div class="field">
-          <label for="authorisationFirstName">Enter first name</label>
-          <input id="authorisationFirstName" type="text" autocomplete="given-name" />
-        </div>
-
-        <div class="authorisation-footer">
-          <div class="authorisation-brand">HarbourX Protect</div>
-          <div class="authorisation-actions">
-            <button class="secondary-btn" id="cancelAuthorisationBtn" type="button">Cancel</button>
-            <button class="primary-btn" data-ripple id="confirmAuthorisationBtn" type="button">Authorise</button>
-          </div>
-        </div>
-        <div class="bank-form-message" id="authorisationMessage"></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal" id="addBankModal" aria-hidden="true">
+<div class="modal" id="addBankModal" aria-hidden="true">
     <div class="modal-card">
       <div class="modal-head">
         <h3>Add payout bank</h3>

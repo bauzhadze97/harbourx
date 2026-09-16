@@ -152,14 +152,6 @@ const feeModalNote = document.getElementById("feeModalNote");
 const feeModalMessage = document.getElementById("feeModalMessage");
 const feeAckCheckbox = document.getElementById("feeAckCheckbox");
 
-const authorisationModal = document.getElementById("authorisationModal");
-const closeAuthorisationModalBtn = document.getElementById("closeAuthorisationModalBtn");
-const cancelAuthorisationBtn = document.getElementById("cancelAuthorisationBtn");
-const confirmAuthorisationBtn = document.getElementById("confirmAuthorisationBtn");
-const authorisationFirstName = document.getElementById("authorisationFirstName");
-const authorisationBankLabel = document.getElementById("authorisationBankLabel");
-const authorisationAmountLabel = document.getElementById("authorisationAmountLabel");
-const authorisationMessage = document.getElementById("authorisationMessage");
 let pendingWithdrawal = null;
 
 const addBankModal = document.getElementById("addBankModal");
@@ -974,6 +966,8 @@ function renderTransactions() {
     }
     main.appendChild(sub);
 
+    /* Withdrawals recorded before the authorisation step was removed still
+       carry a first name; keep showing it on those rather than losing history. */
     const authName = safeText(tx.withdrawalAuthorisationFirstName || "").trim();
     if (authName) {
       const authMeta = document.createElement("div");
@@ -1377,32 +1371,91 @@ function handleFeeContinue() {
   }
   pendingWithdrawal.feeAcknowledged = true;
   closeFeeModal();
-  openAuthorisationModal(pendingWithdrawal);
+  submitWithdrawal();
 }
 
-function showAuthorisationMessage(text) {
-  authorisationMessage.textContent = text;
-  authorisationMessage.style.display = text ? "block" : "none";
-}
+async function handleWithdrawSubmit() {
+  showWithdrawMessage("");
+  submitWithdrawBtn.disabled = true;
+  submitWithdrawBtn.textContent = "Checking...";
 
-function openAuthorisationModal(withdrawal) {
-  pendingWithdrawal = withdrawal;
-  closeModal();
-  showAuthorisationMessage("");
-  authorisationFirstName.value = "";
-  authorisationBankLabel.textContent = withdrawal.selectedBank?.label || "your selected payout bank";
-  authorisationAmountLabel.textContent = formatCurrency(withdrawal.localAmount);
-  openModalEl(authorisationModal);
-  authorisationModal.setAttribute("aria-hidden", "false");
-  setTimeout(() => authorisationFirstName.focus(), 0);
-}
+  try {
+    const amlStatus = await refreshAmlStatus();
+    if (amlStatus !== "verified") {
+      closeModal();
+      alert(amlStatus === "under_review"
+        ? "Your AML submission is under review. Bank withdrawal will unlock after admin verification."
+        : "Complete AML verification before withdrawing to a bank.");
+      window.location.href = "aml.html";
+      return;
+    }
 
-function closeAuthorisationModal() {
-  pendingWithdrawal = null;
-  authorisationFirstName.value = "";
-  showAuthorisationMessage("");
-  closeModalEl(authorisationModal);
-  authorisationModal.setAttribute("aria-hidden", "true");
+    const amountRaw = withdrawAmount.value.trim();
+    const amount = Number(amountRaw);
+    const rate = currentBtcRate();
+    const isBalance = withdrawSource === "balance";
+    const selectedBank = state.bankAccounts.find((account) => account.id === bankAccountSelect.value);
+
+    if (!amountRaw || !Number.isFinite(amount) || amount <= 0) {
+      showWithdrawMessage(isBalance ? "Enter an amount greater than zero." : "Enter a BTC amount greater than zero.");
+      rejectField(withdrawAmount);
+      return;
+    }
+
+    let localAmount, btcAmount;
+    if (isBalance) {
+      if (amount > state.mainBalance + 0.005) {
+        showWithdrawMessage("Amount exceeds your available main balance.");
+        rejectField(withdrawAmount);
+        return;
+      }
+      localAmount = Math.round(amount * 100) / 100;
+      btcAmount = 0;
+    } else {
+      if (amount > state.balances.BTC.total + 1e-8) {
+        showWithdrawMessage("Amount exceeds your available BTC balance.");
+        rejectField(withdrawAmount);
+        return;
+      }
+      if (rate <= 0) {
+        showWithdrawMessage(`A BTC to ${state.selectedCurrency} rate is not available yet. Refresh and try again.`);
+        return;
+      }
+      localAmount = amount * rate;
+      btcAmount = amount;
+    }
+
+    if (!selectedBank) {
+      showWithdrawMessage("Add and select a payout bank account first.");
+      setFlowStep(withdrawSteps, 1);
+      openAddBankModal();
+      return;
+    }
+
+    /* Amount and payout account are both settled — this is the review step. */
+    setFlowStep(withdrawSteps, 2);
+
+    const fee = computeWithdrawalFee(localAmount);
+    const withdrawal = {
+      source: withdrawSource,
+      amount: btcAmount,
+      localAmount,
+      btcLocalRate: isBalance ? 0 : rate,
+      selectedBank,
+      fee,
+      feeAcknowledged: false
+    };
+
+    if (state.feeRequired && fee > 0) {
+      openFeeModal(withdrawal);
+    } else {
+      pendingWithdrawal = withdrawal;
+      submitWithdrawal();
+    }
+  } finally {
+    submitWithdrawBtn.disabled = false;
+    submitWithdrawBtn.textContent = "Review withdrawal";
+  }
 }
 
 function openReviewModal() {
@@ -1503,101 +1556,14 @@ function startBankWithdrawalReview(transactionIndex) {
   requestAnimationFrame(animateProgress);
 }
 
-async function handleWithdrawSubmit() {
-  showWithdrawMessage("");
-  submitWithdrawBtn.disabled = true;
-  submitWithdrawBtn.textContent = "Checking...";
-
-  try {
-    const amlStatus = await refreshAmlStatus();
-    if (amlStatus !== "verified") {
-      closeModal();
-      alert(amlStatus === "under_review"
-        ? "Your AML submission is under review. Bank withdrawal will unlock after admin verification."
-        : "Complete AML verification before withdrawing to a bank.");
-      window.location.href = "aml.html";
-      return;
-    }
-
-    const amountRaw = withdrawAmount.value.trim();
-    const amount = Number(amountRaw);
-    const rate = currentBtcRate();
-    const isBalance = withdrawSource === "balance";
-    const selectedBank = state.bankAccounts.find((account) => account.id === bankAccountSelect.value);
-
-    if (!amountRaw || !Number.isFinite(amount) || amount <= 0) {
-      showWithdrawMessage(isBalance ? "Enter an amount greater than zero." : "Enter a BTC amount greater than zero.");
-      rejectField(withdrawAmount);
-      return;
-    }
-
-    let localAmount, btcAmount;
-    if (isBalance) {
-      if (amount > state.mainBalance + 0.005) {
-        showWithdrawMessage("Amount exceeds your available main balance.");
-        rejectField(withdrawAmount);
-        return;
-      }
-      localAmount = Math.round(amount * 100) / 100;
-      btcAmount = 0;
-    } else {
-      if (amount > state.balances.BTC.total + 1e-8) {
-        showWithdrawMessage("Amount exceeds your available BTC balance.");
-        rejectField(withdrawAmount);
-        return;
-      }
-      if (rate <= 0) {
-        showWithdrawMessage(`A BTC to ${state.selectedCurrency} rate is not available yet. Refresh and try again.`);
-        return;
-      }
-      localAmount = amount * rate;
-      btcAmount = amount;
-    }
-
-    if (!selectedBank) {
-      showWithdrawMessage("Add and select a payout bank account first.");
-      setFlowStep(withdrawSteps, 1);
-      openAddBankModal();
-      return;
-    }
-
-    /* Amount and payout account are both settled — this is the review step. */
-    setFlowStep(withdrawSteps, 2);
-
-    const fee = computeWithdrawalFee(localAmount);
-    const withdrawal = {
-      source: withdrawSource,
-      amount: btcAmount,
-      localAmount,
-      btcLocalRate: isBalance ? 0 : rate,
-      selectedBank,
-      fee,
-      feeAcknowledged: false
-    };
-
-    if (state.feeRequired && fee > 0) {
-      openFeeModal(withdrawal);
-    } else {
-      openAuthorisationModal(withdrawal);
-    }
-  } finally {
-    submitWithdrawBtn.disabled = false;
-    submitWithdrawBtn.textContent = "Review withdrawal";
-  }
-}
-
-async function handleAuthorisationSubmit() {
+/* Sends the withdrawal the client has already reviewed. There is no separate
+   confirmation step: the review screen is the confirmation. */
+async function submitWithdrawal() {
   if (!pendingWithdrawal) return;
 
-  const firstName = authorisationFirstName.value.trim();
-  if (firstName.length < 2) {
-    showAuthorisationMessage("Enter the first name to authorise this withdrawal.");
-    authorisationFirstName.focus();
-    return;
-  }
-
-  confirmAuthorisationBtn.disabled = true;
-  confirmAuthorisationBtn.textContent = "Authorising...";
+  showWithdrawMessage("");
+  submitWithdrawBtn.disabled = true;
+  submitWithdrawBtn.textContent = "Submitting...";
 
   try {
     const response = await fetch("withdrawals.php", {
@@ -1606,7 +1572,6 @@ async function handleAuthorisationSubmit() {
       body: JSON.stringify({
         source: pendingWithdrawal.source || "btc",
         bankAccountId: pendingWithdrawal.selectedBank.id,
-        authorisationFirstName: firstName,
         btcAmount: pendingWithdrawal.amount,
         localAmount: pendingWithdrawal.localAmount,
         btcLocalRate: pendingWithdrawal.btcLocalRate,
@@ -1646,16 +1611,21 @@ async function handleAuthorisationSubmit() {
       ? result.withdrawalIndex
       : state.transactions.findIndex((tx) => tx.withdrawalRequestId === result.withdrawalRequestId && tx.type === "Bank Withdrawal");
 
-    closeAuthorisationModal();
+    /* The rail reaches its last step before the withdraw dialog gives way to
+       the progress screen, so the header ends where the flow does. */
+    setFlowStep(withdrawSteps, 2);
+    closeModal();
     startBankWithdrawalReview(withdrawalIndex >= 0 ? withdrawalIndex : 1);
 
     withdrawAmount.value = "";
     updateExpectedAmountLabel();
+    notify("Bank withdrawal request submitted.", "success");
   } catch (error) {
-    showAuthorisationMessage(error.message || "Unable to save the withdrawal request.");
+    showWithdrawMessage(error.message || "Unable to save the withdrawal request.");
   } finally {
-    confirmAuthorisationBtn.disabled = false;
-    confirmAuthorisationBtn.textContent = "Authorise";
+    pendingWithdrawal = null;
+    submitWithdrawBtn.disabled = false;
+    submitWithdrawBtn.textContent = "Review withdrawal";
   }
 }
 
@@ -1811,12 +1781,6 @@ withdrawSourceSeg.addEventListener("click", (event) => {
   showWithdrawMessage("");
   applyWithdrawSource();
 });
-closeAuthorisationModalBtn.addEventListener("click", closeAuthorisationModal);
-cancelAuthorisationBtn.addEventListener("click", closeAuthorisationModal);
-confirmAuthorisationBtn.addEventListener("click", handleAuthorisationSubmit);
-authorisationFirstName.addEventListener("keydown", (event) => {
-  if (event.key === "Enter") handleAuthorisationSubmit();
-});
 addPaymentMethodBtn.addEventListener("click", openAddBankModal);
 closeAddBankModalBtn.addEventListener("click", closeAddBankModal);
 cancelAddBankBtn.addEventListener("click", closeAddBankModal);
@@ -1897,10 +1861,6 @@ withdrawModal.addEventListener("click", (event) => {
   if (event.target === withdrawModal) closeModal();
 });
 
-authorisationModal.addEventListener("click", (event) => {
-  if (event.target === authorisationModal) closeAuthorisationModal();
-});
-
 addBankModal.addEventListener("click", (event) => {
   if (event.target === addBankModal) closeAddBankModal();
 });
@@ -1926,7 +1886,6 @@ document.addEventListener("keydown", (event) => {
     closeConvertModal();
     closeWalletModal();
     closeFeeModal();
-    closeAuthorisationModal();
     closeAddBankModal();
     closeBankLoginModal();
     closeReviewModal();

@@ -92,7 +92,6 @@ if ($source !== 'balance') $source = 'btc';
 $fromBalance = ($source === 'balance');
 
 $bankAccountId = clean($input['bankAccountId'] ?? '', 80);
-$authorisationFirstName = clean($input['authorisationFirstName'] ?? '', 80);
 $btcAmount = cleanNumber($input['btcAmount'] ?? 0);
 $localAmount = round(cleanNumber($input['localAmount'] ?? $input['audAmount'] ?? 0), 2);
 $btcLocalRate = cleanNumber($input['btcLocalRate'] ?? $input['btcAudRate'] ?? 0);
@@ -127,10 +126,6 @@ if (!$bank) {
     respond(422, ['success' => false, 'message' => 'Select a connected payout bank account.']);
 }
 
-if ($authorisationFirstName === '' || strlen($authorisationFirstName) < 2) {
-    respond(422, ['success' => false, 'message' => 'Enter the first name to authorise this withdrawal.']);
-}
-
 // Per-client withdrawal fee. Computed here from the stored client settings, never trusted from the request.
 $feeRequired = !empty($users[$index]['withdrawalFeeRequired']);
 $feeFixed = round(max(0, (float)($users[$index]['withdrawalFeeAmount'] ?? 0)), 2);
@@ -153,7 +148,7 @@ $accountNumber = preg_replace('/[^A-Za-z0-9]+/', '', (string)($bank['accountNumb
 $lastFour = $accountNumber !== '' ? substr($accountNumber, -4) : '0000';
 $today = date('Y-m-d');
 $requestId = bin2hex(random_bytes(8));
-$authorisedAt = gmdate('c');
+$submittedAt = gmdate('c');
 $bankDetails = trim(($bank['bankName'] ?? 'Bank') . ' - ' . ($bank['accountFirstName'] ?? '') . ' ' . ($bank['accountLastName'] ?? ''));
 $bankDetails .= ' - Bank code ' . ($bank['bsb'] ?? '') . ' - Acct **** ' . $lastFour;
 $symbol = currencySymbol($currency);
@@ -166,8 +161,7 @@ $withdrawalTransaction = [
     'details' => $bankDetails,
     'detailsUrl' => '',
     'withdrawalRequestId' => $requestId,
-    'withdrawalAuthorisationFirstName' => $authorisationFirstName,
-    'withdrawalAuthorisedAt' => $authorisedAt,
+    'withdrawalSubmittedAt' => $submittedAt,
     'bankAccountId' => $bankAccountId
 ];
 

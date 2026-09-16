@@ -31,6 +31,13 @@
 
   /* Set to 0 by the reduced-motion block so JS-driven effects can read it. */
   --hx-motion: 1;
+
+  /* ------------------------------------------------------------------ type
+     The product typeface, in one place. Every stylesheet reads this token, so
+     changing the face is this line plus the Google Fonts URL in each page head.
+     Alternatives that drop straight in: "Figtree", "Manrope", "Outfit". */
+  --hx-font: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --hx-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 }
 
 /* ---------------------------------------------------------------- keyframes */
