@@ -33,14 +33,29 @@ const check = (ok, label, detail = '') => {
   console.log(`${ok ? '  ok  ' : '  FAIL'} ${label}${detail ? ` — ${detail}` : ''}`);
 };
 
-/** Collect anything the page reports as broken. External hosts are ignored:
- *  CI has no network to the price feeds or Google Fonts, and neither is
- *  required for the page to work. */
+/* Third-party endpoints the app is designed to survive without: the price feeds
+   and Google Fonts. How they fail depends on where the test runs — unreachable
+   in a sandbox, CORS-rejected from a GitHub runner, rate-limited elsewhere — so
+   the test judges the app's own code and ignores errors naming these hosts. That
+   exclusion is only safe because `feeds down still shows a price` below asserts
+   the fallback actually works. */
+const EXTERNAL_HOSTS = [
+  'api.coingecko.com',
+  'api.coinbase.com',
+  'api.binance.com',
+  'fonts.googleapis.com',
+  'fonts.gstatic.com'
+];
+
+const isExternal = text =>
+  EXTERNAL_HOSTS.some(host => text.includes(host)) || /net::ERR/.test(text);
+
+/** Collect anything the page reports as broken in the app's own code. */
 function watch(page) {
   const errors = [];
   page.on('pageerror', e => errors.push(`pageerror: ${e.message}`));
   page.on('console', m => {
-    if (m.type() === 'error' && !/net::ERR|status of (401|404)/.test(m.text())) {
+    if (m.type() === 'error' && !isExternal(m.text()) && !/status of (401|404)/.test(m.text())) {
       errors.push(`console: ${m.text()}`);
     }
   });
@@ -170,6 +185,18 @@ try {
       'invalid amount shakes its field');
 
     check(errors.length === 0, 'dialog run — clean console', errors.join(' | '));
+
+    // The run above ignores price-feed errors. Prove the fallback they rely on
+    // works, so a genuinely dead market panel cannot pass unnoticed.
+    await page.click('#closeConvertModalBtn');
+    await page.waitForTimeout(400);
+    const btcPrice = await page.$eval('#marketBtcPrice', el => ({
+      text: el.textContent.trim(),
+      shimmering: el.classList.contains('is-loading')
+    }));
+    check(!btcPrice.shimmering && /\d/.test(btcPrice.text),
+      'feeds down still shows a price', JSON.stringify(btcPrice));
+
     await context.close();
   }
 
