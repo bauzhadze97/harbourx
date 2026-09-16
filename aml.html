@@ -9,7 +9,9 @@
   <script src="theme.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap"></noscript>
   <style>
     :root {
       color-scheme: light;
@@ -91,57 +93,11 @@
     }
     h1, h2, h3 { color: var(--ink); letter-spacing: -0.02em; }
     .page { max-width: 1040px; margin: 0 auto; padding: 26px clamp(14px,3vw,28px) 60px; }
-    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
-    .topbar-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-    .brand { display: flex; align-items: center; gap: 13px; }
-    .badge { width: 46px; height: 46px; border-radius: 13px; display: grid; place-items: center; color: #fff; background: linear-gradient(135deg, #0b2545, #0e938e); box-shadow: 0 10px 22px rgba(14,147,142,.28), inset 0 1px 0 rgba(255,255,255,.24); }
-    :root[data-theme="dark"] .badge { background: linear-gradient(135deg, #10365f, #14b8ad); color: #eafffb; }
-    .badge svg { width: 23px; height: 23px; }
     h1 { margin: 0; font-size: 21px; font-weight: 800; letter-spacing: -.03em; }
-    .subtitle { margin: 3px 0 0; color: var(--muted); font-size: 13px; }
-    .back { color: var(--ink); font-weight: 700; text-decoration: none; padding: 11px 15px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 1px 2px rgba(11,37,69,.05); transition: border-color .2s, background .2s; }
-    .back:hover { border-color: var(--teal-bright); background: var(--panel-2); }
-    .theme-fab {
-      display: inline-flex; align-items: center; gap: 8px;
-      height: 40px; padding: 0 14px;
-      border-radius: 999px;
-      border: 1px solid var(--toggle-bd);
-      background: var(--toggle-bg);
-      color: var(--toggle-fg);
-      font: inherit; font-size: 12.5px; font-weight: 700;
-      cursor: pointer;
-      -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
-      transition: transform .2s, border-color .2s, color .2s;
-    }
-    .theme-fab:hover { transform: translateY(-1px); color: var(--ink); border-color: var(--teal-bright); }
-    .theme-fab:active { transform: translateY(0) scale(.96); }
-    .theme-fab:focus-visible { outline: none; box-shadow: var(--ring); }
-    .theme-fab .t-ico { position: relative; width: 15px; height: 15px; flex: 0 0 auto; }
-    .theme-fab .t-ico svg {
-      position: absolute; inset: 0; width: 15px; height: 15px; display: block;
-      transition: opacity .3s ease, transform .45s cubic-bezier(.2,.7,.2,1);
-    }
-    .theme-fab .t-sun  { opacity: 0; transform: rotate(-90deg) scale(.4); }
-    .theme-fab .t-moon { opacity: 1; transform: none; }
-    :root[data-theme="dark"] .theme-fab .t-sun  { opacity: 1; transform: none; }
-    :root[data-theme="dark"] .theme-fab .t-moon { opacity: 0; transform: rotate(90deg) scale(.4); }
 
-    @keyframes hx-enter {
-      from { opacity: 0; transform: translateY(16px); }
-      to   { opacity: 1; transform: none; }
-    }
-    @media (prefers-reduced-motion: no-preference) {
-      .topbar      { animation: hx-enter .48s cubic-bezier(.2,.7,.2,1) backwards; }
-      .status-card { animation: hx-enter .5s cubic-bezier(.2,.7,.2,1) backwards .06s; }
-      form .section:nth-of-type(1) { animation: hx-enter .5s cubic-bezier(.2,.7,.2,1) backwards .12s; }
-      form .section:nth-of-type(2) { animation: hx-enter .5s cubic-bezier(.2,.7,.2,1) backwards .18s; }
-      form .section:nth-of-type(3) { animation: hx-enter .5s cubic-bezier(.2,.7,.2,1) backwards .24s; }
-      form .section:nth-of-type(4) { animation: hx-enter .5s cubic-bezier(.2,.7,.2,1) backwards .30s; }
-      form .section:nth-of-type(n+5) { animation: hx-enter .5s cubic-bezier(.2,.7,.2,1) backwards .34s; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .theme-fab .t-ico svg { transition: none; }
-    }
+    /* Section entrances come from the shared reveal system now (hx-motion.css +
+       [data-reveal] on each section), so the page-specific keyframes that used
+       to live here have been removed rather than left to fight it. */
     .submit:active:not(:disabled) { transform: translateY(0) scale(.98); }
     .status-card { padding: 18px 20px; border-radius: 18px; background: var(--panel); border: 1px solid var(--line); box-shadow: var(--shadow); margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; }
     .status-card strong { display: block; font-size: 16px; color: var(--ink); }
@@ -187,10 +143,10 @@
     @media (max-width: 680px) {
       .grid { grid-template-columns: 1fr; }
       .span-2 { grid-column: auto; }
-      .section { padding: 18px; }
-    }
-  </style>
+      .section { padding: 18px; }}</style>
+  <link rel="stylesheet" href="hx-motion.css">
   <link rel="stylesheet" href="portal.css">
+  <script src="hx-motion.js" defer></script>
 </head>
 <body>
   <div class="portal-shell">
@@ -214,24 +170,24 @@
         <div class="portal-breadcrumb"><a href="change_password.php">Security</a> &nbsp;›&nbsp; Identity verification</div>
         <div class="portal-heading"><div><h1>Identity verification</h1><p>Complete identity verification to keep your account secure and enable banking withdrawals.</p></div><a class="portal-back" href="dashboard.html">← Back to dashboard</a></div>
 
-        <div class="verify-progress" aria-label="Verification progress">
+        <div class="verify-progress" id="verifyProgress" style="--verify-progress:0" aria-label="Verification progress" data-reveal>
           <div class="verify-step"><i>✓</i><strong>1. Personal details</strong><span>Complete</span></div><div class="verify-step"><i>✓</i><strong>2. Identity document</strong><span>Complete</span></div><div class="verify-step"><i>✓</i><strong>3. Review</strong><span id="reviewStepStatus">Complete</span></div>
         </div>
 
-        <section class="portal-card verify-hero" id="verifiedSummary" hidden>
+        <section class="portal-card verify-hero" id="verifiedSummary" hidden data-reveal>
           <span class="verify-check">✓</span><div class="verify-copy"><h2>Verification complete</h2><p>Your identity has been verified.</p><p>Your HarbourX account is eligible to proceed to bank withdrawal.</p></div><div class="verify-meta"><span class="status status-verified">Verified</span><small id="verifiedDate">Identity review completed</small></div>
         </section>
 
-        <section class="identity-grid" id="identitySummary" hidden>
-          <article class="portal-card identity-card"><div class="identity-card-head"><i>♙</i><h2>Personal details</h2><button type="button" data-edit-verification>✎ Edit details</button></div><dl class="identity-list" id="personalSummary"></dl></article>
-          <article class="portal-card identity-card"><div class="identity-card-head"><i>✉</i><h2>Contact information</h2><button type="button" data-edit-verification>✎ Edit details</button></div><dl class="identity-list" id="contactSummary"></dl></article>
-          <article class="portal-card identity-card"><div class="identity-card-head"><i>⌂</i><h2>Residential address</h2><button type="button" data-edit-verification>✎ Edit details</button></div><dl class="identity-list" id="addressSummary"></dl></article>
-          <article class="portal-card identity-card"><div class="identity-card-head"><i>▤</i><h2>Verification method</h2></div><dl class="identity-list" id="documentSummary"></dl></article>
+        <section class="identity-grid hx-stagger" id="identitySummary" hidden>
+          <article class="portal-card identity-card" data-reveal><div class="identity-card-head"><i>♙</i><h2>Personal details</h2><button type="button" data-edit-verification>✎ Edit details</button></div><dl class="identity-list" id="personalSummary"></dl></article>
+          <article class="portal-card identity-card" data-reveal><div class="identity-card-head"><i>✉</i><h2>Contact information</h2><button type="button" data-edit-verification>✎ Edit details</button></div><dl class="identity-list" id="contactSummary"></dl></article>
+          <article class="portal-card identity-card" data-reveal><div class="identity-card-head"><i>⌂</i><h2>Residential address</h2><button type="button" data-edit-verification>✎ Edit details</button></div><dl class="identity-list" id="addressSummary"></dl></article>
+          <article class="portal-card identity-card" data-reveal><div class="identity-card-head"><i>▤</i><h2>Verification method</h2></div><dl class="identity-list" id="documentSummary"></dl></article>
         </section>
 
-        <section class="portal-card privacy-card" id="privacySummary" hidden><i>♙</i><div><strong>Your privacy and security matter</strong><p>Your personal information is encrypted in transit and used only for account compliance in accordance with our Privacy Policy.</p></div><a href="#privacy">Learn more ↗</a></section>
+        <section class="portal-card privacy-card" id="privacySummary" hidden data-reveal><i>♙</i><div><strong>Your privacy and security matter</strong><p>Your personal information is encrypted in transit and used only for account compliance in accordance with our Privacy Policy.</p></div><a href="#privacy">Learn more ↗</a></section>
 
-    <div class="status-card portal-card" id="statusCard">
+    <div class="status-card portal-card" id="statusCard" data-reveal>
       <div>
         <strong id="statusTitle">Checking AML status...</strong>
         <p id="statusText">Bank withdrawals require verified AML status.</p>
@@ -242,7 +198,7 @@
     <div class="message" id="message"></div>
 
     <form id="amlForm" class="identity-form">
-      <section class="section portal-card form-section">
+      <section class="section portal-card form-section" data-reveal>
         <h2>Personal details</h2>
         <div class="note">Enter details exactly as shown on your government-issued identity document. You must be at least 18.</div>
         <div class="grid form-grid">
@@ -255,7 +211,7 @@
         </div>
       </section>
 
-      <section class="section portal-card form-section">
+      <section class="section portal-card form-section" data-reveal>
         <h2>Contact information</h2>
         <div class="grid form-grid">
           <div><label for="email">Email address</label><input id="email" type="email" readonly></div>
@@ -264,7 +220,7 @@
         </div>
       </section>
 
-      <section class="section portal-card form-section">
+      <section class="section portal-card form-section" data-reveal>
         <h2>Residential address</h2>
         <div class="note">Use your current residential address, not a P.O. Box.</div>
         <div class="grid form-grid">
@@ -276,7 +232,7 @@
         </div>
       </section>
 
-      <section class="section portal-card form-section">
+      <section class="section portal-card form-section" data-reveal>
         <h2>Identity verification</h2>
         <div class="note">HarbourX staff will manually review the identity information supplied here. This form does not itself perform government or third-party document verification.</div>
         <div class="grid form-grid">
@@ -287,7 +243,7 @@
         </div>
       </section>
 
-      <section class="section portal-card form-section">
+      <section class="section portal-card form-section" data-reveal>
         <h2>Tax and financial information</h2>
         <div class="grid form-grid">
           <div><label for="taxReference">Tax reference number</label><input id="taxReference"></div>
@@ -299,13 +255,13 @@
         </div>
       </section>
 
-      <section class="section portal-card form-section">
+      <section class="section portal-card form-section" data-reveal>
         <h2>PEP and sanctions screening</h2>
         <label class="check"><input id="isPep" type="checkbox"><span>I am, or am closely associated with, a politically exposed person such as a current or former senior public official.</span></label>
         <label class="check"><input id="sanctionsConfirmed" type="checkbox" required><span>I confirm that I am not subject to sanctions or financial restrictions. <span class="required">*</span></span></label>
       </section>
 
-      <section class="section portal-card form-section">
+      <section class="section portal-card form-section" data-reveal>
         <h2>Disclosures and consent</h2>
         <label class="check"><input id="consentAccuracy" type="checkbox" required><span>I confirm that the information supplied is complete and accurate. <span class="required">*</span></span></label>
         <label class="check"><input id="consentPrivacy" type="checkbox" required><span>I consent to HarbourX storing and reviewing this information for account compliance. <span class="required">*</span></span></label>
@@ -365,6 +321,18 @@
       return status === "verified" ? "Verified" : status === "under_review" ? "Under review" : "Unverified";
     }
 
+    /* The connecting rail grows to match how far verification has actually got:
+       nothing submitted yet, under review, or complete. hx-motion.css animates
+       the change; browsers set to reduce motion get the final value at once. */
+    function setVerifyProgress(fraction) {
+      const rail = document.getElementById("verifyProgress");
+      if (!rail) return;
+      rail.style.setProperty("--verify-progress", String(Math.max(0, Math.min(1, fraction))));
+      rail.querySelectorAll(".verify-step").forEach((step, i) => {
+        step.classList.toggle("is-done", (i + 1) / 3 <= fraction + 0.001);
+      });
+    }
+
     function renderStatus(aml) {
       const status = aml?.status || "unverified";
       statusBadge.className = `status status-${status}`;
@@ -380,6 +348,7 @@
         identitySummary.hidden = false;
         privacySummary.hidden = false;
         document.getElementById("reviewStepStatus").textContent = "Complete";
+        setVerifyProgress(1);
         renderMaskedSummary(aml?.data || {}, aml);
       } else if (status === "under_review") {
         statusTitle.textContent = "AML submission under review";
@@ -392,6 +361,7 @@
         identitySummary.hidden = true;
         privacySummary.hidden = true;
         document.getElementById("reviewStepStatus").textContent = "Under review";
+        setVerifyProgress(aml?.submittedAt ? 0.66 : 0.33);
       } else {
         statusTitle.textContent = aml?.submittedAt ? "AML verification requires changes" : "AML verification required";
         statusText.textContent = aml?.reviewNote || "Complete all required fields and submit them for HarbourX review before withdrawing to a bank.";
@@ -403,6 +373,7 @@
         identitySummary.hidden = true;
         privacySummary.hidden = true;
         document.getElementById("reviewStepStatus").textContent = "Required";
+        setVerifyProgress(aml?.submittedAt ? 0.5 : 0);
       }
     }
 

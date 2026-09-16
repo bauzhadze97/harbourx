@@ -263,3 +263,212 @@ input[readonly] { color: #86a2b3; background: #091d2c; }
   html { scroll-behavior: auto; }
   .portal-sidebar { transition: none; }
 }
+
+/* ============================================================================
+   Modernisation layer
+   ----------------------------------------------------------------------------
+   Sits on top of the component styles above. Pairs with hx-motion.css, which
+   supplies the durations, easings and keyframes referenced here, and with
+   hx-motion.js, which adds the reveal and ripple hooks to the markup.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------- surfaces */
+
+.portal-card {
+  border-radius: 14px;
+  border: 1px solid transparent;
+  background:
+    linear-gradient(180deg, rgba(126, 190, 217, .16), rgba(126, 190, 217, .04) 38%, rgba(126, 190, 217, .07)) border-box,
+    linear-gradient(150deg, rgba(12, 38, 56, .99), rgba(8, 28, 43, .99)) padding-box;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, .03) inset,
+    0 14px 38px rgba(2, 10, 18, .32);
+  transition:
+    transform var(--hx-dur-base, 240ms) var(--hx-ease-out, ease),
+    box-shadow var(--hx-dur-base, 240ms) var(--hx-ease-out, ease);
+}
+
+@media (hover: hover) {
+  .identity-card:hover,
+  .security-side-card:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, .05) inset,
+      0 22px 50px rgba(2, 10, 18, .44);
+  }
+}
+
+/* ------------------------------------------------------------------- nav */
+
+.portal-nav a {
+  transition:
+    background-color var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease),
+    color var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease),
+    transform var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease);
+}
+@media (hover: hover) {
+  .portal-nav a:hover { transform: translateX(2px); }
+}
+.portal-nav i { transition: transform var(--hx-dur-base, 240ms) var(--hx-ease-spring, ease); }
+.portal-nav a:hover i { transform: scale(1.14); }
+.portal-nav a.active::before {
+  transform: scaleY(0);
+  animation: hx-rail-grow var(--hx-dur-slow, 380ms) var(--hx-ease-spring, ease) forwards;
+}
+@keyframes hx-rail-grow { to { transform: scaleY(1); } }
+
+.portal-search { transition: border-color var(--hx-dur-base, 240ms) var(--hx-ease-out, ease), background-color var(--hx-dur-base, 240ms) var(--hx-ease-out, ease); }
+.portal-search:focus-within { border-color: rgba(32, 215, 208, .6); background: #0e2c40; }
+.portal-avatar { transition: transform var(--hx-dur-base, 240ms) var(--hx-ease-spring, ease); }
+.portal-user:hover .portal-avatar { transform: scale(1.06); }
+
+/* ------------------------------------------------------ verification rail
+   The connecting line grows from the first step to the last as the flow
+   completes, rather than being painted full from the start. --verify-progress
+   is a 0–1 fraction set on .verify-progress. */
+
+.verify-progress::before {
+  transform: scaleX(var(--verify-progress, 1));
+  transform-origin: left center;
+  transition: transform 900ms var(--hx-ease-in-out, ease) 200ms;
+}
+.verify-step i {
+  transition:
+    background-color var(--hx-dur-base, 240ms) var(--hx-ease-out, ease),
+    color var(--hx-dur-base, 240ms) var(--hx-ease-out, ease),
+    transform var(--hx-dur-base, 240ms) var(--hx-ease-spring, ease);
+  animation: hx-pop var(--hx-dur-slow, 380ms) var(--hx-ease-spring, ease) backwards;
+}
+.verify-step:nth-child(1) i { animation-delay: 240ms; }
+.verify-step:nth-child(2) i { animation-delay: 480ms; }
+.verify-step:nth-child(3) i { animation-delay: 720ms; }
+
+/* The completion badge lands last, once the rail has filled. */
+.verify-hero { animation: hx-scale-in var(--hx-dur-slow, 380ms) var(--hx-ease-spring, ease) backwards 820ms; }
+.verify-check {
+  --hx-pulse-color: rgba(54, 229, 165, .4);
+  animation:
+    hx-pop var(--hx-dur-slower, 560ms) var(--hx-ease-spring, ease) backwards 940ms,
+    hx-pulse-ring 3s var(--hx-ease-out, ease) 1.6s infinite;
+}
+
+/* --------------------------------------------------------------- identity */
+
+.identity-row {
+  transition: background-color var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease);
+  border-radius: 6px;
+}
+.identity-row:hover { background: rgba(32, 215, 208, .05); }
+.identity-card-head button {
+  transition:
+    border-color var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease),
+    background-color var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease),
+    transform var(--hx-dur-instant, 90ms) var(--hx-ease-out, ease);
+}
+.identity-card-head button:hover { border-color: var(--hx-teal); color: var(--hx-text); }
+.identity-card-head button:active { transform: scale(.96); }
+
+/* --------------------------------------------------------------- security
+   The strength meter fills segment by segment, and a requirement ticks over
+   the moment it is satisfied rather than appearing already met. */
+
+.strength-bars i {
+  transform-origin: left center;
+  transition:
+    background-color var(--hx-dur-base, 240ms) var(--hx-ease-out, ease),
+    transform var(--hx-dur-base, 240ms) var(--hx-ease-spring, ease);
+}
+.strength-bars i.on { animation: hx-bar-fill var(--hx-dur-slow, 380ms) var(--hx-ease-out, ease); }
+@keyframes hx-bar-fill { from { transform: scaleX(.25); } to { transform: scaleX(1); } }
+.strength-label { transition: color var(--hx-dur-base, 240ms) var(--hx-ease-out, ease); }
+
+.requirement { transition: color var(--hx-dur-base, 240ms) var(--hx-ease-out, ease); }
+.requirement::before {
+  transition:
+    background-color var(--hx-dur-base, 240ms) var(--hx-ease-out, ease),
+    color var(--hx-dur-base, 240ms) var(--hx-ease-out, ease),
+    transform var(--hx-dur-base, 240ms) var(--hx-ease-spring, ease);
+}
+.requirement:not(.off)::before { transform: scale(1.12); }
+
+.settings-row {
+  transition: background-color var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease);
+}
+.settings-row:hover { background: rgba(32, 215, 208, .05); }
+.settings-row[role="button"],
+a.settings-row { cursor: pointer; }
+
+.activity-row i {
+  --hx-pulse-color: rgba(54, 229, 165, .45);
+  animation: hx-pulse-ring 3.2s var(--hx-ease-out, ease) infinite;
+}
+.activity-row:nth-child(2) i { animation-delay: .5s; }
+.activity-row:nth-child(3) i { animation-delay: 1s; }
+
+/* --------------------------------------------------------- form controls */
+
+input, select, textarea {
+  transition:
+    border-color var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease),
+    box-shadow var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease),
+    background-color var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease);
+}
+.password-toggle {
+  border-radius: 8px;
+  transition: color var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease), background-color var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease);
+}
+.password-toggle:hover { color: var(--hx-teal); background: rgba(32, 215, 208, .08); }
+
+.submit-primary,
+.wide-secondary {
+  position: relative;
+  overflow: hidden;
+  transition:
+    filter var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease),
+    transform var(--hx-dur-instant, 90ms) var(--hx-ease-out, ease),
+    box-shadow var(--hx-dur-base, 240ms) var(--hx-ease-out, ease);
+}
+.submit-primary:hover:not(:disabled) { filter: brightness(1.06); box-shadow: 0 14px 30px rgba(32, 215, 208, .24); }
+.submit-primary:active:not(:disabled),
+.wide-secondary:active { transform: scale(.985); }
+.wide-secondary:hover { border-color: var(--hx-teal); color: white; }
+
+.message { animation: hx-rise var(--hx-dur-base, 240ms) var(--hx-ease-out, ease); }
+.notice { animation: hx-rise var(--hx-dur-base, 240ms) var(--hx-ease-out, ease); }
+
+.portal-back {
+  transition:
+    border-color var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease),
+    transform var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease);
+}
+.portal-back:hover { transform: translateX(-2px); }
+
+/* ------------------------------------------------------- reduced motion */
+
+@media (prefers-reduced-motion: reduce) {
+  .identity-card:hover,
+  .security-side-card:hover,
+  .portal-nav a:hover,
+  .portal-nav a:hover i,
+  .portal-back:hover,
+  .portal-user:hover .portal-avatar,
+  .identity-card-head button:active,
+  .submit-primary:active:not(:disabled),
+  .wide-secondary:active { transform: none; }
+
+  .verify-progress::before { transform: scaleX(1); transition: none; }
+  .verify-step i,
+  .verify-hero,
+  .verify-check,
+  .activity-row i,
+  .strength-bars i.on,
+  .message,
+  .notice { animation: none; }
+  .portal-nav a.active::before { transform: scaleY(1); animation: none; }
+}
+
+/* [hidden] is a UA rule at the lowest specificity, so any component that sets
+   its own `display` silently defeats it. These panels are all toggled with the
+   attribute from JS — without this they stay on screen empty for a client who
+   has not been verified yet. */
+[hidden] { display: none !important; }

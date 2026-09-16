@@ -64,8 +64,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <title>HarbourX · Security</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap"></noscript>
+<script src="theme.js"></script>
+<link rel="stylesheet" href="hx-motion.css">
 <link rel="stylesheet" href="portal.css">
+<script src="hx-motion.js" defer></script>
 </head>
 <body>
 <div class="portal-shell">
@@ -92,8 +97,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <?php if ($message): ?><div class="notice success"><?= htmlspecialchars($message) ?></div><?php endif; ?>
       <?php if ($error): ?><div class="notice error"><?= htmlspecialchars($error) ?></div><?php endif; ?>
 
-      <div class="security-layout">
-        <section class="portal-card password-card">
+      <div class="security-layout hx-stagger">
+        <section class="portal-card password-card" data-reveal>
           <div class="security-title"><span class="security-icon">▣</span><div><h2>Change password</h2><p>Update the password used to access your HarbourX account.</p></div></div>
           <div class="security-warning">▲ Changing your password protects all future sign-ins.</div>
           <form method="post" id="passwordForm">
@@ -103,24 +108,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="strength-wrap"><div class="strength-bars"><i></i><i></i><i></i><i></i></div><div class="strength-label" id="strengthLabel">Enter a new password</div></div>
             <div class="requirements"><div class="requirement off" data-rule="length">At least 12 characters</div><div class="requirement off" data-rule="case">Contains uppercase and lowercase letters</div><div class="requirement off" data-rule="number">Contains a number</div><div class="requirement off" data-rule="symbol">Contains a symbol</div></div>
             <div class="password-field"><label for="confirmPassword">Confirm new password</label><input id="confirmPassword" type="password" name="confirm_password" minlength="12" autocomplete="new-password" required><button class="password-toggle" type="button" data-toggle-password="confirmPassword" aria-label="Show confirmation password">◉</button></div>
-            <button class="submit-primary" type="submit">Update password</button>
+            <button class="submit-primary" type="submit" data-ripple>Update password</button>
           </form>
         </section>
 
-        <div class="security-stack">
-          <section class="portal-card security-side-card">
+        <div class="security-stack hx-stagger">
+          <section class="portal-card security-side-card" data-reveal>
             <div class="security-side-head"><span class="security-icon">◇</span><div><h2>Two-factor authentication</h2><p>Add an extra layer of security.</p></div><span class="status status-verified">● Enabled</span></div>
             <div class="settings-list"><div class="settings-row">Authentication app<strong>Enabled</strong></div><div class="settings-row">Backup codes<strong>10 codes ›</strong></div></div>
-            <button class="wide-secondary" type="button">Manage two-factor authentication</button>
+            <button class="wide-secondary" type="button" data-ripple>Manage two-factor authentication</button>
           </section>
 
-          <section class="portal-card security-side-card">
+          <section class="portal-card security-side-card" data-reveal>
             <div class="security-side-head"><span class="security-icon">▱</span><div><h2>Active sessions</h2><p>Your active HarbourX sign-ins.</p></div><span class="security-count">1</span></div>
             <div class="settings-list"><div class="settings-row"><span>▰</span><div><b>Current browser</b><small id="sessionLocation">Active now · Current session</small></div><strong>Secure</strong></div></div>
-            <button class="wide-secondary" type="button">Manage sessions</button>
+            <button class="wide-secondary" type="button" data-ripple>Manage sessions</button>
           </section>
 
-          <section class="portal-card security-side-card">
+          <section class="portal-card security-side-card" data-reveal>
             <div class="security-side-head"><span class="security-icon">◷</span><div><h2>Recent security activity</h2><p>Your latest account activity.</p></div></div>
             <div class="activity-list">
               <?php if ($message): ?><div class="activity-row"><i></i><div><strong>Password changed</strong><small>Current browser</small></div><time>Just now</time></div><?php endif; ?>

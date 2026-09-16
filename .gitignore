@@ -6,3 +6,7 @@ node_modules/
 data/users.json
 data.*/users.json
 *.zip
+
+# local screenshot/verification scratch
+blank.html
+*.png
