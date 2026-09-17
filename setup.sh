@@ -65,7 +65,7 @@ ensure_brew() {
     *) die "Install it yourself with the command at https://brew.sh then re-run this script." ;;
   esac
 
-  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/brew/HEAD/install.sh)"     || die "Homebrew install failed. See https://brew.sh and re-run this script afterwards."
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"     || die "Homebrew install failed. See https://brew.sh and re-run this script afterwards."
 
   for candidate in /opt/homebrew/bin/brew /usr/local/bin/brew; do
     [ -x "$candidate" ] && eval "$("$candidate" shellenv)" && break
