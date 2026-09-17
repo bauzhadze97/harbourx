@@ -108,6 +108,10 @@ The same suite CI runs (see .github/workflows/ci.yml):
      php tests/statements-test.php   statement figures from transaction lines
      node tests/statements-page-test.js  the statements page and its download
 
+The browser tests sign in as the synthetic account, so they seed
+data/users.json with tests/fixtures/users.json and put back whatever was there
+when they finish — a real data file survives a local run.
+
 The browser tests need the server already running, plus Playwright:
 
      npm install playwright && npx playwright install chromium

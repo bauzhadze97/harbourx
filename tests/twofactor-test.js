@@ -22,8 +22,7 @@ const check = (ok, label, detail='') => { if(!ok) fail++; console.log(`  ${ok?'o
 
 (async () => {
   // The flow writes to data/users.json, so start from a known state every run.
-  require('fs').copyFileSync(path.join(ROOT, 'tests/fixtures/users.json'),
-                             path.join(ROOT, 'data/users.json'));
+  require('./fixture').seedUsers();
 
   const browser = await chromium.launch(
     process.env.CHROMIUM_EXECUTABLE ? { executablePath: process.env.CHROMIUM_EXECUTABLE } : {}

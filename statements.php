@@ -199,6 +199,9 @@ if ($action === 'list') {
             'name' => (string)($me['name'] ?? ''),
             'email' => (string)($me['email'] ?? ''),
             'currency' => strtoupper((string)($me['currency'] ?? 'USD')),
+            // The PDF prefixes its cash figures with this; send it so the page
+            // states the same currency rather than a bare number.
+            'symbol' => currencySymbol((string)($me['currency'] ?? 'USD')),
         ],
         'statements' => $summary,
     ]);
@@ -223,7 +226,7 @@ if ($action !== 'pdf') {
 }
 
 $currencyCode = strtoupper((string)($me['currency'] ?? 'USD'));
-$symbol = function_exists('currencySymbolFor') ? currencySymbolFor($currencyCode) : '';
+$symbol = currencySymbol($currencyCode);
 $pdf = new HxPdf(['title' => 'HarbourX statement — ' . $period['label']]);
 
 $margin = 40.0;

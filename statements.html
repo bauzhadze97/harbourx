@@ -114,7 +114,9 @@
       name.trim().split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase() || 'HX';
 
     const trimZeros = (n) => String(Number(n).toFixed(8)).replace(/\.?0+$/, '') || '0';
-    const money = (n) => Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    // The transaction rows and the PDF both name the currency; a bare figure
+    // beside them would be the only place that does not.
+    const money = (n) => (account.symbol || '') + Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
     async function load() {
       const response = await fetch('statements.php?action=list', { cache: 'no-store' });

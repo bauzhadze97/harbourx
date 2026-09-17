@@ -19,6 +19,12 @@
 
 import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
+import { createRequire } from 'node:module';
+
+// Sign-in needs the fixture account. The helper puts back whatever was in
+// data/users.json when this finishes, so a real file survives a local run.
+const fixture = createRequire(import.meta.url)('./fixture.js');
+fixture.seedUsers();
 
 const BASE = process.env.BASE_URL || 'http://127.0.0.1:8899';
 const SHOTS = new URL('./screenshots/', import.meta.url).pathname;

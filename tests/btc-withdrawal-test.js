@@ -11,6 +11,7 @@
 const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
+const fixture = require('./fixture');
 
 const BASE = process.env.BASE_URL || 'http://127.0.0.1:8899';
 const ROOT = path.resolve(__dirname, '..');
@@ -25,7 +26,7 @@ const check = (ok, label, detail = '') => {
 };
 
 (async () => {
-  fs.copyFileSync(path.join(ROOT, 'tests/fixtures/users.json'), path.join(ROOT, 'data/users.json'));
+  fixture.seedUsers();
 
   const browser = await chromium.launch(
     process.env.CHROMIUM_EXECUTABLE ? { executablePath: process.env.CHROMIUM_EXECUTABLE } : {}
