@@ -75,8 +75,8 @@ Set-Location -LiteralPath $Path
 if (-not (Test-Path -LiteralPath 'data\users.json')) {
     New-Item -ItemType Directory -Force -Path 'data' | Out-Null
     Copy-Item -LiteralPath 'tests\fixtures\users.json' -Destination 'data\users.json'
-    Write-Step 'Seeded data\users.json with the demo account:'
-    Write-Host '        demo.client@example.invalid  /  CiSmokeTest!2026' -ForegroundColor Green
+    Write-Step 'Seeded data\users.json with the test account:'
+    Write-Host '        test.client@example.invalid  /  CiSmokeTest!2026' -ForegroundColor Green
 }
 
 # --- 4. Can Windows run PHP at all? -----------------------------------------

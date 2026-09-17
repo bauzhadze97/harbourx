@@ -9,7 +9,7 @@
 
   If data\users.json is missing (a fresh clone never has it — it holds real
   client details and is deliberately untracked) the script seeds the synthetic
-  demo account used by the test suite and prints its credentials.
+  test account used by the test suite and prints its credentials.
 
 .EXAMPLE
   .\run-local.ps1
@@ -170,8 +170,8 @@ Write-Step "PHP $version  ($php)"
 if (-not (Test-Path -LiteralPath 'data\users.json')) {
     New-Item -ItemType Directory -Force -Path 'data' | Out-Null
     Copy-Item -LiteralPath 'tests\fixtures\users.json' -Destination 'data\users.json'
-    Write-Step 'Seeded data\users.json with the demo account:'
-    Write-Host '        demo.client@example.invalid  /  CiSmokeTest!2026' -ForegroundColor Green
+    Write-Step 'Seeded data\users.json with the test account:'
+    Write-Host '        test.client@example.invalid  /  CiSmokeTest!2026' -ForegroundColor Green
     Write-Warn '      To use your real data instead, copy your own data\users.json over this one.'
 } else {
     Write-Step 'Using the existing data\users.json'

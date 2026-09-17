@@ -71,7 +71,7 @@ The rest of this section is the same thing done by hand.
 
      c. To look at the interface only, with no PHP at all:
           .\run-local.ps1 -Static
-        then open http://localhost:8000/tests/preview.html. It seeds a demo
+        then open http://localhost:8000/tests/preview.html. It seeds a test
         account into the browser so the pages render. Signing in, two-factor,
         tickets, converting and withdrawing all need PHP and will not work, and
         a static server serves .php files as plain text — keep it on localhost.
@@ -83,8 +83,8 @@ The rest of this section is the same thing done by hand.
    it holds real client details and passwords, so it is deliberately untracked.
 
      - To work against real data, copy your own data/users.json into data/.
-     - Otherwise the script seeds the synthetic demo account used by the tests:
-         demo.client@example.invalid / CiSmokeTest!2026
+     - Otherwise the script seeds the synthetic test account used by the tests:
+         test.client@example.invalid / CiSmokeTest!2026
 
    Client sign-in is at /login.html, the admin console at /admin.php, and the
    support centre at /support.html. Tickets are stored in data/tickets.json,

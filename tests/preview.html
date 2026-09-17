@@ -30,7 +30,7 @@
 <body>
   <div class="portal-card preview-card">
     <h1>UI preview</h1>
-    <p>Seeds a demo account into this browser so the interface renders without a
+    <p>Seeds a test account into this browser so the interface renders without a
        PHP server. For looking at the design only.</p>
 
     <div class="preview-note">
@@ -49,12 +49,12 @@
   </div>
 
 <script>
-/* A demo client, written straight to localStorage — the same shape login.php
+/* A test client, written straight to localStorage — the same shape login.php
    returns. Nothing here reaches a server. */
 localStorage.setItem('hx-theme', 'dark');
 localStorage.setItem('user', JSON.stringify({
-  email: 'demo.client@example.invalid',
-  name: 'Demo Client',
+  email: 'test.client@example.invalid',
+  name: 'Test Client',
   currency: 'AUD',
   portfolioUsd: 0,
   btc: 1.25,

@@ -135,8 +135,8 @@ cd "$TARGET"
 if [ ! -f data/users.json ]; then
   mkdir -p data
   cp tests/fixtures/users.json data/users.json
-  say "Seeded data/users.json with the demo account:"
-  printf '        demo.client@example.invalid  /  CiSmokeTest!2026\n'
+  say "Seeded data/users.json with the test account:"
+  printf '        test.client@example.invalid  /  CiSmokeTest!2026\n'
   say "To use real data instead, copy your own data/users.json over it."
 else
   say "Using the existing data/users.json"

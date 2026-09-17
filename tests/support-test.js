@@ -15,7 +15,7 @@ const fixture = require('./fixture');
 
 const BASE = process.env.BASE_URL || 'http://127.0.0.1:8899';
 const ROOT = path.resolve(__dirname, '..');
-const CLIENT = { email: 'demo.client@example.invalid', password: 'CiSmokeTest!2026' };
+const CLIENT = { email: 'test.client@example.invalid', password: 'CiSmokeTest!2026' };
 const ADMIN_PASSWORD = 'Genesis2050!';
 
 let fail = 0;
