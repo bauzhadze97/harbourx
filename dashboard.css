@@ -1859,3 +1859,10 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 .btc-warning strong { color: var(--hx-amber); }
 
 .btc-withdraw-flow .summary-box { margin-top: 14px; }
+
+/* Two text actions in a card header sit together rather than fighting the title. */
+.hx-card-actions { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+.hx-card-actions .hx-text-button { white-space: nowrap; }
+
+/* The wallet dialog's title now carries a secondary action beneath it. */
+.modal-head #walletSendBtcBtn { margin-top: 4px; font-size: 11px; }

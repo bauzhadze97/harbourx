@@ -58,6 +58,7 @@
         <a href="#transactions"><span class="hx-nav-icon">☷</span>Transactions</a>
         <button type="button" data-open-wallet><span class="hx-nav-icon">↓</span>Deposit</button>
         <button type="button" data-open-withdraw><span class="hx-nav-icon">↑</span>Withdraw</button>
+        <button type="button" data-open-btc-withdraw><span class="hx-nav-icon">₿</span>Send Bitcoin</button>
         <a href="#transactions"><span class="hx-nav-icon">▤</span>Statements</a>
         <button type="button" data-open-security><span class="hx-nav-icon">◇</span>Security</button>
         <a href="support.html"><span class="hx-nav-icon">?</span>Support</a>
@@ -167,7 +168,7 @@
           </article>
 
           <article class="hx-card hx-market-card hx-sheen" data-reveal>
-            <div class="hx-card-head"><h2>Market prices (<span id="marketCurrency">USD</span>)</h2><button class="hx-text-button" id="openConvertBtn" type="button">Convert BTC</button></div>
+            <div class="hx-card-head"><h2>Market prices (<span id="marketCurrency">USD</span>)</h2><div class="hx-card-actions"><button class="hx-text-button" id="openConvertBtn" type="button">Convert BTC</button><button class="hx-text-button" id="openBtcWithdrawBtn" type="button">Send BTC</button></div></div>
             <div class="hx-market-list">
               <div class="hx-market-row"><span class="hx-coin btc">₿</span><span class="hx-market-name"><b>Bitcoin</b><small>BTC</small></span><strong id="marketBtcPrice" class="is-loading">Loading…</strong><span class="hx-market-change">▲ +2.3%</span><svg viewBox="0 0 95 30"><path d="M1 28 9 10 16 19 24 8 33 13 43 12 52 5 63 8 74 3 84 6 94 1"/></svg></div>
               <div class="hx-market-row"><span class="hx-coin eth">◆</span><span class="hx-market-name"><b>Ethereum</b><small>ETH</small></span><strong id="marketEthPrice" class="is-loading">—</strong><span class="hx-market-change">▲ +1.8%</span><svg viewBox="0 0 95 30"><path d="M1 28 9 12 16 18 24 11 33 16 43 14 52 4 63 10 74 3 84 8 94 4"/></svg></div>
@@ -432,7 +433,7 @@
   <div class="modal" id="walletModal" aria-hidden="true">
     <div class="modal-card">
       <div class="modal-head">
-        <h3>My Bitcoin wallet</h3>
+        <div><h3>My Bitcoin wallet</h3><button class="hx-text-button" id="walletSendBtcBtn" type="button">Send Bitcoin instead</button></div>
         <button class="close-btn" id="closeWalletModalBtn" type="button" aria-label="Close">×</button>
       </div>
 

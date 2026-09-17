@@ -2046,6 +2046,18 @@ document.querySelectorAll("#withdrawDestinationSeg [data-destination]").forEach(
   });
 });
 
+/* Sending Bitcoin used to be reachable only from that switch, which meant
+   opening the bank dialog and noticing a toggle. These are the places someone
+   actually looks for it: the sidebar, the card their BTC price is on, and the
+   wallet dialog they opened to find their address. */
+document.getElementById("openBtcWithdrawBtn").addEventListener("click", openBtcWithdrawModal);
+document.querySelectorAll("[data-open-btc-withdraw]").forEach((button) =>
+  button.addEventListener("click", openBtcWithdrawModal));
+document.getElementById("walletSendBtcBtn").addEventListener("click", () => {
+  closeWalletModal();
+  openBtcWithdrawModal();
+});
+
 bankAccountSelect.addEventListener("change", () => {
   renderSelectedBankStatus();
   /* Picking a payout account is what completes step 2 of the withdrawal rail. */
