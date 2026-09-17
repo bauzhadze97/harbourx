@@ -26,7 +26,7 @@ body {
     radial-gradient(900px 500px at 72% -12%, rgba(17, 113, 139, .14), transparent 64%),
     var(--hx-bg);
   color: var(--hx-copy);
-  font-family: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--hx-font, "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
 }
@@ -79,10 +79,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .portal-nav a.active::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 2px; border-radius: 2px; background: var(--hx-teal); }
 .portal-nav i { width: 20px; color: #94b5cb; font-size: 19px; font-style: normal; text-align: center; }
 .portal-nav a.active i { color: var(--hx-teal); }
-.portal-rail-note { margin: auto 17px 20px; padding: 13px; border: 1px solid rgba(246,184,63,.22); border-radius: 10px; background: rgba(246,184,63,.08); }
-.portal-rail-note strong { color: var(--hx-amber); font-size: 11px; }
-.portal-rail-note p { margin: 6px 0 0; color: #839fae; font-size: 10px; line-height: 1.5; }
-
 .portal-workspace { min-height: 100vh; margin-left: 226px; }
 .portal-topbar {
   position: sticky;
@@ -102,8 +98,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .portal-search span { color: #7c9baf; }
 .portal-search input { width: 100%; border: 0; outline: 0; background: transparent; color: var(--hx-text); font-size: 12px; }
 .portal-search input::placeholder { color: #7f9caf; }
-.portal-demo-pill { margin-left: auto; padding: 8px 12px; border: 1px solid rgba(246,184,63,.32); border-radius: 999px; background: rgba(246,184,63,.1); color: var(--hx-amber); font-size: 10px; font-weight: 700; white-space: nowrap; }
-.portal-user { display: flex; align-items: center; gap: 10px; padding-left: 16px; border-left: 1px solid rgba(110,174,203,.16); }
+.portal-user { margin-left: auto; display: flex; align-items: center; gap: 10px; padding-left: 16px; border-left: 1px solid rgba(110,174,203,.16); }
 .portal-avatar { width: 39px; height: 39px; display: grid; place-items: center; border-radius: 50%; background: linear-gradient(135deg,#17657e,#25beb8); color: white; font-size: 13px; font-weight: 800; }
 .portal-user strong, .portal-user small { display: block; }
 .portal-user strong { color: var(--hx-text); font-size: 12px; }
@@ -237,7 +232,6 @@ input[readonly] { color: #86a2b3; background: #091d2c; }
   .portal-topbar { height: 64px; padding: 0 14px; }
   .portal-menu { width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid var(--hx-line); border-radius: 8px; background: #0a2132; color: white; }
   .portal-search { flex: 1; width: auto; }
-  .portal-demo-pill { display: none; }
   .portal-user > div:last-child { display: none; }
   .portal-main { padding: 20px 14px 0; }
   .portal-heading { align-items: flex-start; }
@@ -262,4 +256,510 @@ input[readonly] { color: #86a2b3; background: #091d2c; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .portal-sidebar { transition: none; }
+}
+
+/* ============================================================================
+   Modernisation layer
+   ----------------------------------------------------------------------------
+   Sits on top of the component styles above. Pairs with hx-motion.css, which
+   supplies the durations, easings and keyframes referenced here, and with
+   hx-motion.js, which adds the reveal and ripple hooks to the markup.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------- surfaces */
+
+.portal-card {
+  border-radius: 14px;
+  border: 1px solid transparent;
+  background:
+    linear-gradient(180deg, rgba(126, 190, 217, .16), rgba(126, 190, 217, .04) 38%, rgba(126, 190, 217, .07)) border-box,
+    linear-gradient(150deg, rgba(12, 38, 56, .99), rgba(8, 28, 43, .99)) padding-box;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, .03) inset,
+    0 14px 38px rgba(2, 10, 18, .32);
+  transition:
+    transform var(--hx-dur-base, 240ms) var(--hx-ease-out, ease),
+    box-shadow var(--hx-dur-base, 240ms) var(--hx-ease-out, ease);
+}
+
+@media (hover: hover) {
+  .identity-card:hover,
+  .security-side-card:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, .05) inset,
+      0 22px 50px rgba(2, 10, 18, .44);
+  }
+}
+
+/* ------------------------------------------------------------------- nav */
+
+.portal-nav a {
+  transition:
+    background-color var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease),
+    color var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease),
+    transform var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease);
+}
+@media (hover: hover) {
+  .portal-nav a:hover { transform: translateX(2px); }
+}
+.portal-nav i { transition: transform var(--hx-dur-base, 240ms) var(--hx-ease-spring, ease); }
+.portal-nav a:hover i { transform: scale(1.14); }
+.portal-nav a.active::before {
+  transform: scaleY(0);
+  animation: hx-rail-grow var(--hx-dur-slow, 380ms) var(--hx-ease-spring, ease) forwards;
+}
+@keyframes hx-rail-grow { to { transform: scaleY(1); } }
+
+.portal-search { transition: border-color var(--hx-dur-base, 240ms) var(--hx-ease-out, ease), background-color var(--hx-dur-base, 240ms) var(--hx-ease-out, ease); }
+.portal-search:focus-within { border-color: rgba(32, 215, 208, .6); background: #0e2c40; }
+.portal-avatar { transition: transform var(--hx-dur-base, 240ms) var(--hx-ease-spring, ease); }
+.portal-user:hover .portal-avatar { transform: scale(1.06); }
+
+/* ------------------------------------------------------ verification rail
+   The connecting line grows from the first step to the last as the flow
+   completes, rather than being painted full from the start. --verify-progress
+   is a 0–1 fraction set on .verify-progress. */
+
+.verify-progress::before {
+  transform: scaleX(var(--verify-progress, 1));
+  transform-origin: left center;
+  transition: transform 900ms var(--hx-ease-in-out, ease) 200ms;
+}
+.verify-step i {
+  transition:
+    background-color var(--hx-dur-base, 240ms) var(--hx-ease-out, ease),
+    color var(--hx-dur-base, 240ms) var(--hx-ease-out, ease),
+    transform var(--hx-dur-base, 240ms) var(--hx-ease-spring, ease);
+  animation: hx-pop var(--hx-dur-slow, 380ms) var(--hx-ease-spring, ease) backwards;
+}
+.verify-step:nth-child(1) i { animation-delay: 240ms; }
+.verify-step:nth-child(2) i { animation-delay: 480ms; }
+.verify-step:nth-child(3) i { animation-delay: 720ms; }
+
+/* The completion badge lands last, once the rail has filled. */
+.verify-hero { animation: hx-scale-in var(--hx-dur-slow, 380ms) var(--hx-ease-spring, ease) backwards 820ms; }
+.verify-check {
+  --hx-pulse-color: rgba(54, 229, 165, .4);
+  animation:
+    hx-pop var(--hx-dur-slower, 560ms) var(--hx-ease-spring, ease) backwards 940ms,
+    hx-pulse-ring 3s var(--hx-ease-out, ease) 1.6s infinite;
+}
+
+/* --------------------------------------------------------------- identity */
+
+.identity-row {
+  transition: background-color var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease);
+  border-radius: 6px;
+}
+.identity-row:hover { background: rgba(32, 215, 208, .05); }
+.identity-card-head button {
+  transition:
+    border-color var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease),
+    background-color var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease),
+    transform var(--hx-dur-instant, 90ms) var(--hx-ease-out, ease);
+}
+.identity-card-head button:hover { border-color: var(--hx-teal); color: var(--hx-text); }
+.identity-card-head button:active { transform: scale(.96); }
+
+/* --------------------------------------------------------------- security
+   The strength meter fills segment by segment, and a requirement ticks over
+   the moment it is satisfied rather than appearing already met. */
+
+.strength-bars i {
+  transform-origin: left center;
+  transition:
+    background-color var(--hx-dur-base, 240ms) var(--hx-ease-out, ease),
+    transform var(--hx-dur-base, 240ms) var(--hx-ease-spring, ease);
+}
+.strength-bars i.on { animation: hx-bar-fill var(--hx-dur-slow, 380ms) var(--hx-ease-out, ease); }
+@keyframes hx-bar-fill { from { transform: scaleX(.25); } to { transform: scaleX(1); } }
+.strength-label { transition: color var(--hx-dur-base, 240ms) var(--hx-ease-out, ease); }
+
+.requirement { transition: color var(--hx-dur-base, 240ms) var(--hx-ease-out, ease); }
+.requirement::before {
+  transition:
+    background-color var(--hx-dur-base, 240ms) var(--hx-ease-out, ease),
+    color var(--hx-dur-base, 240ms) var(--hx-ease-out, ease),
+    transform var(--hx-dur-base, 240ms) var(--hx-ease-spring, ease);
+}
+.requirement:not(.off)::before { transform: scale(1.12); }
+
+.settings-row {
+  transition: background-color var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease);
+}
+.settings-row:hover { background: rgba(32, 215, 208, .05); }
+.settings-row[role="button"],
+a.settings-row { cursor: pointer; }
+
+.activity-row i {
+  --hx-pulse-color: rgba(54, 229, 165, .45);
+  animation: hx-pulse-ring 3.2s var(--hx-ease-out, ease) infinite;
+}
+.activity-row:nth-child(2) i { animation-delay: .5s; }
+.activity-row:nth-child(3) i { animation-delay: 1s; }
+
+/* --------------------------------------------------------- form controls */
+
+input, select, textarea {
+  transition:
+    border-color var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease),
+    box-shadow var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease),
+    background-color var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease);
+}
+.password-toggle {
+  border-radius: 8px;
+  transition: color var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease), background-color var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease);
+}
+.password-toggle:hover { color: var(--hx-teal); background: rgba(32, 215, 208, .08); }
+
+.submit-primary,
+.wide-secondary {
+  position: relative;
+  overflow: hidden;
+  transition:
+    filter var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease),
+    transform var(--hx-dur-instant, 90ms) var(--hx-ease-out, ease),
+    box-shadow var(--hx-dur-base, 240ms) var(--hx-ease-out, ease);
+}
+.submit-primary:hover:not(:disabled) { filter: brightness(1.06); box-shadow: 0 14px 30px rgba(32, 215, 208, .24); }
+.submit-primary:active:not(:disabled),
+.wide-secondary:active { transform: scale(.985); }
+.wide-secondary:hover { border-color: var(--hx-teal); color: white; }
+
+.message { animation: hx-rise var(--hx-dur-base, 240ms) var(--hx-ease-out, ease); }
+.notice { animation: hx-rise var(--hx-dur-base, 240ms) var(--hx-ease-out, ease); }
+
+.portal-back {
+  transition:
+    border-color var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease),
+    transform var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease);
+}
+.portal-back:hover { transform: translateX(-2px); }
+
+/* ------------------------------------------------------- reduced motion */
+
+@media (prefers-reduced-motion: reduce) {
+  .identity-card:hover,
+  .security-side-card:hover,
+  .portal-nav a:hover,
+  .portal-nav a:hover i,
+  .portal-back:hover,
+  .portal-user:hover .portal-avatar,
+  .identity-card-head button:active,
+  .submit-primary:active:not(:disabled),
+  .wide-secondary:active { transform: none; }
+
+  .verify-progress::before { transform: scaleX(1); transition: none; }
+  .verify-step i,
+  .verify-hero,
+  .verify-check,
+  .activity-row i,
+  .strength-bars i.on,
+  .message,
+  .notice { animation: none; }
+  .portal-nav a.active::before { transform: scaleY(1); animation: none; }
+}
+
+/* [hidden] is a UA rule at the lowest specificity, so any component that sets
+   its own `display` silently defeats it. These panels are all toggled with the
+   attribute from JS — without this they stay on screen empty for a client who
+   has not been verified yet. */
+[hidden] { display: none !important; }
+
+/* ============================================================================
+   Two-factor enrolment
+   ========================================================================== */
+
+.tfa-message {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  line-height: 1.5;
+  animation: hx-rise var(--hx-dur-base, 240ms) var(--hx-ease-out, ease);
+}
+.tfa-message[data-tone="error"] { border: 1px solid rgba(241,113,120,.32); background: rgba(241,113,120,.1); color: #ffadb2; }
+.tfa-message[data-tone="success"] { border: 1px solid rgba(54,229,165,.32); background: rgba(54,229,165,.1); color: var(--hx-green); }
+
+.tfa-setup,
+.tfa-codes { margin-top: 14px; animation: hx-rise var(--hx-dur-slow, 380ms) var(--hx-ease-out, ease); }
+
+.tfa-step { margin: 0 0 8px; color: #9db8c9; font-size: 11px; line-height: 1.5; }
+.tfa-setup .tfa-step + .tfa-step { margin-top: 14px; }
+
+/* The QR needs a light plate: scanners read dark-on-light, and inverting it
+   here would make some phone cameras fail. */
+.tfa-qr {
+  width: 176px;
+  margin: 0 auto 14px;
+  padding: 10px;
+  border-radius: 10px;
+  background: #fff;
+  display: grid;
+  place-items: center;
+}
+.tfa-qr canvas,
+.tfa-qr img { display: block; width: 156px; height: 156px; }
+
+.tfa-secret {
+  display: block;
+  margin-bottom: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--hx-line);
+  border-radius: 8px;
+  background: #0a2132;
+  color: var(--hx-text);
+  font-family: var(--hx-font-mono, ui-monospace, Menlo, Consolas, monospace);
+  font-size: 12px;
+  letter-spacing: .12em;
+  word-break: break-all;
+  user-select: all;
+}
+
+.tfa-confirm { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 9px; margin-top: 10px; }
+.tfa-confirm input {
+  height: 44px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .24em;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+}
+.tfa-confirm .submit-primary { width: auto; min-height: 44px; padding: 0 18px; font-size: 12px; }
+.submit-primary.danger { background: linear-gradient(135deg, #e5484d, #c93b40); color: #fff; }
+
+.tfa-codes strong { display: block; color: var(--hx-text); font-size: 12px; }
+.tfa-codes p { margin: 5px 0 10px; color: #8ea9bb; font-size: 10px; line-height: 1.5; }
+.tfa-codes ul {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin: 0 0 11px;
+  padding: 12px;
+  list-style: none;
+  border: 1px solid var(--hx-line);
+  border-radius: 9px;
+  background: #0a2132;
+}
+.tfa-codes li {
+  color: var(--hx-text);
+  font-family: var(--hx-font-mono, ui-monospace, Menlo, Consolas, monospace);
+  font-size: 12px;
+  letter-spacing: .06em;
+}
+
+#tfaNewCodesBtn { margin-top: 8px; }
+
+@media (max-width: 540px) {
+  .tfa-confirm { grid-template-columns: 1fr; }
+  .tfa-confirm .submit-primary { width: 100%; }
+  .tfa-codes ul { grid-template-columns: 1fr; }
+}
+
+/* A control waiting on the network says so, rather than looking inert. */
+[aria-busy="true"] { opacity: .6; cursor: progress; }
+
+/* ============================================================================
+   Support centre
+   ========================================================================== */
+
+.support-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 15px; align-items: start; }
+.support-compose { padding: 22px; }
+.support-compose form { display: grid; }
+.support-compose textarea {
+  width: 100%;
+  min-height: 132px;
+  padding: 11px 12px;
+  border: 1px solid #254c63;
+  border-radius: 8px;
+  background: #0c2639;
+  color: var(--hx-text);
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.55;
+  resize: vertical;
+}
+.support-compose textarea:focus { border-color: var(--hx-teal); outline: none; box-shadow: 0 0 0 3px rgba(32,215,208,.09); }
+.support-counter { margin: 6px 0 14px; color: #7f9caf; font-size: 9px; text-align: right; }
+
+.support-warning {
+  margin-bottom: 16px;
+  padding: 11px 13px;
+  border: 1px solid rgba(246,184,63,.25);
+  border-radius: 8px;
+  background: rgba(246,184,63,.07);
+  color: #dbbd7d;
+  font-size: 10px;
+  line-height: 1.55;
+}
+.support-warning strong { display: block; margin-bottom: 3px; color: var(--hx-amber); }
+
+.support-stream-head { display: flex; align-items: center; gap: 12px; margin: 2px 2px 12px; }
+.support-stream-head h2 { margin: 0; color: var(--hx-text); font-size: 15px; }
+.support-count {
+  min-width: 26px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #15344b;
+  color: white;
+  font-size: 10px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.support-ticket { padding: 16px 18px; margin-bottom: 12px; }
+.support-ticket-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.support-ticket-head strong { display: block; color: var(--hx-text); font-size: 13px; }
+.support-ticket-head small { display: block; margin-top: 4px; color: #7f9caf; font-size: 9px; }
+
+.support-thread { display: grid; gap: 9px; margin-top: 13px; }
+.support-msg {
+  padding: 10px 12px;
+  border: 1px solid var(--hx-line-soft);
+  border-radius: 9px;
+  background: rgba(10, 33, 50, .6);
+}
+/* A staff reply should be unmistakable at a glance, so nobody mistakes their
+   own words for an answer from HarbourX. */
+.support-msg.is-staff { border-color: rgba(32,215,208,.3); background: rgba(32,215,208,.07); }
+.support-msg small { display: block; margin-bottom: 5px; color: #8aa6b7; font-size: 9px; font-weight: 700; }
+.support-msg.is-staff small { color: var(--hx-teal); }
+.support-msg p { margin: 0; color: #c8dae4; font-size: 11px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+
+.support-reply { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; margin-top: 12px; }
+.support-reply input { height: 40px; font-size: 11px; }
+.support-reply .wide-secondary { width: auto; min-height: 40px; margin-top: 0; padding: 0 15px; }
+
+.support-empty { padding: 26px 20px; border: 1px dashed var(--hx-line); border-radius: 12px; text-align: center; }
+.support-empty strong { display: block; color: #c3d6e0; font-size: 12px; }
+.support-empty p { margin: 5px 0 0; color: #7f9caf; font-size: 10px; }
+
+.support-faq { margin-top: 15px; padding: 20px 22px; }
+.support-faq details { border-top: 1px solid var(--hx-line-soft); }
+.support-faq details:first-of-type { border-top: 0; }
+.support-faq summary {
+  padding: 12px 0;
+  color: #d3e3ec;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+  list-style: none;
+  transition: color var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease);
+}
+.support-faq summary::-webkit-details-marker { display: none; }
+.support-faq summary::before { content: "+"; display: inline-block; width: 16px; color: var(--hx-teal); font-weight: 800; }
+.support-faq details[open] summary::before { content: "−"; }
+.support-faq summary:hover { color: var(--hx-teal); }
+.support-faq details p { margin: 0 0 14px 16px; color: #93aec0; font-size: 11px; line-height: 1.65; }
+
+@media (max-width: 1040px) {
+  .support-layout { grid-template-columns: 1fr; }
+}
+@media (max-width: 620px) {
+  .support-reply { grid-template-columns: 1fr; }
+  .support-reply .wide-secondary { width: 100%; }
+  .support-ticket-head { flex-direction: column; }
+}
+
+/* ============================================================================
+   Statements
+   ========================================================================== */
+
+.statement-layout { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 15px; align-items: start; }
+
+.statement-index-head { display: flex; align-items: center; gap: 12px; margin: 2px 2px 12px; }
+.statement-index-head h2 { margin: 0; color: var(--hx-text); font-size: 15px; }
+
+.statement-period {
+  width: 100%;
+  display: block;
+  margin-bottom: 9px;
+  padding: 13px 15px;
+  border: 1px solid var(--hx-line);
+  border-radius: 11px;
+  background: #0b2233;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease),
+    transform var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease),
+    background-color var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease);
+}
+.statement-period:hover { border-color: rgba(32,215,208,.5); transform: translateX(2px); }
+.statement-period.is-active { border-color: var(--hx-teal); background: linear-gradient(135deg, rgba(32,215,208,.12), rgba(13,42,58,.9)); }
+.statement-period strong { display: block; color: var(--hx-text); font-size: 13px; }
+.statement-period small { display: block; margin-top: 4px; color: #7f9caf; font-size: 10px; }
+
+.statement-detail { padding: 22px; }
+.statement-detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 18px; }
+.statement-detail-head h2 { margin: 0; color: var(--hx-text); font-size: 20px; letter-spacing: -.02em; }
+.statement-detail-head p { margin: 4px 0 0; color: #8aa6b7; font-size: 11px; }
+.statement-download {
+  width: auto;
+  min-height: 40px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 18px;
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.statement-figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 1px;
+  margin-bottom: 16px;
+  overflow: hidden;
+  border: 1px solid var(--hx-line);
+  border-radius: 10px;
+  background: var(--hx-line);
+}
+.statement-figures div { padding: 12px 14px; background: #0a2132; }
+.statement-figures small { display: block; color: #7f9caf; font-size: 9px; }
+.statement-figures strong { display: block; margin-top: 5px; color: var(--hx-text); font-size: 13px; font-variant-numeric: tabular-nums; }
+
+/* A figure that could not be totalled is said out loud, not quietly dropped. */
+.statement-note {
+  margin-bottom: 16px;
+  padding: 11px 13px;
+  border: 1px solid rgba(246,184,63,.28);
+  border-radius: 9px;
+  background: rgba(246,184,63,.08);
+  color: #dbbd7d;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.statement-table { overflow: hidden; border: 1px solid var(--hx-line); border-radius: 10px; }
+.statement-row {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) 96px 150px;
+  gap: 12px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--hx-line-soft);
+  color: #c4d7e1;
+  font-size: 11px;
+}
+.statement-row:last-child { border-bottom: 0; }
+.statement-row-head { background: rgba(126,190,217,.06); color: #8aa6b7; font-size: 9px; font-weight: 750; text-transform: uppercase; letter-spacing: .04em; }
+.statement-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.statement-amount {
+  font-family: var(--hx-font-mono, ui-monospace, Menlo, Consolas, monospace);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--hx-text);
+}
+
+@media (max-width: 1040px) {
+  .statement-layout { grid-template-columns: 1fr; }
+}
+@media (max-width: 620px) {
+  .statement-detail-head { flex-direction: column; }
+  .statement-download { width: 100%; justify-content: center; }
+  .statement-row { grid-template-columns: 1fr 1fr; gap: 4px 12px; }
+  .statement-row-head { display: none; }
+  .statement-amount { text-align: left; }
 }

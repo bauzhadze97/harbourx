@@ -1,0 +1,371 @@
+/* ============================================================================
+   HarbourX motion system
+   ----------------------------------------------------------------------------
+   One shared vocabulary for every animated surface in the product: the client
+   dashboard, the sign-in page, the identity form, the security pages and the
+   admin console.
+
+   Everything here is opt-in through a data-attribute or a class, so adding the
+   file to a page changes nothing until markup asks for it. Every effect is
+   switched off wholesale by the prefers-reduced-motion block at the bottom.
+   ========================================================================== */
+
+:root {
+  /* Durations. Micro-feedback stays under a frame budget people can feel as
+     "instant"; entrances are long enough to read as deliberate. */
+  --hx-dur-instant: 90ms;
+  --hx-dur-fast: 160ms;
+  --hx-dur-base: 240ms;
+  --hx-dur-slow: 380ms;
+  --hx-dur-slower: 560ms;
+
+  /* Easings. `out` for anything entering, `in` for anything leaving,
+     `spring` for controls that should feel physical. */
+  --hx-ease-out: cubic-bezier(.22, 1, .36, 1);
+  --hx-ease-in: cubic-bezier(.64, 0, .78, 0);
+  --hx-ease-in-out: cubic-bezier(.65, 0, .35, 1);
+  --hx-ease-spring: cubic-bezier(.34, 1.4, .64, 1);
+
+  /* Stagger step used by .hx-stagger children. */
+  --hx-stagger: 55ms;
+
+  /* Set to 0 by the reduced-motion block so JS-driven effects can read it. */
+  --hx-motion: 1;
+
+  /* ------------------------------------------------------------------ type
+     The product typeface, in one place. Every stylesheet reads this token, so
+     changing the face is this line plus the Google Fonts URL in each page head.
+     Alternatives that drop straight in: "Figtree", "Manrope", "Outfit". */
+  --hx-font: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --hx-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+/* ---------------------------------------------------------------- keyframes */
+
+@keyframes hx-rise {
+  from { opacity: 0; transform: translate3d(0, 14px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes hx-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes hx-pop {
+  0%   { opacity: 0; transform: scale(.88); }
+  60%  { opacity: 1; transform: scale(1.03); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes hx-scale-in {
+  from { opacity: 0; transform: translate3d(0, 18px, 0) scale(.975); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes hx-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes hx-shimmer {
+  from { background-position: 180% 0; }
+  to   { background-position: -80% 0; }
+}
+@keyframes hx-flash {
+  0%   { color: var(--hx-flash-color, #36e5a5); transform: translateY(-2px); }
+  100% { color: inherit; transform: none; }
+}
+@keyframes hx-ripple {
+  to { opacity: 0; transform: scale(2.6); }
+}
+@keyframes hx-draw {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes hx-nudge-x {
+  50% { transform: translateX(3px); }
+}
+@keyframes hx-pulse-ring {
+  0%   { box-shadow: 0 0 0 0 var(--hx-pulse-color, rgba(32, 215, 208, .45)); }
+  70%  { box-shadow: 0 0 0 10px rgba(32, 215, 208, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(32, 215, 208, 0); }
+}
+@keyframes hx-breathe {
+  0%, 100% { opacity: .55; }
+  50%      { opacity: 1; }
+}
+@keyframes hx-shake {
+  10%, 90% { transform: translateX(-2px); }
+  30%, 70% { transform: translateX(4px); }
+  50%      { transform: translateX(-4px); }
+}
+@keyframes hx-toast-in {
+  from { opacity: 0; transform: translate3d(0, 16px, 0) scale(.96); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ------------------------------------------------------------ reveal on view
+   Elements marked [data-reveal] start hidden and are released by the
+   IntersectionObserver in hx-motion.js. The rules are scoped to html.hx-js,
+   a class theme.js sets before first paint, so a browser with scripting off
+   never hides the content it cannot then reveal. */
+
+html.hx-js [data-reveal] {
+  opacity: 0;
+  transform: translate3d(0, var(--hx-reveal-y, 16px), 0);
+  transition:
+    opacity var(--hx-dur-slow) var(--hx-ease-out),
+    transform var(--hx-dur-slow) var(--hx-ease-out);
+  transition-delay: var(--hx-reveal-delay, 0ms);
+  will-change: opacity, transform;
+}
+html.hx-js [data-reveal="left"]  { transform: translate3d(-18px, 0, 0); }
+html.hx-js [data-reveal="right"] { transform: translate3d(18px, 0, 0); }
+html.hx-js [data-reveal="scale"] { transform: scale(.96); }
+html.hx-js [data-reveal].is-revealed {
+  opacity: 1;
+  transform: none;
+  will-change: auto;
+}
+
+/* ------------------------------------------------------------------ stagger
+   `.hx-stagger` hands each child an index so entrances cascade instead of
+   landing all at once. hx-motion.js sets --hx-i past the tenth child. */
+
+.hx-stagger > * { --hx-i: 0; }
+.hx-stagger > *:nth-child(1)  { --hx-i: 0; }
+.hx-stagger > *:nth-child(2)  { --hx-i: 1; }
+.hx-stagger > *:nth-child(3)  { --hx-i: 2; }
+.hx-stagger > *:nth-child(4)  { --hx-i: 3; }
+.hx-stagger > *:nth-child(5)  { --hx-i: 4; }
+.hx-stagger > *:nth-child(6)  { --hx-i: 5; }
+.hx-stagger > *:nth-child(7)  { --hx-i: 6; }
+.hx-stagger > *:nth-child(8)  { --hx-i: 7; }
+.hx-stagger > *:nth-child(9)  { --hx-i: 8; }
+.hx-stagger > *:nth-child(10) { --hx-i: 9; }
+.hx-stagger > * { --hx-reveal-delay: calc(var(--hx-i) * var(--hx-stagger)); }
+
+/* --------------------------------------------------------------- entrances
+   For content that is present at first paint and should simply ease in. */
+
+.hx-enter        { animation: hx-rise var(--hx-dur-slow) var(--hx-ease-out) backwards; }
+.hx-enter-pop    { animation: hx-pop var(--hx-dur-slow) var(--hx-ease-spring) backwards; }
+.hx-enter-fade   { animation: hx-fade var(--hx-dur-base) ease backwards; }
+.hx-stagger > .hx-enter,
+.hx-stagger > .hx-enter-pop,
+.hx-stagger > .hx-enter-fade { animation-delay: calc(var(--hx-i) * var(--hx-stagger)); }
+
+/* ------------------------------------------------------------------- lift
+   Cards that respond to the pointer. Transform only, so it never reflows. */
+
+.hx-lift {
+  transition:
+    transform var(--hx-dur-base) var(--hx-ease-out),
+    box-shadow var(--hx-dur-base) var(--hx-ease-out),
+    border-color var(--hx-dur-base) var(--hx-ease-out);
+}
+@media (hover: hover) {
+  .hx-lift:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--hx-lift-shadow, 0 18px 42px rgba(0, 0, 0, .34));
+  }
+}
+.hx-lift:active { transform: translateY(-1px); }
+
+/* ------------------------------------------------------------------- sheen
+   A soft highlight that follows the pointer across a card. hx-motion.js writes
+   --hx-mx / --hx-my; with no JS the layer simply stays transparent. */
+
+.hx-sheen { position: relative; isolation: isolate; }
+.hx-sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  /* Negative index inside the host's own stacking context (that is what the
+     `isolation` above is for): the highlight lands on the card's background but
+     under its text, so nothing is tinted by it. */
+  z-index: -1;
+  border-radius: inherit;
+  opacity: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    320px circle at var(--hx-mx, 50%) var(--hx-my, 0%),
+    var(--hx-sheen-color, rgba(32, 215, 208, .13)),
+    transparent 62%
+  );
+  transition: opacity var(--hx-dur-base) var(--hx-ease-out);
+}
+@media (hover: hover) {
+  .hx-sheen:hover::after { opacity: 1; }
+}
+
+/* ------------------------------------------------------------------ press
+   Buttons acknowledge the click before the network does. */
+
+.hx-press {
+  transition:
+    transform var(--hx-dur-instant) var(--hx-ease-out),
+    filter var(--hx-dur-fast) var(--hx-ease-out),
+    box-shadow var(--hx-dur-fast) var(--hx-ease-out);
+}
+.hx-press:active { transform: scale(.975); }
+
+/* ------------------------------------------------------------------ ripple */
+
+.hx-ripple-host { position: relative; overflow: hidden; }
+.hx-ripple-ink {
+  position: absolute;
+  z-index: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  background: var(--hx-ripple-color, rgba(255, 255, 255, .28));
+  opacity: .5;
+  transform: scale(0);
+  animation: hx-ripple var(--hx-dur-slower) var(--hx-ease-out) forwards;
+}
+
+/* --------------------------------------------------------------- skeleton */
+
+.hx-skeleton {
+  border-radius: 6px;
+  color: transparent !important;
+  background-image: linear-gradient(
+    100deg,
+    var(--hx-skeleton-base, rgba(126, 190, 217, .10)) 30%,
+    var(--hx-skeleton-hi, rgba(126, 190, 217, .22)) 48%,
+    var(--hx-skeleton-base, rgba(126, 190, 217, .10)) 66%
+  );
+  background-size: 220% 100%;
+  animation: hx-shimmer 1.35s linear infinite;
+  user-select: none;
+}
+
+/* ------------------------------------------------------- numeric feedback
+   Money that changes should say so without a banner. */
+
+.hx-flash { animation: hx-flash var(--hx-dur-slower) var(--hx-ease-out); }
+.hx-tabular { font-variant-numeric: tabular-nums; }
+
+/* ------------------------------------------------------------------ spin */
+
+.hx-spin { animation: hx-spin .75s linear infinite; }
+.is-busy .hx-spin-target,
+.hx-spin-target.is-busy { animation: hx-spin .75s linear infinite; }
+
+/* ------------------------------------------------------------------ pulse */
+
+.hx-pulse { animation: hx-pulse-ring 2.4s var(--hx-ease-out) infinite; }
+.hx-breathe { animation: hx-breathe 2.6s ease-in-out infinite; }
+
+/* ------------------------------------------------------------------ shake
+   Applied by JS to a field that failed validation. */
+
+.hx-shake { animation: hx-shake var(--hx-dur-slower) var(--hx-ease-in-out); }
+
+/* ----------------------------------------------------------- SVG line draw
+   Charts and tick marks trace themselves in. hx-motion.js measures the path
+   and sets --hx-len so the dash offset matches the real geometry. */
+
+.hx-draw {
+  stroke-dasharray: var(--hx-len, 1200);
+  stroke-dashoffset: var(--hx-len, 1200);
+  animation: hx-draw var(--hx-draw-dur, 1.1s) var(--hx-ease-out) forwards;
+  animation-delay: var(--hx-draw-delay, 120ms);
+}
+
+/* ------------------------------------------------------------------ steps
+   Progress rails shared by the convert, withdraw and verification flows.
+   The fill is a scaled pseudo-element, so moving between steps animates on
+   the compositor rather than by re-laying-out the rail. */
+
+.hx-steps-rail { position: relative; }
+.hx-steps-rail::after {
+  content: "";
+  position: absolute;
+  inset: var(--hx-rail-inset, 12px 0 auto 0);
+  height: 2px;
+  transform-origin: left center;
+  transform: scaleX(var(--hx-step-progress, 0));
+  background: var(--hx-step-fill, #20d7d0);
+  transition: transform var(--hx-dur-slow) var(--hx-ease-in-out);
+}
+
+/* ------------------------------------------------------------------ toast */
+
+.hx-toast-stack {
+  position: fixed;
+  z-index: 9999;
+  right: 18px;
+  bottom: 18px;
+  display: grid;
+  gap: 10px;
+  max-width: min(360px, calc(100vw - 36px));
+  pointer-events: none;
+}
+.hx-toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--hx-toast-line, rgba(126, 190, 217, .2));
+  border-radius: 12px;
+  background: var(--hx-toast-bg, #0c2437);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, .42);
+  color: var(--hx-toast-fg, #e8f3f8);
+  font-size: 13px;
+  line-height: 1.45;
+  pointer-events: auto;
+  animation: hx-toast-in var(--hx-dur-base) var(--hx-ease-spring) backwards;
+}
+.hx-toast[data-tone="success"] { border-color: rgba(54, 229, 165, .36); }
+.hx-toast[data-tone="error"]   { border-color: rgba(241, 113, 120, .4); }
+.hx-toast[data-tone="success"] .hx-toast-dot { background: #36e5a5; }
+.hx-toast[data-tone="error"]   .hx-toast-dot { background: #f17178; }
+.hx-toast-dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  margin-top: 6px;
+  border-radius: 50%;
+  background: #20d7d0;
+}
+.hx-toast.is-leaving {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity var(--hx-dur-fast) var(--hx-ease-in), transform var(--hx-dur-fast) var(--hx-ease-in);
+}
+
+/* ------------------------------------------------------- scroll progress */
+
+.hx-scroll-progress {
+  position: fixed;
+  z-index: 9998;
+  inset: 0 0 auto 0;
+  height: 2px;
+  transform-origin: left center;
+  transform: scaleX(var(--hx-scroll, 0));
+  background: linear-gradient(90deg, var(--hx-teal, #20d7d0), var(--hx-green, #36e5a5));
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------- reduced-motion guard
+   One switch. Anything added above must be covered here too. */
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --hx-motion: 0; }
+
+  html { scroll-behavior: auto; }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  html.hx-js [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .hx-lift:hover,
+  .hx-press:active { transform: none; }
+  .hx-sheen::after { display: none; }
+  .hx-skeleton { animation: none; }
+  .hx-draw { stroke-dasharray: none; stroke-dashoffset: 0; }
+}

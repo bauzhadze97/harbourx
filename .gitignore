@@ -1,8 +1,14 @@
 .playwright-mcp/
-node_modules/
+node_modules
 
 # Runtime client data — contains plaintext passwords and KYC/PII.
 # Never commit these; they live on the server only.
 data/users.json
 data.*/users.json
+data/tickets.json
 *.zip
+
+# local screenshot/verification scratch (root only — tests/ has its own
+# blank.html and publishes screenshots as a CI artifact)
+/blank.html
+*.png

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HarbourX · UI preview (no PHP)</title>
+<meta name="color-scheme" content="dark">
+<script src="../theme.js"></script>
+<link rel="stylesheet" href="../hx-motion.css">
+<link rel="stylesheet" href="../portal.css">
+<style>
+  body { display: grid; place-items: center; min-height: 100vh; padding: 24px; }
+  .preview-card { max-width: 560px; padding: 30px; }
+  .preview-card h1 { margin: 0 0 6px; color: var(--hx-text); font-size: 24px; letter-spacing: -.03em; }
+  .preview-card > p { margin: 0 0 18px; color: #93b1c5; font-size: 13px; line-height: 1.6; }
+  .preview-note { margin: 0 0 20px; padding: 12px 14px; border: 1px solid rgba(246,184,63,.28);
+                  border-radius: 9px; background: rgba(246,184,63,.08); color: #dbbd7d;
+                  font-size: 11px; line-height: 1.6; }
+  .preview-note strong { display: block; margin-bottom: 4px; color: var(--hx-amber); }
+  .preview-links { display: grid; gap: 9px; }
+  .preview-links a { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+                     min-height: 46px; padding: 0 16px; border: 1px solid var(--hx-line);
+                     border-radius: 9px; background: #0b2233; color: var(--hx-text);
+                     text-decoration: none; font-size: 13px; font-weight: 600;
+                     transition: border-color .16s ease, transform .16s ease; }
+  .preview-links a:hover { border-color: var(--hx-teal); transform: translateX(2px); }
+  .preview-links small { color: #7f9caf; font-size: 10px; font-weight: 400; }
+</style>
+</head>
+<body>
+  <div class="portal-card preview-card">
+    <h1>UI preview</h1>
+    <p>Seeds a demo account into this browser so the interface renders without a
+       PHP server. For looking at the design only.</p>
+
+    <div class="preview-note">
+      <strong>What will not work here</strong>
+      Signing in, two-factor, support tickets, converting, withdrawing and AML —
+      all of those are PHP endpoints, and a static server hands back their source
+      instead of running them. For the working app you need PHP; see README.txt.
+    </div>
+
+    <div class="preview-links">
+      <a href="../dashboard.html">Dashboard <small>portfolio, convert, withdraw dialogs</small></a>
+      <a href="../support.html">Support centre <small>renders empty — needs PHP for tickets</small></a>
+      <a href="../login.html">Sign-in page <small>layout only</small></a>
+      <a href="../aml.html">Identity verification <small>layout only</small></a>
+    </div>
+  </div>
+
+<script>
+/* A demo client, written straight to localStorage — the same shape login.php
+   returns. Nothing here reaches a server. */
+localStorage.setItem('hx-theme', 'dark');
+localStorage.setItem('user', JSON.stringify({
+  email: 'demo.client@example.invalid',
+  name: 'Demo Client',
+  currency: 'AUD',
+  portfolioUsd: 0,
+  btc: 1.25,
+  mainBalance: 48250.5,
+  amlStatus: 'verified',
+  twoFactorEnabled: false,
+  transactions: [
+    { date: '2026-02-01', type: 'Received', amount: '+1.25 BTC', status: 'Completed', details: 'bc1q…f3t4', detailsUrl: '' },
+    { date: '2026-02-14', type: 'BTC to AUD Conversion', amount: '-0.50000000 BTC -> A$48,250.50', status: 'Completed', details: 'Converted to main balance', detailsUrl: '' },
+    { date: '2026-03-02', type: 'Bank Withdrawal', amount: '-A$1,000.00', status: 'Pending', details: 'From AUD main balance', detailsUrl: '' }
+  ]
+}));
+</script>
+</body>
+</html>

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HarbourX · Support</title>
+  <meta name="description" content="Open a support ticket and track replies from the HarbourX team.">
+  <meta name="color-scheme" content="dark">
+  <script src="theme.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap"></noscript>
+  <link rel="stylesheet" href="hx-motion.css">
+  <link rel="stylesheet" href="portal.css">
+  <script src="hx-motion.js" defer></script>
+</head>
+<body>
+  <div class="portal-shell">
+    <aside class="portal-sidebar" id="portalSidebar">
+      <a class="portal-brand" href="dashboard.html"><svg viewBox="0 0 42 42" aria-hidden="true"><path d="M6 29 21 9l15 20"/><path d="m13 33 8-11 8 11"/></svg><strong>HarbourX</strong></a>
+      <nav class="portal-nav" aria-label="Primary navigation">
+        <a href="dashboard.html"><i>⌂</i>Overview</a><a href="dashboard.html#portfolio"><i>◔</i>Portfolio</a><a href="dashboard.html#transactions"><i>☷</i>Transactions</a><a href="dashboard.html"><i>↓</i>Deposit</a><a href="dashboard.html"><i>↑</i>Withdraw</a><a href="statements.html"><i>▤</i>Statements</a><a href="change_password.php"><i>◇</i>Security</a><a class="active" href="support.html"><i>?</i>Support</a>
+      </nav>
+    </aside>
+
+    <div class="portal-workspace">
+      <header class="portal-topbar">
+        <button class="portal-menu" id="portalMenu" type="button" aria-label="Open navigation">☰</button>
+        <label class="portal-search"><span>⌕</span><input type="search" id="ticketSearch" placeholder="Search your tickets…"></label>
+        <div class="portal-user"><span class="portal-avatar" id="userInitials">HX</span><div><strong id="userName">HarbourX client</strong><small>Support centre</small></div></div>
+      </header>
+
+      <main class="portal-main">
+        <div class="portal-breadcrumb"><a href="dashboard.html">Dashboard</a> &nbsp;›&nbsp; Support</div>
+        <div class="portal-heading">
+          <div><h1>Support</h1><p>Open a ticket and follow the replies. Urgent security concerns are picked up first.</p></div>
+          <a class="portal-back" href="dashboard.html">← Back to dashboard</a>
+        </div>
+
+        <div class="support-layout">
+          <section class="portal-card support-compose" data-reveal>
+            <div class="security-title">
+              <span class="security-icon">✉</span>
+              <div><h2>Open a ticket</h2><p>Tell us what happened and we will come back to you here.</p></div>
+            </div>
+
+            <div class="message" id="composeMessage"></div>
+
+            <form id="ticketForm">
+              <label for="ticketTopic">What is this about?</label>
+              <select id="ticketTopic" required></select>
+
+              <label for="ticketSubject">Subject</label>
+              <input id="ticketSubject" type="text" maxlength="120" placeholder="A short summary" required>
+
+              <label for="ticketBody">Details</label>
+              <textarea id="ticketBody" rows="6" maxlength="4000" placeholder="What were you doing, and what happened instead?" required></textarea>
+              <p class="support-counter"><span id="bodyCount">0</span> / 4000</p>
+
+              <div class="support-warning">
+                <strong>Never share a password, a 2FA code or a backup code.</strong>
+                HarbourX staff will never ask for them, and never ask you to pay a fee to release a withdrawal.
+              </div>
+
+              <button class="submit-primary" type="submit" id="ticketSubmit" data-ripple>Open ticket</button>
+            </form>
+          </section>
+
+          <section class="support-stream">
+            <div class="support-stream-head">
+              <h2>Your tickets</h2>
+              <span class="support-count" id="ticketCount">0</span>
+            </div>
+            <div id="ticketList" class="hx-stagger"></div>
+            <div class="support-empty" id="ticketEmpty" hidden>
+              <strong>No tickets yet</strong>
+              <p>Anything you open will appear here with its replies.</p>
+            </div>
+          </section>
+        </div>
+
+        <section class="portal-card support-faq" data-reveal>
+          <div class="security-title">
+            <span class="security-icon">◈</span>
+            <div><h2>Before you write</h2><p>The three things people ask most.</p></div>
+          </div>
+          <details><summary>Why is my withdrawal still in review?</summary><p>Bank withdrawals are released once identity verification is complete and the payout account has been confirmed. Check the Security page for your verification status — if it reads Verified and the request is still open after two business days, open a ticket with the reference from your transaction list.</p></details>
+          <details><summary>I have lost my authenticator app.</summary><p>Use one of the backup codes you saved when you turned on two-factor authentication — each signs you in once. If those are gone too, open a ticket from a device you have signed in on before, and do not share the codes with anyone who contacts you first.</p></details>
+          <details><summary>Someone has asked me to pay a fee to release a withdrawal.</summary><p>Stop. HarbourX never asks for an external payment to release a withdrawal, and never asks for your password or codes. Open a ticket under "Security concern" and tell us how they contacted you.</p></details>
+        </section>
+
+        <footer class="portal-footer">
+          <span>© 2026 HarbourX</span>
+          <nav aria-label="Legal"><a href="#terms">Terms</a><a href="#privacy">Privacy</a><a href="#risk">Risk disclosure</a></nav>
+        </footer>
+      </main>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    /* Same gate as the other client pages: no localStorage user, no page. */
+    let currentUser = null;
+    try {
+      const raw = localStorage.getItem('user');
+      if (!raw) { window.location.replace('login.html'); return; }
+      currentUser = JSON.parse(raw);
+      if (!currentUser || !currentUser.email) { window.location.replace('login.html'); return; }
+    } catch (e) {
+      window.location.replace('login.html');
+      return;
+    }
+
+    const name = String(currentUser.name || currentUser.email || 'HarbourX client');
+    document.getElementById('userName').textContent = name;
+    document.getElementById('userInitials').textContent =
+      name.trim().split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase() || 'HX';
+
+    const el = (id) => document.getElementById(id);
+    const form = el('ticketForm'), list = el('ticketList'), empty = el('ticketEmpty');
+    const topicSelect = el('ticketTopic'), bodyInput = el('ticketBody');
+    const composeMessage = el('composeMessage'), submitBtn = el('ticketSubmit');
+    const search = el('ticketSearch');
+
+    let tickets = [];
+
+    function say(text, tone) {
+      composeMessage.textContent = text || '';
+      composeMessage.className = text ? 'message ' + (tone || 'success') : 'message';
+    }
+
+    async function call(action, extra) {
+      const response = await fetch('support.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(Object.assign({ action }, extra || {}))
+      });
+      if (response.status === 401) { window.location.replace('login.html'); throw new Error('signed out'); }
+      return response.json();
+    }
+
+    async function busy(button, work) {
+      if (button) { button.disabled = true; button.setAttribute('aria-busy', 'true'); }
+      try { return await work(); }
+      finally { if (button) { button.disabled = false; button.removeAttribute('aria-busy'); } }
+    }
+
+    const when = (iso) => {
+      const date = new Date(iso);
+      return isNaN(date) ? '' : date.toLocaleString(undefined,
+        { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    };
+
+    function render() {
+      const term = (search.value || '').trim().toLowerCase();
+      const shown = term
+        ? tickets.filter(t => (t.subject + ' ' + t.reference + ' ' + (t.topicLabel || '')).toLowerCase().includes(term))
+        : tickets;
+
+      el('ticketCount').textContent = String(tickets.length);
+      list.innerHTML = '';
+      empty.hidden = shown.length > 0;
+
+      shown.forEach((ticket) => {
+        const card = document.createElement('article');
+        card.className = 'portal-card support-ticket';
+        card.setAttribute('data-reveal', '');
+
+        const head = document.createElement('div');
+        head.className = 'support-ticket-head';
+
+        const heading = document.createElement('div');
+        const subject = document.createElement('strong');
+        subject.textContent = ticket.subject;
+        const meta = document.createElement('small');
+        meta.textContent = `${ticket.reference} · ${ticket.topicLabel || 'Support'} · opened ${when(ticket.createdAt)}`;
+        heading.appendChild(subject);
+        heading.appendChild(meta);
+
+        const status = document.createElement('span');
+        status.className = 'status ' + (ticket.status === 'closed' ? 'status-unverified' : 'status-under_review');
+        status.textContent = ticket.status === 'closed' ? 'Closed' : 'Open';
+
+        head.appendChild(heading);
+        head.appendChild(status);
+        card.appendChild(head);
+
+        const thread = document.createElement('div');
+        thread.className = 'support-thread';
+        (ticket.messages || []).forEach((entry) => {
+          const row = document.createElement('div');
+          row.className = 'support-msg' + (entry.from === 'staff' ? ' is-staff' : '');
+          const who = document.createElement('small');
+          who.textContent = (entry.from === 'staff' ? 'HarbourX support' : 'You') + ' · ' + when(entry.at);
+          const body = document.createElement('p');
+          body.textContent = entry.body;
+          row.appendChild(who);
+          row.appendChild(body);
+          thread.appendChild(row);
+        });
+        card.appendChild(thread);
+
+        if (ticket.status !== 'closed') {
+          const replyRow = document.createElement('div');
+          replyRow.className = 'support-reply';
+
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.placeholder = 'Add a reply…';
+          input.maxLength = 4000;
+
+          const send = document.createElement('button');
+          send.className = 'wide-secondary';
+          send.type = 'button';
+          send.textContent = 'Reply';
+          send.setAttribute('data-ripple', '');
+
+          const close = document.createElement('button');
+          close.className = 'wide-secondary';
+          close.type = 'button';
+          close.textContent = 'Close';
+          close.setAttribute('data-ripple', '');
+
+          send.addEventListener('click', () => busy(send, async () => {
+            const result = await call('reply', { id: ticket.id, body: input.value.trim() });
+            if (!result.success) {
+              if (window.hxMotion) window.hxMotion.toast(result.message || 'Unable to reply.', 'error');
+              return;
+            }
+            input.value = '';
+            await load();
+            if (window.hxMotion) window.hxMotion.toast('Reply sent.', 'success');
+          }));
+
+          close.addEventListener('click', () => busy(close, async () => {
+            const result = await call('close', { id: ticket.id });
+            if (result.success) {
+              await load();
+              if (window.hxMotion) window.hxMotion.toast('Ticket closed.', 'success');
+            }
+          }));
+
+          replyRow.appendChild(input);
+          replyRow.appendChild(send);
+          replyRow.appendChild(close);
+          card.appendChild(replyRow);
+        }
+
+        list.appendChild(card);
+      });
+
+      if (window.hxMotion) window.hxMotion.scan(list);
+    }
+
+    async function load() {
+      const result = await call('list');
+      if (!result.success) return;
+      tickets = result.tickets || [];
+
+      if (!topicSelect.options.length) {
+        Object.entries(result.topics || {}).forEach(([value, label]) => {
+          const option = document.createElement('option');
+          option.value = value;
+          option.textContent = label;
+          topicSelect.appendChild(option);
+        });
+      }
+      render();
+    }
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      busy(submitBtn, async () => {
+        say('');
+        const result = await call('create', {
+          topic: topicSelect.value,
+          subject: el('ticketSubject').value.trim(),
+          body: bodyInput.value.trim()
+        });
+        if (!result.success) { say(result.message || 'Unable to open the ticket.', 'error'); return; }
+        form.reset();
+        el('bodyCount').textContent = '0';
+        say(result.message, 'success');
+        await load();
+      });
+    });
+
+    bodyInput.addEventListener('input', () => { el('bodyCount').textContent = String(bodyInput.value.length); });
+    search.addEventListener('input', render);
+    el('portalMenu').addEventListener('click', () => document.body.classList.toggle('nav-open'));
+
+    load();
+  })();
+  </script>
+</body>
+</html>
