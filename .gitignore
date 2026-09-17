@@ -1,5 +1,5 @@
 .playwright-mcp/
-node_modules/
+node_modules
 
 # Runtime client data — contains plaintext passwords and KYC/PII.
 # Never commit these; they live on the server only.

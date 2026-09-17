@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HarbourX · Statements</title>
+  <meta name="description" content="Monthly HarbourX account statements, viewable here and downloadable as PDF.">
+  <meta name="color-scheme" content="dark">
+  <script src="theme.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap"></noscript>
+  <link rel="stylesheet" href="hx-motion.css">
+  <link rel="stylesheet" href="portal.css">
+  <script src="hx-motion.js" defer></script>
+</head>
+<body>
+  <div class="portal-shell">
+    <aside class="portal-sidebar" id="portalSidebar">
+      <a class="portal-brand" href="dashboard.html"><svg viewBox="0 0 42 42" aria-hidden="true"><path d="M6 29 21 9l15 20"/><path d="m13 33 8-11 8 11"/></svg><strong>HarbourX</strong></a>
+      <nav class="portal-nav" aria-label="Primary navigation">
+        <a href="dashboard.html"><i>⌂</i>Overview</a><a href="dashboard.html#portfolio"><i>◔</i>Portfolio</a><a href="dashboard.html#transactions"><i>☷</i>Transactions</a><a href="dashboard.html"><i>↓</i>Deposit</a><a href="dashboard.html"><i>↑</i>Withdraw</a><a class="active" href="statements.html"><i>▤</i>Statements</a><a href="change_password.php"><i>◇</i>Security</a><a href="support.html"><i>?</i>Support</a>
+      </nav>
+      <div class="portal-rail-note"><strong>Demo account</strong><p>Statements are generated from this account's recorded activity.</p></div>
+    </aside>
+
+    <div class="portal-workspace">
+      <header class="portal-topbar">
+        <button class="portal-menu" id="portalMenu" type="button" aria-label="Open navigation">☰</button>
+        <label class="portal-search"><span>⌕</span><input type="search" id="statementSearch" placeholder="Search periods…"></label>
+        <span class="portal-demo-pill">ⓘ Demo account — sample data only.</span>
+        <div class="portal-user"><span class="portal-avatar" id="userInitials">HX</span><div><strong id="userName">HarbourX client</strong><small>Statements</small></div></div>
+      </header>
+
+      <main class="portal-main">
+        <div class="portal-breadcrumb"><a href="dashboard.html">Dashboard</a> &nbsp;›&nbsp; Statements</div>
+        <div class="portal-heading">
+          <div><h1>Statements</h1><p>One statement per month, built from your recorded activity. Download any of them as a PDF.</p></div>
+          <a class="portal-back" href="dashboard.html">← Back to dashboard</a>
+        </div>
+
+        <div class="statement-layout">
+          <section class="statement-index">
+            <div class="statement-index-head">
+              <h2>Periods</h2>
+              <span class="support-count" id="periodCount">0</span>
+            </div>
+            <div id="periodList" class="hx-stagger"></div>
+            <div class="support-empty" id="periodEmpty" hidden>
+              <strong>No statements yet</strong>
+              <p>A statement appears here for each month with activity on the account.</p>
+            </div>
+          </section>
+
+          <section class="portal-card statement-detail" id="statementDetail" hidden data-reveal>
+            <div class="statement-detail-head">
+              <div>
+                <h2 id="detailPeriod">—</h2>
+                <p id="detailReference">—</p>
+              </div>
+              <a class="submit-primary statement-download" id="downloadPdf" href="#" download>Download PDF</a>
+            </div>
+
+            <div class="statement-figures" id="detailFigures"></div>
+
+            <div class="statement-note" id="detailNote" hidden></div>
+
+            <div class="statement-table" role="table" aria-label="Transactions in this period">
+              <div class="statement-row statement-row-head" role="row">
+                <span role="columnheader">Date</span>
+                <span role="columnheader">Description</span>
+                <span role="columnheader">Status</span>
+                <span role="columnheader">Amount</span>
+              </div>
+              <div id="detailRows"></div>
+            </div>
+          </section>
+        </div>
+
+        <footer class="portal-footer">
+          <span>© 2026 HarbourX</span>
+          <nav aria-label="Legal"><a href="#terms">Terms</a><a href="#privacy">Privacy</a><a href="#risk">Risk disclosure</a></nav>
+        </footer>
+      </main>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    let currentUser = null;
+    try {
+      const raw = localStorage.getItem('user');
+      if (!raw) { window.location.replace('login.html'); return; }
+      currentUser = JSON.parse(raw);
+      if (!currentUser || !currentUser.email) { window.location.replace('login.html'); return; }
+    } catch (e) {
+      window.location.replace('login.html');
+      return;
+    }
+
+    const el = (id) => document.getElementById(id);
+    const list = el('periodList'), empty = el('periodEmpty'), detail = el('statementDetail');
+    const search = el('statementSearch');
+
+    let statements = [];
+    let account = {};
+    let selected = null;
+
+    const name = String(currentUser.name || currentUser.email);
+    el('userName').textContent = name;
+    el('userInitials').textContent =
+      name.trim().split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase() || 'HX';
+
+    const trimZeros = (n) => String(Number(n).toFixed(8)).replace(/\.?0+$/, '') || '0';
+    const money = (n) => Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    async function load() {
+      const response = await fetch('statements.php?action=list', { cache: 'no-store' });
+      if (response.status === 401) { window.location.replace('login.html'); return; }
+      const result = await response.json();
+      if (!result.success) return;
+
+      statements = result.statements || [];
+      account = result.account || {};
+      renderIndex();
+      if (statements.length) select(statements[0].period);
+    }
+
+    function renderIndex() {
+      const term = (search.value || '').trim().toLowerCase();
+      const shown = term ? statements.filter(s => s.label.toLowerCase().includes(term) || s.period.includes(term)) : statements;
+
+      el('periodCount').textContent = String(statements.length);
+      list.innerHTML = '';
+      empty.hidden = shown.length > 0;
+
+      shown.forEach((s) => {
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'statement-period' + (selected === s.period ? ' is-active' : '');
+        card.setAttribute('data-reveal', '');
+        card.setAttribute('data-period', s.period);
+
+        const title = document.createElement('strong');
+        title.textContent = s.label;
+        const meta = document.createElement('small');
+        meta.textContent = `${s.count} transaction${s.count === 1 ? '' : 's'} · ${s.reference}`;
+        card.appendChild(title);
+        card.appendChild(meta);
+
+        card.addEventListener('click', () => select(s.period));
+        list.appendChild(card);
+      });
+
+      if (window.hxMotion) window.hxMotion.scan(list);
+    }
+
+    async function select(period) {
+      selected = period;
+      renderIndex();
+
+      const response = await fetch('statements.php?action=view&period=' + encodeURIComponent(period), { cache: 'no-store' });
+      if (response.status === 401) { window.location.replace('login.html'); return; }
+      const result = await response.json();
+      if (!result.success) return;
+
+      const s = result.statement;
+      detail.hidden = false;
+      el('detailPeriod').textContent = s.label;
+      el('detailReference').textContent = `${s.reference} · ${account.email || ''}`;
+      el('downloadPdf').href = 'statements.php?action=pdf&period=' + encodeURIComponent(s.period);
+
+      const figures = [
+        ['Transactions', String(s.count)],
+        ['Bitcoin in', trimZeros(s.btcIn) + ' BTC'],
+        ['Bitcoin out', trimZeros(s.btcOut) + ' BTC'],
+        ['Cash in', money(s.fiatIn)],
+        ['Cash out', money(s.fiatOut)]
+      ];
+      const box = el('detailFigures');
+      box.innerHTML = '';
+      figures.forEach(([label, value]) => {
+        const cell = document.createElement('div');
+        const l = document.createElement('small');
+        l.textContent = label;
+        const v = document.createElement('strong');
+        v.textContent = value;
+        cell.appendChild(l);
+        cell.appendChild(v);
+        box.appendChild(cell);
+      });
+
+      // Say so rather than quietly leaving figures out of the totals.
+      const note = el('detailNote');
+      if (s.unparsed > 0) {
+        note.hidden = false;
+        note.textContent = `${s.unparsed} transaction${s.unparsed === 1 ? '' : 's'} in this period record an amount this summary could not total. ${s.unparsed === 1 ? 'It is' : 'They are'} listed below exactly as recorded and not counted in the figures above.`;
+      } else {
+        note.hidden = true;
+      }
+
+      const rows = el('detailRows');
+      rows.innerHTML = '';
+      s.transactions.forEach((tx) => {
+        const row = document.createElement('div');
+        row.className = 'statement-row';
+        row.setAttribute('role', 'row');
+        [
+          tx.date,
+          tx.details ? `${tx.type} — ${tx.details}` : tx.type,
+          tx.status,
+          tx.amount
+        ].forEach((value, i) => {
+          const cell = document.createElement('span');
+          cell.setAttribute('role', 'cell');
+          if (i === 3) cell.className = 'statement-amount';
+          cell.textContent = value;
+          // The columns are narrow and these ellipsise; keep the whole value
+          // reachable rather than only most of it.
+          cell.title = value;
+          row.appendChild(cell);
+        });
+        rows.appendChild(row);
+      });
+    }
+
+    search.addEventListener('input', renderIndex);
+    el('portalMenu').addEventListener('click', () => document.body.classList.toggle('nav-open'));
+
+    load();
+  })();
+  </script>
+</body>
+</html>

@@ -55,6 +55,9 @@ jobs:
       - name: Bitcoin address validation (BIP-173 / BIP-350 vectors)
         run: php tests/btc-test.php
 
+      - name: Statement figures (amount parser, monthly grouping)
+        run: php tests/statements-test.php
+
       - name: No client data committed
         run: |
           # data/users.json holds plaintext passwords and KYC details; it must
@@ -115,6 +118,9 @@ jobs:
 
       - name: Bitcoin withdrawal flow
         run: node tests/btc-withdrawal-test.js
+
+      - name: Statements page and PDF download
+        run: node tests/statements-page-test.js
 
       - name: Publish screenshots
         if: always()

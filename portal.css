@@ -667,3 +667,105 @@ input, select, textarea {
   .support-reply .wide-secondary { width: 100%; }
   .support-ticket-head { flex-direction: column; }
 }
+
+/* ============================================================================
+   Statements
+   ========================================================================== */
+
+.statement-layout { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 15px; align-items: start; }
+
+.statement-index-head { display: flex; align-items: center; gap: 12px; margin: 2px 2px 12px; }
+.statement-index-head h2 { margin: 0; color: var(--hx-text); font-size: 15px; }
+
+.statement-period {
+  width: 100%;
+  display: block;
+  margin-bottom: 9px;
+  padding: 13px 15px;
+  border: 1px solid var(--hx-line);
+  border-radius: 11px;
+  background: #0b2233;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease),
+    transform var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease),
+    background-color var(--hx-dur-fast, 160ms) var(--hx-ease-out, ease);
+}
+.statement-period:hover { border-color: rgba(32,215,208,.5); transform: translateX(2px); }
+.statement-period.is-active { border-color: var(--hx-teal); background: linear-gradient(135deg, rgba(32,215,208,.12), rgba(13,42,58,.9)); }
+.statement-period strong { display: block; color: var(--hx-text); font-size: 13px; }
+.statement-period small { display: block; margin-top: 4px; color: #7f9caf; font-size: 10px; }
+
+.statement-detail { padding: 22px; }
+.statement-detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 18px; }
+.statement-detail-head h2 { margin: 0; color: var(--hx-text); font-size: 20px; letter-spacing: -.02em; }
+.statement-detail-head p { margin: 4px 0 0; color: #8aa6b7; font-size: 11px; }
+.statement-download {
+  width: auto;
+  min-height: 40px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 18px;
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.statement-figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 1px;
+  margin-bottom: 16px;
+  overflow: hidden;
+  border: 1px solid var(--hx-line);
+  border-radius: 10px;
+  background: var(--hx-line);
+}
+.statement-figures div { padding: 12px 14px; background: #0a2132; }
+.statement-figures small { display: block; color: #7f9caf; font-size: 9px; }
+.statement-figures strong { display: block; margin-top: 5px; color: var(--hx-text); font-size: 13px; font-variant-numeric: tabular-nums; }
+
+/* A figure that could not be totalled is said out loud, not quietly dropped. */
+.statement-note {
+  margin-bottom: 16px;
+  padding: 11px 13px;
+  border: 1px solid rgba(246,184,63,.28);
+  border-radius: 9px;
+  background: rgba(246,184,63,.08);
+  color: #dbbd7d;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.statement-table { overflow: hidden; border: 1px solid var(--hx-line); border-radius: 10px; }
+.statement-row {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) 96px 150px;
+  gap: 12px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--hx-line-soft);
+  color: #c4d7e1;
+  font-size: 11px;
+}
+.statement-row:last-child { border-bottom: 0; }
+.statement-row-head { background: rgba(126,190,217,.06); color: #8aa6b7; font-size: 9px; font-weight: 750; text-transform: uppercase; letter-spacing: .04em; }
+.statement-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.statement-amount {
+  font-family: var(--hx-font-mono, ui-monospace, Menlo, Consolas, monospace);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--hx-text);
+}
+
+@media (max-width: 1040px) {
+  .statement-layout { grid-template-columns: 1fr; }
+}
+@media (max-width: 620px) {
+  .statement-detail-head { flex-direction: column; }
+  .statement-download { width: 100%; justify-content: center; }
+  .statement-row { grid-template-columns: 1fr 1fr; gap: 4px 12px; }
+  .statement-row-head { display: none; }
+  .statement-amount { text-align: left; }
+}

@@ -99,7 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <aside class="portal-sidebar" id="portalSidebar">
     <a class="portal-brand" href="dashboard.html"><svg viewBox="0 0 42 42" aria-hidden="true"><path d="M6 29 21 9l15 20"/><path d="m13 33 8-11 8 11"/></svg><strong>HarbourX</strong></a>
     <nav class="portal-nav" aria-label="Primary navigation">
-      <a href="dashboard.html"><i>⌂</i>Overview</a><a href="dashboard.html#portfolio"><i>◔</i>Portfolio</a><a href="dashboard.html#transactions"><i>☷</i>Transactions</a><a href="dashboard.html" data-dashboard-action="deposit"><i>↓</i>Deposit</a><a href="dashboard.html" data-dashboard-action="withdraw"><i>↑</i>Withdraw</a><a href="dashboard.html#transactions"><i>▤</i>Statements</a><a class="active" href="change_password.php"><i>◇</i>Security</a><a href="support.html"><i>?</i>Support</a>
+      <a href="dashboard.html"><i>⌂</i>Overview</a><a href="dashboard.html#portfolio"><i>◔</i>Portfolio</a><a href="dashboard.html#transactions"><i>☷</i>Transactions</a><a href="dashboard.html" data-dashboard-action="deposit"><i>↓</i>Deposit</a><a href="dashboard.html" data-dashboard-action="withdraw"><i>↑</i>Withdraw</a><a href="statements.html"><i>▤</i>Statements</a><a class="active" href="change_password.php"><i>◇</i>Security</a><a href="support.html"><i>?</i>Support</a>
     </nav>
     <div class="portal-rail-note"><strong>Demo account</strong><p>Security information on this page is provided for demonstration.</p></div>
   </aside>
