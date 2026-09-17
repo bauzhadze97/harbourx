@@ -79,10 +79,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .portal-nav a.active::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 2px; border-radius: 2px; background: var(--hx-teal); }
 .portal-nav i { width: 20px; color: #94b5cb; font-size: 19px; font-style: normal; text-align: center; }
 .portal-nav a.active i { color: var(--hx-teal); }
-.portal-rail-note { margin: auto 17px 20px; padding: 13px; border: 1px solid rgba(246,184,63,.22); border-radius: 10px; background: rgba(246,184,63,.08); }
-.portal-rail-note strong { color: var(--hx-amber); font-size: 11px; }
-.portal-rail-note p { margin: 6px 0 0; color: #839fae; font-size: 10px; line-height: 1.5; }
-
 .portal-workspace { min-height: 100vh; margin-left: 226px; }
 .portal-topbar {
   position: sticky;
@@ -102,8 +98,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .portal-search span { color: #7c9baf; }
 .portal-search input { width: 100%; border: 0; outline: 0; background: transparent; color: var(--hx-text); font-size: 12px; }
 .portal-search input::placeholder { color: #7f9caf; }
-.portal-demo-pill { margin-left: auto; padding: 8px 12px; border: 1px solid rgba(246,184,63,.32); border-radius: 999px; background: rgba(246,184,63,.1); color: var(--hx-amber); font-size: 10px; font-weight: 700; white-space: nowrap; }
-.portal-user { display: flex; align-items: center; gap: 10px; padding-left: 16px; border-left: 1px solid rgba(110,174,203,.16); }
+.portal-user { margin-left: auto; display: flex; align-items: center; gap: 10px; padding-left: 16px; border-left: 1px solid rgba(110,174,203,.16); }
 .portal-avatar { width: 39px; height: 39px; display: grid; place-items: center; border-radius: 50%; background: linear-gradient(135deg,#17657e,#25beb8); color: white; font-size: 13px; font-weight: 800; }
 .portal-user strong, .portal-user small { display: block; }
 .portal-user strong { color: var(--hx-text); font-size: 12px; }
@@ -237,7 +232,6 @@ input[readonly] { color: #86a2b3; background: #091d2c; }
   .portal-topbar { height: 64px; padding: 0 14px; }
   .portal-menu { width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid var(--hx-line); border-radius: 8px; background: #0a2132; color: white; }
   .portal-search { flex: 1; width: auto; }
-  .portal-demo-pill { display: none; }
   .portal-user > div:last-child { display: none; }
   .portal-main { padding: 20px 14px 0; }
   .portal-heading { align-items: flex-start; }

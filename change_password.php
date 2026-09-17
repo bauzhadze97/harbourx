@@ -101,14 +101,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <nav class="portal-nav" aria-label="Primary navigation">
       <a href="dashboard.html"><i>⌂</i>Overview</a><a href="dashboard.html#portfolio"><i>◔</i>Portfolio</a><a href="dashboard.html#transactions"><i>☷</i>Transactions</a><a href="dashboard.html" data-dashboard-action="deposit"><i>↓</i>Deposit</a><a href="dashboard.html" data-dashboard-action="withdraw"><i>↑</i>Withdraw</a><a href="statements.html"><i>▤</i>Statements</a><a class="active" href="change_password.php"><i>◇</i>Security</a><a href="support.html"><i>?</i>Support</a>
     </nav>
-    <div class="portal-rail-note"><strong>Demo account</strong><p>Security information on this page is provided for demonstration.</p></div>
   </aside>
 
   <div class="portal-workspace">
     <header class="portal-topbar">
       <button class="portal-menu" id="portalMenu" type="button" aria-label="Open navigation">☰</button>
       <label class="portal-search"><span>⌕</span><input type="search" placeholder="Search security settings…"></label>
-      <span class="portal-demo-pill">ⓘ Demo account — sample data only.</span>
       <div class="portal-user"><span class="portal-avatar" id="userInitials">HX</span><div><strong id="userName">HarbourX client</strong><small>Protected account</small></div></div>
     </header>
 

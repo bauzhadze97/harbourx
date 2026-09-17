@@ -332,7 +332,6 @@ if ($period['unparsed'] > 0) {
 $footY = HxPdf::HEIGHT - 52;
 $pdf->rule($margin, $footY, $width);
 $pdf->text('Generated ' . gmdate('j F Y H:i') . ' UTC · HarbourX · harbourx.org', $margin, $footY + 14, ['size' => 8, 'colour' => $muted]);
-$pdf->text('Demo account — sample data only.', $margin, $footY + 14, ['size' => 8, 'colour' => $muted, 'align' => 'right', 'width' => $width]);
 
 $bytes = $pdf->render();
 $filename = 'HarbourX-statement-' . $period['period'] . '.pdf';

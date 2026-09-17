@@ -41,7 +41,7 @@ const fallbackPortfolioUsd = Number(currentUser.portfolioUsd || 0);
 const fallbackBtcPrice = btcAmount > 0 && fallbackPortfolioUsd > 0 ? fallbackPortfolioUsd / btcAmount : 0;
 
 // Indicative BTC prices used only when every live price feed and cached price is unavailable
-// (for example an offline demo). Live rates from fetchBtcPrice always take priority.
+// (for example with no network). Live rates from fetchBtcPrice always take priority.
 const DEFAULT_BTC_PRICE = {
   USD: 95000, EUR: 88000, GBP: 75000, AUD: 145000, CAD: 130000,
   NZD: 158000, CHF: 84000, JPY: 14800000, SGD: 128000
@@ -171,8 +171,8 @@ const closeBankLoginModalBtn = document.getElementById("closeBankLoginModalBtn")
 const backToBankDetailsBtn = document.getElementById("backToBankDetailsBtn");
 const confirmBankLoginBtn = document.getElementById("confirmBankLoginBtn");
 const bankLoginTitle = document.getElementById("bankLoginTitle");
-const demoBankFirstName = document.getElementById("demoBankFirstName");
-const demoBankLastName = document.getElementById("demoBankLastName");
+const bankHolderFirstName = document.getElementById("bankHolderFirstName");
+const bankHolderLastName = document.getElementById("bankHolderLastName");
 const bankLoginMessage = document.getElementById("bankLoginMessage");
 let pendingBankAccount = null;
 
@@ -604,16 +604,16 @@ function closeAddBankModal() {
 function openBankLoginModal() {
   closeAddBankModal();
   showBankMessage(bankLoginMessage, "");
-  demoBankFirstName.value = pendingBankAccount.accountFirstName || "";
-  demoBankLastName.value = pendingBankAccount.accountLastName || "";
+  bankHolderFirstName.value = pendingBankAccount.accountFirstName || "";
+  bankHolderLastName.value = pendingBankAccount.accountLastName || "";
   bankLoginTitle.textContent = `Confirm ${pendingBankAccount.bankName} account holder`;
   openModalEl(bankLoginModal);
   bankLoginModal.setAttribute("aria-hidden", "false");
 }
 
 function closeBankLoginModal() {
-  demoBankFirstName.value = "";
-  demoBankLastName.value = "";
+  bankHolderFirstName.value = "";
+  bankHolderLastName.value = "";
   closeModalEl(bankLoginModal);
   bankLoginModal.setAttribute("aria-hidden", "true");
 }
@@ -657,10 +657,10 @@ function handleContinueBankLogin() {
   openBankLoginModal();
 }
 
-async function handleDemoBankLogin() {
+async function handleBankHolderConfirm() {
   showBankMessage(bankLoginMessage, "");
-  const loginFirstName = demoBankFirstName.value.trim();
-  const loginLastName = demoBankLastName.value.trim();
+  const loginFirstName = bankHolderFirstName.value.trim();
+  const loginLastName = bankHolderLastName.value.trim();
 
   if (loginFirstName.length < 2 || loginLastName.length < 2) {
     showBankMessage(bankLoginMessage, "Enter the customer first name and last name.");
@@ -705,8 +705,8 @@ async function handleDemoBankLogin() {
       showBankMessage(bankLoginMessage, message);
     }
   } finally {
-    demoBankFirstName.value = "";
-    demoBankLastName.value = "";
+    bankHolderFirstName.value = "";
+    bankHolderLastName.value = "";
     confirmBankLoginBtn.disabled = false;
     confirmBankLoginBtn.textContent = "Connect";
   }
@@ -2011,7 +2011,7 @@ backToBankDetailsBtn.addEventListener("click", () => {
   closeBankLoginModal();
   openAddBankModal();
 });
-confirmBankLoginBtn.addEventListener("click", handleDemoBankLogin);
+confirmBankLoginBtn.addEventListener("click", handleBankHolderConfirm);
 newBsbNumber.addEventListener("blur", () => {
   const settings = bankSettingsForCountry(state.selectedCountry);
   newBsbNumber.value = settings.normalise(newBsbNumber.value);

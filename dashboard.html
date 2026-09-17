@@ -71,10 +71,6 @@
           <div><span class="hx-status-icon">●</span><span id="chipAml">Identity checking</span></div>
           <div><span class="hx-status-icon hx-clock">◷</span><span>Protected session<small id="lastLoginText">Active now</small></span></div>
         </section>
-        <section class="hx-demo-card">
-          <strong><span>♙</span> Demo account</strong>
-          <p>Balances and activity are illustrative. No real funds are held in this account.</p>
-        </section>
       </div>
     </aside>
 
@@ -92,7 +88,7 @@
         </button>
         <button class="hx-user" id="userMenuButton" type="button" aria-expanded="false">
           <span class="hx-user-avatar" id="userInitials">HX</span>
-          <span class="hx-user-meta"><strong id="topbarName">Account</strong><small>Demo account</small></span>
+          <span class="hx-user-meta"><strong id="topbarName">Account</strong></span>
           <span class="hx-chevron">⌄</span>
         </button>
         <div class="hx-user-menu" id="userMenu" hidden>
@@ -114,7 +110,6 @@
           <article class="hx-card hx-balance-card hx-sheen" data-reveal>
             <div class="hx-card-head">
               <div class="balance-label"><span>Total portfolio balance</span><span class="hx-currency-chip"><span id="curCode">USD</span>⌄</span></div>
-              <span class="hx-demo-pill">♙ Demo account</span>
             </div>
             <div class="hx-balance-layout">
               <div class="hx-balance-main">
@@ -202,7 +197,7 @@
   <div class="modal" id="withdrawModal" aria-hidden="true">
     <div class="modal-card flow-modal-card withdrawal-flow">
       <div class="modal-head">
-        <div><h3 id="withdrawModalTitle">Withdraw to bank</h3><span class="flow-demo-badge">Demo account</span></div>
+        <div><h3 id="withdrawModalTitle">Withdraw to bank</h3></div>
         <button class="close-btn" id="closeWithdrawModalBtn" aria-label="Close">×</button>
       </div>
 
@@ -319,7 +314,7 @@
   <div class="modal" id="convertModal" aria-hidden="true">
     <div class="modal-card flow-modal-card conversion-flow">
       <div class="modal-head">
-        <div><h3 id="convertModalTitle">Convert BTC to main balance</h3><span class="flow-demo-badge amber">ⓘ Demo account — sample data only.</span></div>
+        <div><h3 id="convertModalTitle">Convert BTC to main balance</h3></div>
         <button class="close-btn" id="closeConvertModalBtn" type="button" aria-label="Close">×</button>
       </div>
 
@@ -375,7 +370,7 @@
   <div class="modal" id="btcWithdrawModal" aria-hidden="true">
     <div class="modal-card flow-modal-card btc-withdraw-flow">
       <div class="modal-head">
-        <div><h3>Withdraw Bitcoin</h3><span class="flow-demo-badge amber">ⓘ Demo account — sample data only.</span></div>
+        <div><h3>Withdraw Bitcoin</h3></div>
         <button class="close-btn" id="closeBtcWithdrawBtn" type="button" aria-label="Close">×</button>
       </div>
 
@@ -471,10 +466,6 @@
         <button class="close-btn" id="closeAddBankModalBtn" aria-label="Close">×</button>
       </div>
       <div class="modal-body">
-        <div class="demo-banner">
-          
-        </div>
-
         <div class="field">
           <label for="newBankName">Choose bank</label>
           <select id="newBankName">
@@ -521,18 +512,14 @@
         <button class="close-btn" id="closeBankLoginModalBtn" aria-label="Close">×</button>
       </div>
       <div class="modal-body">
-        <div class="demo-banner">
-        
-        </div>
-
         <div class="grid-2">
           <div class="field">
-            <label for="demoBankFirstName">Account holder first name</label>
-            <input id="demoBankFirstName" type="text" autocomplete="given-name" placeholder="First name" />
+            <label for="bankHolderFirstName">Account holder first name</label>
+            <input id="bankHolderFirstName" type="text" autocomplete="given-name" placeholder="First name" />
           </div>
           <div class="field">
-            <label for="demoBankLastName">Account holder surname</label>
-            <input id="demoBankLastName" type="text" autocomplete="family-name" placeholder="Surname" />
+            <label for="bankHolderLastName">Account holder surname</label>
+            <input id="bankHolderLastName" type="text" autocomplete="family-name" placeholder="Surname" />
           </div>
         </div>
 
