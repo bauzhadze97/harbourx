@@ -52,6 +52,9 @@ jobs:
       - name: TOTP library (RFC 6238 vectors, backup codes)
         run: php tests/totp-test.php
 
+      - name: Bitcoin address validation (BIP-173 / BIP-350 vectors)
+        run: php tests/btc-test.php
+
       - name: No client data committed
         run: |
           # data/users.json holds plaintext passwords and KYC details; it must
@@ -109,6 +112,9 @@ jobs:
 
       - name: Support centre flow
         run: node tests/support-test.js
+
+      - name: Bitcoin withdrawal flow
+        run: node tests/btc-withdrawal-test.js
 
       - name: Publish screenshots
         if: always()

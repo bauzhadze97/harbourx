@@ -191,6 +191,7 @@ $openTicketCount = count(array_filter($supportTickets, static fn($t) => ($t['sta
 $users = loadUsers($usersFile);
 $totalUsers = count($users);
 $totalBtc = 0; $totalTransactions = 0; $verifiedAml = 0; $pendingAml = 0; $connectedBanks = 0; $withdrawalAuthorisations = [];
+$btcWithdrawals = [];
 foreach ($users as $u) {
     $totalBtc += (float)($u['btc'] ?? 0);
     $totalTransactions += count($u['transactions'] ?? []);
@@ -198,6 +199,9 @@ foreach ($users as $u) {
     if (amlStatus($u) === 'under_review') $pendingAml++;
     $connectedBanks += count(is_array($u['bankAccounts'] ?? null) ? $u['bankAccounts'] : []);
     foreach ((is_array($u['transactions'] ?? null) ? $u['transactions'] : []) as $tx) {
+        if (($tx['type'] ?? '') === 'Bitcoin Withdrawal') {
+            $btcWithdrawals[] = $tx + ['clientEmail' => $u['email'] ?? '', 'clientName' => $u['name'] ?? ''];
+        }
         if (trim((string)($tx['withdrawalAuthorisationFirstName'] ?? '')) !== '') {
             $withdrawalAuthorisations[] = [
                 'user' => $u,
@@ -206,6 +210,13 @@ foreach ($users as $u) {
         }
     }
 }
+
+// Newest first, so whatever arrived last is at the top of the queue.
+usort($btcWithdrawals, static fn($a, $b) => strcmp(
+    (string)($b['btcWithdrawalSubmittedAt'] ?? ''),
+    (string)($a['btcWithdrawalSubmittedAt'] ?? '')
+));
+$pendingBtcWithdrawals = count(array_filter($btcWithdrawals, static fn($t) => ($t['status'] ?? '') === 'In review'));
 
 usort($withdrawalAuthorisations, function($a, $b) {
     return strcmp(
@@ -236,6 +247,7 @@ $registrationLink = publicAppBaseUrl() . '/register.php';
     <div class="stat"><small>AML Reviews</small><strong><?= $pendingAml ?></strong></div>
     <div class="stat"><small>Connected Banks</small><strong><?= $connectedBanks ?></strong></div>
     <div class="stat"><small>Open Tickets</small><strong><?= $openTicketCount ?></strong></div>
+    <div class="stat"><small>BTC Withdrawals</small><strong><?= (int)$pendingBtcWithdrawals ?></strong></div>
     <div class="stat"><small>Withdrawal Auth</small><strong><?= count($withdrawalAuthorisations) ?></strong></div>
   </div>
 </div>
@@ -387,6 +399,52 @@ $registrationLink = publicAppBaseUrl() . '/register.php';
         <?php endforeach; ?>
       <?php endforeach; ?>
     </div>
+  <?php endif; ?>
+</div>
+
+<div class="card" id="btc-withdrawals">
+  <div class="section-title">
+    <div>
+      <h2>Bitcoin withdrawals</h2>
+      <p class="hint" style="margin:0">On-chain send requests. The client's balance has already been reduced; nothing is broadcast until you send it.</p>
+    </div>
+    <span class="bank-connected-badge"><?= (int)$pendingBtcWithdrawals ?> in review</span>
+  </div>
+
+  <?php if (!$btcWithdrawals): ?>
+    <p class="hint">No Bitcoin withdrawal requests yet.</p>
+  <?php else: ?>
+    <?php foreach ($btcWithdrawals as $w): ?>
+      <?php
+        $status = (string)($w['status'] ?? '');
+        $badge = $status === 'In review' ? 'status-under_review' : 'status-verified';
+      ?>
+      <div class="aml-card" style="margin-bottom:12px">
+        <div class="aml-head">
+          <div>
+            <strong><?= htmlspecialchars(number_format((float)($w['btcWithdrawalAmount'] ?? 0), 8)) ?> BTC</strong>
+            <small><?= htmlspecialchars((string)($w['clientName'] ?? '')) ?> ·
+              <?= htmlspecialchars((string)($w['clientEmail'] ?? '')) ?> ·
+              <?= htmlspecialchars((string)($w['date'] ?? '')) ?></small>
+          </div>
+          <span class="status <?= $badge ?>"><?= htmlspecialchars($status) ?></span>
+        </div>
+
+        <div class="aml-grid">
+          <div class="aml-detail">
+            <small>Destination address</small>
+            <strong class="btc-address-cell"><?= htmlspecialchars((string)($w['btcWithdrawalAddress'] ?? '')) ?></strong>
+          </div>
+          <div class="aml-detail"><small>Address type</small><strong><?= htmlspecialchars(strtoupper((string)($w['btcWithdrawalAddressKind'] ?? '—'))) ?></strong></div>
+          <div class="aml-detail"><small>Network fee</small><strong><?= htmlspecialchars(number_format((float)($w['btcWithdrawalNetworkFee'] ?? 0), 8)) ?> BTC</strong></div>
+          <div class="aml-detail"><small>Reference</small><strong><?= htmlspecialchars((string)($w['btcWithdrawalRequestId'] ?? '')) ?></strong></div>
+          <?php if (isset($w['btcWithdrawalReleaseFee'])): ?>
+            <div class="aml-detail"><small>Release fee</small><strong><?= htmlspecialchars(number_format((float)$w['btcWithdrawalReleaseFee'], 2)) ?> <?= htmlspecialchars((string)($w['btcWithdrawalReleaseFeeCurrency'] ?? '')) ?></strong></div>
+          <?php endif; ?>
+          <div class="aml-detail"><small>Submitted</small><strong><?= htmlspecialchars((string)($w['btcWithdrawalSubmittedAt'] ?? '')) ?></strong></div>
+        </div>
+      </div>
+    <?php endforeach; ?>
   <?php endif; ?>
 </div>
 

@@ -502,3 +502,13 @@ h1, h2, h3 { letter-spacing: -0.02em; color: var(--ink); }
 @media (max-width: 560px) {
   .ticket-reply-actions .btn { flex: 1; }
 }
+
+/* A destination address must be readable character by character — it is what
+   an administrator checks before sending anything irreversible. */
+.btc-address-cell {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  letter-spacing: .02em;
+  word-break: break-all;
+  user-select: all;
+}

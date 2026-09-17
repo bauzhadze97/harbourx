@@ -212,6 +212,14 @@
         </p>
 
         <div class="field flow-field">
+          <label>Send to</label>
+          <div class="seg source-cards" id="withdrawDestinationSeg">
+            <button type="button" class="seg-btn is-active" data-destination="bank"><strong>Bank account</strong><small>Local currency to a connected bank</small></button>
+            <button type="button" class="seg-btn" data-destination="btc"><strong>Bitcoin address</strong><small>Send BTC on-chain</small></button>
+          </div>
+        </div>
+
+        <div class="field flow-field">
           <label>Select source</label>
           <div class="seg source-cards" id="withdrawSourceSeg">
             <button type="button" class="seg-btn" data-source="balance"><strong id="withdrawBalanceSource">Main balance</strong><small>Withdraw from your available balance</small></button>
@@ -359,6 +367,64 @@
       <div class="modal-foot">
         <button class="secondary-btn" id="cancelConvertBtn" type="button">Cancel</button>
         <button class="primary-btn" data-ripple id="submitConvertBtn" type="button">Review conversion</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="btcWithdrawModal" aria-hidden="true">
+    <div class="modal-card flow-modal-card btc-withdraw-flow">
+      <div class="modal-head">
+        <div><h3>Withdraw Bitcoin</h3><span class="flow-demo-badge amber">ⓘ Demo account — sample data only.</span></div>
+        <button class="close-btn" id="closeBtcWithdrawBtn" type="button" aria-label="Close">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="flow-steps" id="btcWithdrawSteps" data-step="0" aria-label="Bitcoin withdrawal progress"><div class="active"><i>1</i><span>Amount</span></div><b></b><div><i>2</i><span>Address</span></div><b></b><div><i>3</i><span>Review</span></div></div>
+        <p class="hint flow-intro">Send Bitcoin from your balance to an address you control. Requests are reviewed before they are broadcast.</p>
+
+        <div class="asset-balance-panel"><span class="asset-balance-coin">₿</span><div><small>Available BTC balance</small><strong id="btcWithdrawAvailable">0.00000000 BTC</strong><em id="btcWithdrawAvailableFiat">≈ 0.00</em></div><button id="btcWithdrawMaxBtn" type="button">MAX</button></div>
+
+        <div class="field flow-field">
+          <label for="btcWithdrawAmount">Amount to send</label>
+          <div class="amount-input"><input id="btcWithdrawAmount" type="number" step="0.00000001" min="0" placeholder="0.00000000" /><span>BTC</span></div>
+          <button class="link-btn" id="btcWithdrawSendAllBtn" type="button">Send everything (fee comes out of the amount)</button>
+        </div>
+
+        <div class="field flow-field">
+          <label for="btcWithdrawAddress">Destination Bitcoin address</label>
+          <div class="btc-address-input">
+            <input id="btcWithdrawAddress" type="text" placeholder="bc1… or 1… / 3…" autocapitalize="off" autocorrect="off" spellcheck="false" autocomplete="off" />
+            <span class="btc-address-state" id="btcAddressState" aria-live="polite"></span>
+          </div>
+          <p class="btc-address-hint" id="btcAddressHint">Legacy, SegWit and Taproot addresses are accepted. The checksum is verified before anything is sent.</p>
+        </div>
+
+        <div class="summary-box flow-breakdown">
+          <div class="summary-row"><span>Amount</span><strong id="btcWithdrawAmountSummary">0.00000000 BTC</strong></div>
+          <div class="summary-row"><span>Network fee</span><strong id="btcWithdrawFeeSummary">0.00000000 BTC</strong></div>
+          <div class="summary-row flow-total"><span>Total debited</span><strong id="btcWithdrawTotalSummary">0.00000000 BTC</strong></div>
+          <div class="summary-row"><span>Remaining balance</span><strong id="btcWithdrawRemaining">0.00000000 BTC</strong></div>
+          <div class="summary-row" id="btcWithdrawFiatRow"><span>Approximate value</span><strong id="btcWithdrawFiat">0.00</strong></div>
+        </div>
+
+        <div class="btc-warning">
+          <span aria-hidden="true">⚠</span>
+          <p><strong>A Bitcoin send cannot be reversed.</strong> Check the address against the one you were given, character by character. If it is wrong the coins are gone and nobody can recover them.</p>
+        </div>
+
+        <div class="fraud-warning"><span>ⓘ</span><p><strong>HarbourX will never ask you to send Bitcoin to release a withdrawal.</strong><br>If anyone asks you to, stop and contact Support.</p></div>
+
+        <div class="bank-form-message" id="btcWithdrawMessage"></div>
+
+        <div class="alert-box" id="btcWithdrawAlert" style="display:none;">
+          <div class="alert-text" id="btcWithdrawAlertText">Request submitted.</div>
+          <button class="copy-alert-btn" id="btcWithdrawAlertClose" type="button">Done</button>
+        </div>
+      </div>
+
+      <div class="modal-foot">
+        <button class="secondary-btn" id="cancelBtcWithdrawBtn" type="button">Cancel</button>
+        <button class="primary-btn" data-ripple id="submitBtcWithdrawBtn" type="button">Review withdrawal</button>
       </div>
     </div>
   </div>

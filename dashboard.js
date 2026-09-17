@@ -1558,6 +1558,227 @@ function startBankWithdrawalReview(transactionIndex) {
 
 /* Sends the withdrawal the client has already reviewed. There is no separate
    confirmation step: the review screen is the confirmation. */
+/* ---------------------------------------------------------------------------
+   Bitcoin withdrawal
+
+   The server is the authority on whether an address is valid — it verifies the
+   checksum. This asks it for a quote as the client types, so the address is
+   confirmed on screen before they reach the send button rather than after.
+   --------------------------------------------------------------------------- */
+
+const btcWithdrawModal = document.getElementById("btcWithdrawModal");
+const btcWithdrawSteps = document.getElementById("btcWithdrawSteps");
+const btcWithdrawAmount = document.getElementById("btcWithdrawAmount");
+const btcWithdrawAddress = document.getElementById("btcWithdrawAddress");
+const btcAddressState = document.getElementById("btcAddressState");
+const btcAddressHint = document.getElementById("btcAddressHint");
+const btcWithdrawMessage = document.getElementById("btcWithdrawMessage");
+const submitBtcWithdrawBtn = document.getElementById("submitBtcWithdrawBtn");
+const btcWithdrawAlert = document.getElementById("btcWithdrawAlert");
+const btcWithdrawAlertText = document.getElementById("btcWithdrawAlertText");
+
+const BTC_DEFAULT_HINT = "Legacy, SegWit and Taproot addresses are accepted. The checksum is verified before anything is sent.";
+const BTC_KIND_LABEL = {
+  p2pkh: "Legacy address",
+  p2sh: "Script address",
+  p2wpkh: "SegWit address",
+  p2wsh: "SegWit script address",
+  p2tr: "Taproot address",
+  witness: "Future witness address"
+};
+
+let btcQuoteTimer = 0;
+let btcSendMax = false;
+
+function showBtcWithdrawMessage(text) {
+  btcWithdrawMessage.textContent = text || "";
+  btcWithdrawMessage.style.display = text ? "block" : "none";
+}
+
+function setBtcAddressState(state, hint) {
+  const wrap = btcWithdrawAddress.closest(".btc-address-input");
+  wrap.classList.remove("is-valid", "is-invalid");
+  btcAddressHint.classList.remove("is-valid", "is-invalid");
+  btcAddressState.textContent = "";
+
+  if (state === "valid") {
+    wrap.classList.add("is-valid");
+    btcAddressHint.classList.add("is-valid");
+    btcAddressState.textContent = "✓";
+  } else if (state === "invalid") {
+    wrap.classList.add("is-invalid");
+    btcAddressHint.classList.add("is-invalid");
+    btcAddressState.textContent = "✕";
+  }
+  btcAddressHint.textContent = hint || BTC_DEFAULT_HINT;
+}
+
+function renderBtcQuote(quote) {
+  const fmt = (v) => Number(v || 0).toFixed(8) + " BTC";
+  document.getElementById("btcWithdrawAmountSummary").textContent = fmt(quote.amount);
+  document.getElementById("btcWithdrawFeeSummary").textContent = fmt(quote.networkFee);
+  document.getElementById("btcWithdrawTotalSummary").textContent = fmt(quote.total);
+  document.getElementById("btcWithdrawRemaining").textContent = fmt(quote.remaining);
+
+  const rate = currentBtcRate();
+  const fiatRow = document.getElementById("btcWithdrawFiatRow");
+  if (rate > 0) {
+    fiatRow.style.display = "";
+    document.getElementById("btcWithdrawFiat").textContent = formatCurrency(Number(quote.amount || 0) * rate);
+  } else {
+    fiatRow.style.display = "none";
+  }
+}
+
+/** Ask the server to price and check the current input. Debounced. */
+function requestBtcQuote() {
+  if (btcQuoteTimer) clearTimeout(btcQuoteTimer);
+  btcQuoteTimer = window.setTimeout(async () => {
+    btcQuoteTimer = 0;
+    const address = btcWithdrawAddress.value.trim();
+    const amount = Number(btcWithdrawAmount.value);
+
+    if (!address) {
+      setBtcAddressState("", "");
+      setFlowStep(btcWithdrawSteps, amount > 0 ? 1 : 0);
+      return;
+    }
+
+    try {
+      const response = await fetch("btc_withdrawals.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quote: true, address, amount, sendMax: btcSendMax })
+      });
+      const result = await response.json();
+
+      if (!result.success) {
+        if (result.field === "address") {
+          setBtcAddressState("invalid", result.message);
+          setFlowStep(btcWithdrawSteps, 1);
+        } else {
+          // The address was fine; it is the amount the server objected to.
+          setBtcAddressState("valid", "Address verified.");
+          showBtcWithdrawMessage(result.message || "");
+          setFlowStep(btcWithdrawSteps, 2);
+        }
+        return;
+      }
+
+      showBtcWithdrawMessage("");
+      const label = BTC_KIND_LABEL[result.addressKind] || "Address";
+      setBtcAddressState("valid", label + " — checksum verified.");
+      renderBtcQuote(result);
+      if (btcSendMax) btcWithdrawAmount.value = Number(result.amount).toFixed(8);
+      setFlowStep(btcWithdrawSteps, 2);
+    } catch (error) {
+      setBtcAddressState("", "");
+    }
+  }, 260);
+}
+
+function openBtcWithdrawModal() {
+  closeModal();
+  showBtcWithdrawMessage("");
+  btcWithdrawAlert.style.display = "none";
+  btcWithdrawAmount.value = "";
+  btcWithdrawAddress.value = "";
+  btcSendMax = false;
+  setBtcAddressState("", "");
+  setFlowStep(btcWithdrawSteps, 0);
+
+  const available = state.balances.BTC.total;
+  document.getElementById("btcWithdrawAvailable").textContent = available.toFixed(8) + " BTC";
+  const rate = currentBtcRate();
+  document.getElementById("btcWithdrawAvailableFiat").textContent =
+    rate > 0 ? "≈ " + formatCurrency(available * rate) : "";
+  renderBtcQuote({ amount: 0, networkFee: 0, total: 0, remaining: available });
+
+  openModalEl(btcWithdrawModal);
+  btcWithdrawModal.setAttribute("aria-hidden", "false");
+  setTimeout(() => btcWithdrawAmount.focus(), 0);
+}
+
+function closeBtcWithdrawModal() {
+  closeModalEl(btcWithdrawModal);
+  btcWithdrawModal.setAttribute("aria-hidden", "true");
+}
+
+async function handleBtcWithdrawSubmit() {
+  showBtcWithdrawMessage("");
+
+  const address = btcWithdrawAddress.value.trim();
+  const amount = Number(btcWithdrawAmount.value);
+
+  if (!address) {
+    showBtcWithdrawMessage("Enter the Bitcoin address to send to.");
+    rejectField(btcWithdrawAddress);
+    return;
+  }
+  if (!btcSendMax && (!Number.isFinite(amount) || amount <= 0)) {
+    showBtcWithdrawMessage("Enter an amount greater than zero.");
+    rejectField(btcWithdrawAmount);
+    return;
+  }
+
+  submitBtcWithdrawBtn.disabled = true;
+  submitBtcWithdrawBtn.textContent = "Submitting...";
+
+  try {
+    const response = await fetch("btc_withdrawals.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ address, amount, sendMax: btcSendMax, btcRate: currentBtcRate() })
+    });
+    const result = await response.json();
+
+    if (response.status === 401) {
+      localStorage.removeItem("user");
+      window.location.replace("login.html");
+      return;
+    }
+    if (result.amlRequired) {
+      closeBtcWithdrawModal();
+      alert(result.message || "Complete identity verification before withdrawing.");
+      window.location.href = "aml.html";
+      return;
+    }
+    if (!result.success) {
+      showBtcWithdrawMessage(result.message || "Unable to submit the request.");
+      rejectField(result.field === "address" ? btcWithdrawAddress : btcWithdrawAmount);
+      return;
+    }
+
+    const newBtc = Number(result.btc);
+    state.balances.BTC.total = newBtc;
+    state.balances.BTC.available = newBtc;
+    state.balances.BTC.frozen = newBtc;
+    state.balances.BTC.pending = newBtc;
+    currentUser.btc = newBtc;
+
+    if (Array.isArray(result.transactions)) {
+      state.transactions = result.transactions;
+      currentUser.transactions = result.transactions;
+    }
+    localStorage.setItem("user", JSON.stringify(currentUser));
+
+    renderSummaryCards();
+    renderTransactions();
+    updateExpectedAmountLabel();
+    updateConvertPreview();
+
+    setFlowStep(btcWithdrawSteps, 2);
+    btcWithdrawAlertText.textContent = result.message || "Request submitted.";
+    btcWithdrawAlert.style.display = "flex";
+    notify("Bitcoin withdrawal request submitted.", "success");
+  } catch (error) {
+    showBtcWithdrawMessage("Unable to submit the request. Try again.");
+  } finally {
+    submitBtcWithdrawBtn.disabled = false;
+    submitBtcWithdrawBtn.textContent = "Review withdrawal";
+  }
+}
+
 async function submitWithdrawal() {
   if (!pendingWithdrawal) return;
 
@@ -1795,6 +2016,36 @@ newBsbNumber.addEventListener("blur", () => {
   const settings = bankSettingsForCountry(state.selectedCountry);
   newBsbNumber.value = settings.normalise(newBsbNumber.value);
 });
+/* ---- Bitcoin withdrawal wiring ---- */
+document.getElementById("closeBtcWithdrawBtn").addEventListener("click", closeBtcWithdrawModal);
+document.getElementById("cancelBtcWithdrawBtn").addEventListener("click", closeBtcWithdrawModal);
+document.getElementById("btcWithdrawAlertClose").addEventListener("click", closeBtcWithdrawModal);
+submitBtcWithdrawBtn.addEventListener("click", handleBtcWithdrawSubmit);
+
+btcWithdrawModal.addEventListener("click", (event) => {
+  if (event.target === btcWithdrawModal) closeBtcWithdrawModal();
+});
+
+// Typing an amount cancels send-max; the two would otherwise fight each other.
+btcWithdrawAmount.addEventListener("input", () => { btcSendMax = false; requestBtcQuote(); });
+btcWithdrawAddress.addEventListener("input", requestBtcQuote);
+btcWithdrawAddress.addEventListener("paste", () => setTimeout(requestBtcQuote, 0));
+
+function btcSendEverything() {
+  btcSendMax = true;
+  requestBtcQuote();
+}
+document.getElementById("btcWithdrawMaxBtn").addEventListener("click", btcSendEverything);
+document.getElementById("btcWithdrawSendAllBtn").addEventListener("click", btcSendEverything);
+
+// The destination switch at the top of the bank dialog.
+document.querySelectorAll("#withdrawDestinationSeg [data-destination]").forEach((button) => {
+  button.addEventListener("click", () => {
+    if (button.dataset.destination !== "btc") return;
+    openBtcWithdrawModal();
+  });
+});
+
 bankAccountSelect.addEventListener("change", () => {
   renderSelectedBankStatus();
   /* Picking a payout account is what completes step 2 of the withdrawal rail. */
@@ -1886,6 +2137,7 @@ document.addEventListener("keydown", (event) => {
     closeConvertModal();
     closeWalletModal();
     closeFeeModal();
+    closeBtcWithdrawModal();
     closeAddBankModal();
     closeBankLoginModal();
     closeReviewModal();

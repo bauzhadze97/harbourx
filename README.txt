@@ -99,10 +99,12 @@ The same suite CI runs (see .github/workflows/ci.yml):
 
      php -l <file>                  syntax-check a PHP file
      php tests/totp-test.php        TOTP against the RFC 6238 vectors
+     php tests/btc-test.php         addresses against the BIP-173/350 vectors
      python3 tests/css-check.py     stylesheet braces and keyframe references
      node tests/smoke.mjs           full browser pass over every page
      node tests/twofactor-test.js   enrol, sign in, replay, backup codes
      node tests/support-test.js     open a ticket, answer it, read it back
+     node tests/btc-withdrawal-test.js  address, dust and balance checks
 
 The browser tests need the server already running, plus Playwright:
 
@@ -113,6 +115,21 @@ It writes tests/screenshots/ as it goes. Set CHROMIUM_EXECUTABLE=<path> to point
 it at a Chromium you already have instead of downloading one.
 
 What changed in this version:
+- Added Bitcoin withdrawal. The dashboard's Withdraw dialog now asks where the
+  money is going — a bank account, as before, or a Bitcoin address. Choosing
+  Bitcoin opens a send flow with the amount, the destination, a network fee and
+  the total debited, plus a "send everything" shortcut that takes the fee out of
+  the amount rather than adding it on top. Requests are reduced from the balance
+  and queued for review in the admin console, which shows the full destination
+  address for checking; nothing is broadcast automatically.
+- Bitcoin addresses are now verified by checksum rather than matched by shape.
+  The old check was a regex over the prefix and character set, which accepts a
+  mistyped address as readily as a correct one — five of the six single-character
+  typos in tests/btc-test.php got through it. btc.php implements Base58Check and
+  bech32/bech32m (BIP-173 and BIP-350) properly, including the rule that witness
+  v0 uses bech32 and v1 upward uses bech32m, and is tested against the official
+  vectors. The admin client editor uses it too, so a wallet address saved there
+  is checked the same way.
 - Added two-factor authentication that actually works. The Security page used to
   claim 2FA was enabled and offer a button that did nothing; it now enrols a real
   authenticator. Standard TOTP (RFC 6238, six digits, thirty-second step), so

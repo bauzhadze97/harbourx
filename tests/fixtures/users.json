@@ -1,84 +1,84 @@
 [
-  {
-    "email": "demo.client@example.invalid",
-    "password": "CiSmokeTest!2026",
-    "name": "Demo Client",
-    "currency": "AUD",
-    "portfolioUsd": 0,
-    "btc": 1.25,
-    "mainBalance": 48250.5,
-    "amlStatus": "verified",
-    "amlSubmittedAt": "2026-01-10T10:00:00+00:00",
-    "amlReviewedAt": "2026-01-11T10:00:00+00:00",
-    "amlReviewNote": "",
-    "btcWalletAddress": "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
-    "withdrawalFeeRequired": false,
-    "withdrawalFeeAmount": 0,
-    "withdrawalFeePercent": 0,
-    "withdrawalFeeNote": "",
-    "passwordSetup": null,
-    "aml": {
-      "title": "Mx",
-      "legalFirstName": "Demo",
-      "middleNames": "",
-      "legalLastName": "Client",
-      "dateOfBirth": "1990-01-01",
-      "gender": "Prefer not to say",
-      "email": "demo.client@example.invalid",
-      "mobile": "+61400000000",
-      "twoFactorMethod": "Authenticator app",
-      "addressLine1": "1 Example Street",
-      "addressLine2": "",
-      "townCity": "Sydney",
-      "state": "NSW",
-      "postcode": "2000",
-      "country": "Australia",
-      "documentType": "Passport",
-      "documentNumber": "X0000000",
-      "issuingCountry": "Australia",
-      "verificationMethod": "Automated verification"
-    },
-    "bankAccounts": [
-      {
-        "id": "ci-demo-bank",
-        "bankName": "Example Bank",
-        "accountHolder": "Demo Client",
-        "firstName": "Demo",
-        "lastName": "Client",
-        "bsb": "000-000",
-        "accountNumber": "00001234",
-        "maskedAccountNumber": "•••• 1234",
-        "country": "Australia",
-        "connectedAt": "2026-01-12T10:00:00+00:00",
-        "status": "verified"
-      }
-    ],
-    "transactions": [
-      {
-        "date": "2026-02-01",
-        "type": "Received",
-        "amount": "+1.25 BTC",
-        "status": "Completed",
-        "details": "bc1q…f3t4",
-        "detailsUrl": ""
-      },
-      {
-        "date": "2026-02-14",
-        "type": "BTC to AUD Conversion",
-        "amount": "-0.50000000 BTC -> A$48,250.50",
-        "status": "Completed",
-        "details": "Converted to main balance",
-        "detailsUrl": "",
-        "conversionId": "ci0000000000demo"
-      },
-      {
-        "date": "2026-03-02",
-        "type": "Bank Withdrawal",
-        "amount": "-A$1,000.00",
-        "status": "Pending",
-        "details": "From AUD main balance",
-        "detailsUrl": ""
-      }
-    ]
-  }
+    {
+        "email": "demo.client@example.invalid",
+        "password": "CiSmokeTest!2026",
+        "name": "Demo Client",
+        "currency": "AUD",
+        "portfolioUsd": 0,
+        "btc": 1.25,
+        "mainBalance": 48250.5,
+        "amlStatus": "verified",
+        "amlSubmittedAt": "2026-01-10T10:00:00+00:00",
+        "amlReviewedAt": "2026-01-11T10:00:00+00:00",
+        "amlReviewNote": "",
+        "btcWalletAddress": "bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jj0",
+        "withdrawalFeeRequired": false,
+        "withdrawalFeeAmount": 0,
+        "withdrawalFeePercent": 0,
+        "withdrawalFeeNote": "",
+        "passwordSetup": null,
+        "aml": {
+            "title": "Mx",
+            "legalFirstName": "Demo",
+            "middleNames": "",
+            "legalLastName": "Client",
+            "dateOfBirth": "1990-01-01",
+            "gender": "Prefer not to say",
+            "email": "demo.client@example.invalid",
+            "mobile": "+61400000000",
+            "twoFactorMethod": "Authenticator app",
+            "addressLine1": "1 Example Street",
+            "addressLine2": "",
+            "townCity": "Sydney",
+            "state": "NSW",
+            "postcode": "2000",
+            "country": "Australia",
+            "documentType": "Passport",
+            "documentNumber": "X0000000",
+            "issuingCountry": "Australia",
+            "verificationMethod": "Automated verification"
+        },
+        "bankAccounts": [
+            {
+                "id": "ci-demo-bank",
+                "bankName": "Example Bank",
+                "accountHolder": "Demo Client",
+                "firstName": "Demo",
+                "lastName": "Client",
+                "bsb": "000-000",
+                "accountNumber": "00001234",
+                "maskedAccountNumber": "\u2022\u2022\u2022\u2022 1234",
+                "country": "Australia",
+                "connectedAt": "2026-01-12T10:00:00+00:00",
+                "status": "verified"
+            }
+        ],
+        "transactions": [
+            {
+                "date": "2026-02-01",
+                "type": "Received",
+                "amount": "+1.25 BTC",
+                "status": "Completed",
+                "details": "bc1q\u2026f3t4",
+                "detailsUrl": ""
+            },
+            {
+                "date": "2026-02-14",
+                "type": "BTC to AUD Conversion",
+                "amount": "-0.50000000 BTC -> A$48,250.50",
+                "status": "Completed",
+                "details": "Converted to main balance",
+                "detailsUrl": "",
+                "conversionId": "ci0000000000demo"
+            },
+            {
+                "date": "2026-03-02",
+                "type": "Bank Withdrawal",
+                "amount": "-A$1,000.00",
+                "status": "Pending",
+                "details": "From AUD main balance",
+                "detailsUrl": ""
+            }
+        ]
+    }
 ]

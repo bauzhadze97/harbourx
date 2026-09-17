@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/btc.php';
 require_once __DIR__ . '/locale_config.php';
 
 $secureCookie = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
@@ -36,20 +37,15 @@ function cleanCurrency($value) {
 // case-insensitive but must not be mixed case, so they are lower-cased;
 // legacy Base58Check addresses (starting 1 or 3) are case-sensitive and left as-is.
 function cleanBtcAddress($value) {
-    $address = trim((string)$value);
-    if (preg_match('/^bc1/i', $address)) return strtolower($address);
-    return $address;
+    return hx_btc_address_normalise((string)$value);
 }
 
-// Format-checks a Bitcoin address. This is a shape check (prefix and character
-// set), not a checksum verification: legacy P2PKH/P2SH Base58Check, plus
-// native SegWit / Taproot Bech32(m). An empty string is treated as "no address".
+// Verifies a Bitcoin address, checksum and all. This used to be a shape check —
+// prefix and character set — which accepts an address with a mistyped character
+// as readily as a correct one. Five of the six single-character typos in
+// tests/btc-test.php got through it. An empty string means "no address".
 function isValidBtcAddress($address) {
-    $address = trim((string)$address);
-    if ($address === '') return false;
-    if (preg_match('/^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$/', $address)) return true;
-    if (preg_match('/^bc1[ac-hj-np-z02-9]{11,87}$/', strtolower($address))) return true;
-    return false;
+    return hx_btc_address_valid((string)$address);
 }
 
 function findUserIndex($users, $email) {
