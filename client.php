@@ -201,6 +201,7 @@ if ($error) echo '<div class="notice error">' . htmlspecialchars($error) . '</di
     <div class="actions">
       <a class="btn btn-light" href="admin.php">Back to clients</a>
       <a class="btn btn-blue" href="transactions.php?email=<?= urlencode($u['email'] ?? '') ?>">Manage Transactions</a>
+      <a class="btn btn-light" href="payments.php?client=<?= urlencode(strtolower($u['email'] ?? '')) ?>">Payment Schedule</a>
     </div>
   </div>
 </div>

@@ -324,6 +324,7 @@ $registrationLink = publicAppBaseUrl() . '/register.php';
             <button class="btn btn-light" name="login_as_client" type="submit">Log in as client</button>
           </form>
           <a class="btn btn-light" href="transactions.php?email=<?= urlencode($u['email'] ?? '') ?>">Transactions</a>
+          <a class="btn btn-light" href="payments.php?client=<?= urlencode(strtolower($u['email'] ?? '')) ?>">Payments</a>
           <form method="post" action="client.php" style="display:inline-flex">
             <input type="hidden" name="original_email" value="<?= htmlspecialchars($u['email'] ?? '') ?>">
             <button class="btn btn-light" name="generate_password_setup_link" type="submit">Setup Link</button>

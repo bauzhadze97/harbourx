@@ -93,6 +93,10 @@ The rest of this section is the same thing done by hand.
    Everything is written straight back to data/users.json, so a local run edits
    whichever file you put there. Keep a copy before experimenting.
 
+   The admin payment schedule is stored separately in
+   data/payment_schedules.json. It is also untracked runtime data and must be
+   preserved alongside data/users.json during deployments.
+
 Running the checks locally
 --------------------------
 The same suite CI runs (see .github/workflows/ci.yml):
@@ -106,6 +110,7 @@ The same suite CI runs (see .github/workflows/ci.yml):
      node tests/support-test.js     open a ticket, answer it, read it back
      node tests/btc-withdrawal-test.js  address, dust and balance checks
      php tests/statements-test.php   statement figures from transaction lines
+     php tests/payment-schedule-test.php  payment due-date and storage checks
      node tests/statements-page-test.js  the statements page and its download
 
 The browser tests sign in as the synthetic account, so they seed

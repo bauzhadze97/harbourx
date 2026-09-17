@@ -6,6 +6,7 @@ node_modules
 data/users.json
 data.*/users.json
 data/tickets.json
+data/payment_schedules.json
 *.zip
 
 # local screenshot/verification scratch (root only — tests/ has its own

@@ -185,12 +185,14 @@ function themeFab() {
 
 function pageTop($active = 'clients') {
     $clientsClass = $active === 'clients' ? 'btn btn-blue' : 'btn btn-light';
+    $paymentsClass = $active === 'payments' ? 'btn btn-blue' : 'btn btn-light';
     echo '<div class="page"><div class="topbar">'
         . '<div class="brand"><div class="badge">' . hxMark() . '</div>'
         . '<div><h1>HarbourX Admin</h1><p>Client operations console</p></div></div>'
         . '<div class="actions">'
         . themeToggleButton()
         . '<a class="' . $clientsClass . '" href="admin.php">Clients</a>'
+        . '<a class="' . $paymentsClass . '" href="payments.php">Payments</a>'
         . '<a class="btn btn-light" href="login.html" target="_blank" rel="noopener">Client app</a>'
         . '<a class="btn btn-light" href="admin.php?logout=1">Log out</a>'
         . '</div></div>';
