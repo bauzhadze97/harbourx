@@ -28,37 +28,91 @@ die()  { printf '\n  %s\n\n' "$1" >&2; exit 1; }
 printf '\n  HarbourX — setup\n  ----------------\n'
 
 # --- 1. Work out how to install things -------------------------------------
+
+# Existing on PATH is not the same as working. macOS ships a git at /usr/bin/git
+# that is only a stub: run it without the Xcode command line tools and it pops a
+# GUI installer instead of doing anything.
+runs() {
+  command -v "$1" >/dev/null 2>&1 && "$@" >/dev/null 2>&1
+}
+
+IS_MAC=0
+[ "$(uname -s)" = "Darwin" ] && IS_MAC=1
+
+# On macOS everything comes from Homebrew, which a new machine does not have.
+# Installing it also installs the command line tools, and so git.
+ensure_brew() {
+  if command -v brew >/dev/null 2>&1; then return 0; fi
+
+  # It may be installed but not on PATH yet — Apple Silicon and Intel differ.
+  for candidate in /opt/homebrew/bin/brew /usr/local/bin/brew; do
+    if [ -x "$candidate" ]; then
+      eval "$("$candidate" shellenv)"
+      say "Found Homebrew at $candidate"
+      return 0
+    fi
+  done
+
+  warn ''
+  warn 'Homebrew is not installed. It is how macOS gets git and PHP, and'
+  warn 'installing it also installs the Xcode command line tools.'
+  warn ''
+  warn 'This asks for your Mac password and takes a few minutes.'
+  printf '  Install Homebrew now? [y/N] '
+  read -r reply </dev/tty || reply=""
+  case "$reply" in
+    [Yy]*) ;;
+    *) die "Install it yourself with the command at https://brew.sh then re-run this script." ;;
+  esac
+
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/brew/HEAD/install.sh)"     || die "Homebrew install failed. See https://brew.sh and re-run this script afterwards."
+
+  for candidate in /opt/homebrew/bin/brew /usr/local/bin/brew; do
+    [ -x "$candidate" ] && eval "$("$candidate" shellenv)" && break
+  done
+  command -v brew >/dev/null 2>&1 || die "Homebrew installed but 'brew' is still not on PATH. Open a new terminal and re-run."
+  say 'Homebrew installed'
+}
+
+if [ "$IS_MAC" = "1" ]; then ensure_brew; fi
+
 INSTALL=""
-if command -v apt-get >/dev/null 2>&1;   then INSTALL="sudo apt-get install -y"
+if command -v brew >/dev/null 2>&1;      then INSTALL="brew install"
+elif command -v apt-get >/dev/null 2>&1; then INSTALL="sudo apt-get install -y"
 elif command -v dnf >/dev/null 2>&1;     then INSTALL="sudo dnf install -y"
 elif command -v pacman >/dev/null 2>&1;  then INSTALL="sudo pacman -S --noconfirm"
-elif command -v brew >/dev/null 2>&1;    then INSTALL="brew install"
 fi
 
 need() {
-  local cmd="$1" pkg="$2"
-  if command -v "$cmd" >/dev/null 2>&1; then
+  local cmd="$1" pkg="$2" probe="$3"
+  # shellcheck disable=SC2086
+  if runs "$cmd" $probe; then
     say "$cmd already installed ($(command -v "$cmd"))"
     return 0
   fi
   if [ -z "$INSTALL" ]; then
     die "$cmd is missing and I cannot tell how to install it here. Install $pkg and re-run."
   fi
-  say "Installing $pkg…"
-  if command -v apt-get >/dev/null 2>&1; then sudo apt-get update -qq || true; fi
+  say "Installing $pkg… (this can take a few minutes)"
+  if command -v apt-get >/dev/null 2>&1 && [ "$INSTALL" != "brew install" ]; then
+    sudo apt-get update -qq || true
+  fi
   # shellcheck disable=SC2086
-  $INSTALL $pkg >/dev/null || die "Could not install $pkg. Install it by hand and re-run."
-  command -v "$cmd" >/dev/null 2>&1 || die "$pkg installed but $cmd is still not on PATH."
+  $INSTALL $pkg || die "Could not install $pkg. Install it by hand and re-run."
+  # shellcheck disable=SC2086
+  runs "$cmd" $probe || die "$pkg installed but $cmd still will not run. Open a new terminal and re-run."
   say "$cmd installed"
 }
 
-need git git
-if command -v php >/dev/null 2>&1; then
-  say "php already installed ($(php -r 'echo PHP_VERSION;'))"
+need git git --version
+
+# Debian and Ubuntu call the interpreter php-cli; Homebrew and Fedora call it php.
+if command -v apt-get >/dev/null 2>&1 && [ "$INSTALL" != "brew install" ]; then
+  need php php-cli --version
 else
-  # Debian/Ubuntu call it php-cli; Fedora and Homebrew just call it php.
-  if command -v apt-get >/dev/null 2>&1; then need php php-cli; else need php php; fi
+  need php php --version
 fi
+say "php $(php -r 'echo PHP_VERSION;')"
 
 # --- 2. Get the project -----------------------------------------------------
 if [ -f "./login.php" ] && [ -f "./dashboard.html" ]; then

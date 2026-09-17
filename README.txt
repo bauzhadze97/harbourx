@@ -11,8 +11,15 @@ no build step, no npm install, no database.
 The short way — setup.sh / setup.ps1 install what is missing, fetch the project
 and start it, and are safe to re-run:
 
-  Linux, WSL, macOS   ./setup.sh
+  macOS, Linux, WSL   ./setup.sh
   Windows             .\setup.ps1
+
+On a brand new Mac nothing is installed yet — no Homebrew, no PHP (Apple dropped
+it in macOS 12), and /usr/bin/git is a stub that only opens the Xcode installer.
+setup.sh handles all three: it offers to install Homebrew (which brings the
+command line tools and git with it), then installs PHP through it. It checks
+that each tool actually runs rather than just existing on PATH, so the git stub
+does not fool it.
 
 On Windows, setup.ps1 installs Git, clones the project, and then starts it with
 PHP if Windows will run PHP — and hands the job to setup.sh inside WSL if it
