@@ -222,6 +222,8 @@ function pageTop($active = 'clients') {
 function pageFooter() {
     $notificationsVersion = (string)(@filemtime(__DIR__ . '/admin-notifications.js') ?: 1);
     $opsVersion = (string)(@filemtime(__DIR__ . '/admin-ops.js') ?: 1);
+    $dashboardVersion = (string)(@filemtime(__DIR__ . '/admin-dashboard.js') ?: 1);
     echo '<script src="admin-notifications.js?v=' . rawurlencode($notificationsVersion) . '"></script>'
-        . '<script src="admin-ops.js?v=' . rawurlencode($opsVersion) . '"></script></div></body></html>';
+        . '<script src="admin-ops.js?v=' . rawurlencode($opsVersion) . '"></script>'
+        . '<script src="admin-dashboard.js?v=' . rawurlencode($dashboardVersion) . '"></script></div></body></html>';
 }

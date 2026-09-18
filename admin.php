@@ -190,14 +190,16 @@ $openTicketCount = count(array_filter($supportTickets, static fn($t) => ($t['sta
 
 $users = loadUsers($usersFile);
 $totalUsers = count($users);
-$totalBtc = 0; $totalTransactions = 0; $verifiedAml = 0; $pendingAml = 0; $connectedBanks = 0; $withdrawalAuthorisations = [];
+$totalBtc = 0; $totalTransactions = 0; $verifiedAml = 0; $pendingAml = 0; $connectedBanks = 0; $clientsWithBanks = 0; $withdrawalAuthorisations = [];
 $btcWithdrawals = [];
 foreach ($users as $u) {
     $totalBtc += (float)($u['btc'] ?? 0);
     $totalTransactions += count($u['transactions'] ?? []);
     if (amlStatus($u) === 'verified') $verifiedAml++;
     if (amlStatus($u) === 'under_review') $pendingAml++;
-    $connectedBanks += count(is_array($u['bankAccounts'] ?? null) ? $u['bankAccounts'] : []);
+    $userBankAccounts = is_array($u['bankAccounts'] ?? null) ? $u['bankAccounts'] : [];
+    $connectedBanks += count($userBankAccounts);
+    if (count($userBankAccounts) > 0) $clientsWithBanks++;
     foreach ((is_array($u['transactions'] ?? null) ? $u['transactions'] : []) as $tx) {
         if (($tx['type'] ?? '') === 'Bitcoin Withdrawal') {
             $btcWithdrawals[] = $tx + ['clientEmail' => $u['email'] ?? '', 'clientName' => $u['name'] ?? ''];
@@ -229,6 +231,10 @@ $adminSnapshot = currentAdminAlertSnapshot();
 $paymentStats = $adminSnapshot['paymentStats'];
 $callbackStats = $adminSnapshot['callbackStats'];
 $adminAlerts = $adminSnapshot['items'];
+$paymentTotal = array_sum($paymentStats);
+$callbackTotal = $callbackStats['upcoming'] + $callbackStats['due'] + $callbackStats['completed'] + $callbackStats['cancelled'];
+$dashboardDate = (new DateTimeImmutable('now', new DateTimeZone(HX_ADMIN_TIMEZONE)))->format('l, M j');
+$createPanelOpen = isset($_POST['create_user']) && $error !== '';
 
 pageHeader('Clients');
 pageTop('clients');
@@ -237,88 +243,124 @@ if ($error) echo '<div class="notice error">' . htmlspecialchars($error) . '</di
 $registrationLink = publicAppBaseUrl() . '/register.php';
 ?>
 
-<div class="card">
-  <div class="section-title">
+<section class="card dashboard-overview" data-dashboard-overview>
+  <div class="dashboard-overview-head">
     <div>
-      <h2>Dashboard</h2>
-      <p class="hint" style="margin:0">All clients are here. Click <b>Open Client</b> to go to the inner page.</p>
+      <span class="ops-eyebrow">Operations overview · <?= htmlspecialchars($dashboardDate) ?></span>
+      <h2>Good overview, faster decisions.</h2>
+      <p>Clients, money, compliance and follow-ups in one calm workspace.</p>
     </div>
-    <a class="btn btn-blue" href="#create-client">Create Client</a>
+    <div class="actions dashboard-quick-actions">
+      <button class="btn btn-blue" type="button" data-panel-toggle="create-client" aria-expanded="<?= $createPanelOpen ? 'true' : 'false' ?>">+ New client</button>
+      <a class="btn btn-light" href="payments.php#add-payment">Add payment</a>
+      <a class="btn btn-light" href="callbacks.php#schedule-callback">Schedule callback</a>
+    </div>
   </div>
-  <div class="stats">
-    <div class="stat"><small>Clients</small><strong><?= $totalUsers ?></strong></div>
-    <div class="stat"><small>Total BTC</small><strong><?= htmlspecialchars(number_format($totalBtc, 8)) ?></strong></div>
-    <div class="stat"><small>AML Verified</small><strong><?= $verifiedAml ?></strong></div>
-    <div class="stat"><small>AML Reviews</small><strong><?= $pendingAml ?></strong></div>
-    <div class="stat"><small>Connected Banks</small><strong><?= $connectedBanks ?></strong></div>
-    <div class="stat"><small>Open Tickets</small><strong><?= $openTicketCount ?></strong></div>
-    <div class="stat"><small>BTC Withdrawals</small><strong><?= (int)$pendingBtcWithdrawals ?></strong></div>
-    <div class="stat"><small>Withdrawal Auth</small><strong><?= count($withdrawalAuthorisations) ?></strong></div>
-    <a class="stat" href="payments.php?status=pending"><small>Payments pending</small><strong data-stat-payment-pending><?= (int)$paymentStats['pending'] ?></strong></a>
-    <a class="stat" href="payments.php?status=overdue"><small>Payments overdue</small><strong data-stat-payment-overdue><?= (int)$paymentStats['overdue'] ?></strong></a>
-    <a class="stat" href="callbacks.php?status=due"><small>Callbacks due</small><strong data-stat-callback-due><?= (int)$callbackStats['due'] ?></strong></a>
-    <a class="stat" href="callbacks.php"><small>Callbacks today</small><strong data-stat-callback-today><?= (int)$callbackStats['today'] ?></strong></a>
+
+  <div class="dashboard-kpis">
+    <a class="dashboard-kpi kpi-teal" href="#clients">
+      <span class="dashboard-kpi-icon">CL</span>
+      <span><small>Clients</small><strong data-dashboard-count="<?= $totalUsers ?>"><?= $totalUsers ?></strong><em><?= $verifiedAml ?> AML verified</em></span>
+    </a>
+    <div class="dashboard-kpi kpi-blue">
+      <span class="dashboard-kpi-icon">₿</span>
+      <span><small>Total Bitcoin</small><strong data-dashboard-count="<?= htmlspecialchars((string)$totalBtc) ?>" data-decimals="8"><?= htmlspecialchars(number_format($totalBtc, 8)) ?></strong><em><?= $totalTransactions ?> transactions</em></span>
+    </div>
+    <a class="dashboard-kpi kpi-red" href="payments.php?status=overdue">
+      <span class="dashboard-kpi-icon">!</span>
+      <span><small>Payments overdue</small><strong data-dashboard-count="<?= (int)$paymentStats['overdue'] ?>" data-stat-payment-overdue><?= (int)$paymentStats['overdue'] ?></strong><em><?= (int)$paymentStats['pending'] ?> still pending</em></span>
+    </a>
+    <a class="dashboard-kpi kpi-amber" href="callbacks.php?status=due">
+      <span class="dashboard-kpi-icon">↗</span>
+      <span><small>Callbacks due</small><strong data-dashboard-count="<?= (int)$callbackStats['due'] ?>" data-stat-callback-due><?= (int)$callbackStats['due'] ?></strong><em><?= (int)$callbackStats['today'] ?> scheduled today</em></span>
+    </a>
   </div>
+
+  <div class="dashboard-attention-strip">
+    <span>Also watching</span>
+    <a href="admin.php#clients"><b><?= $pendingAml ?></b> AML reviews</a>
+    <a href="admin.php#support"><b><?= $openTicketCount ?></b> open tickets</a>
+    <a href="admin.php#btc-withdrawals"><b><?= (int)$pendingBtcWithdrawals ?></b> BTC withdrawals</a>
+    <a href="callbacks.php"><b data-stat-callback-today><?= (int)$callbackStats['today'] ?></b> callbacks today</a>
+  </div>
+</section>
+
+<div class="dashboard-visual-grid" data-dashboard-overview>
+  <section class="card dashboard-chart-card">
+    <div class="section-title"><div><span class="ops-eyebrow">Cashflow</span><h2>Payment status</h2><p class="hint" style="margin:0">Current schedule at a glance.</p></div><a class="btn btn-light" href="payments.php">Open payments</a></div>
+    <div class="dashboard-donut-layout">
+      <div class="dashboard-donut">
+        <svg viewBox="0 0 120 120" role="img" aria-label="Payment status chart">
+          <circle class="dashboard-donut-track" cx="60" cy="60" r="48"></circle>
+          <g transform="rotate(-90 60 60)">
+            <circle class="dashboard-donut-segment donut-paid" cx="60" cy="60" r="48" data-donut-value="<?= (int)$paymentStats['paid'] ?>"></circle>
+            <circle class="dashboard-donut-segment donut-pending" cx="60" cy="60" r="48" data-donut-value="<?= (int)$paymentStats['pending'] ?>"></circle>
+            <circle class="dashboard-donut-segment donut-overdue" cx="60" cy="60" r="48" data-donut-value="<?= (int)$paymentStats['overdue'] ?>"></circle>
+            <circle class="dashboard-donut-segment donut-missed" cx="60" cy="60" r="48" data-donut-value="<?= (int)$paymentStats['missed'] ?>"></circle>
+          </g>
+        </svg>
+        <div><strong data-dashboard-count="<?= $paymentTotal ?>"><?= $paymentTotal ?></strong><span>Total</span></div>
+      </div>
+      <div class="dashboard-chart-legend">
+        <a href="payments.php?status=paid"><i class="legend-paid"></i><span>Paid</span><b><?= (int)$paymentStats['paid'] ?></b></a>
+        <a href="payments.php?status=pending"><i class="legend-pending"></i><span>Pending</span><b data-stat-payment-pending><?= (int)$paymentStats['pending'] ?></b></a>
+        <a href="payments.php?status=overdue"><i class="legend-overdue"></i><span>Overdue</span><b><?= (int)$paymentStats['overdue'] ?></b></a>
+        <a href="payments.php?status=missed"><i class="legend-missed"></i><span>Not paid</span><b><?= (int)$paymentStats['missed'] ?></b></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="card dashboard-chart-card">
+    <div class="section-title"><div><span class="ops-eyebrow">Progress</span><h2>Client readiness</h2><p class="hint" style="margin:0">Completion across key operations.</p></div><a class="btn btn-light" href="#clients">View clients</a></div>
+    <div class="dashboard-progress-list">
+      <div class="dashboard-progress-row"><div><span>AML verified</span><b><?= $verifiedAml ?>/<?= $totalUsers ?></b></div><div class="dashboard-progress-track"><span class="bar-teal" data-dashboard-bar data-value="<?= $verifiedAml ?>" data-max="<?= max(1, $totalUsers) ?>" style="width:<?= $totalUsers ? round($verifiedAml / $totalUsers * 100, 1) : 0 ?>%"></span></div></div>
+      <div class="dashboard-progress-row"><div><span>Bank connected</span><b><?= $clientsWithBanks ?>/<?= $totalUsers ?></b></div><div class="dashboard-progress-track"><span class="bar-blue" data-dashboard-bar data-value="<?= $clientsWithBanks ?>" data-max="<?= max(1, $totalUsers) ?>" style="width:<?= $totalUsers ? round($clientsWithBanks / $totalUsers * 100, 1) : 0 ?>%"></span></div></div>
+      <div class="dashboard-progress-row"><div><span>Payments completed</span><b><?= (int)$paymentStats['paid'] ?>/<?= $paymentTotal ?></b></div><div class="dashboard-progress-track"><span class="bar-green" data-dashboard-bar data-value="<?= (int)$paymentStats['paid'] ?>" data-max="<?= max(1, $paymentTotal) ?>" style="width:<?= $paymentTotal ? round($paymentStats['paid'] / $paymentTotal * 100, 1) : 0 ?>%"></span></div></div>
+      <div class="dashboard-progress-row"><div><span>Callbacks completed</span><b><?= (int)$callbackStats['completed'] ?>/<?= $callbackTotal ?></b></div><div class="dashboard-progress-track"><span class="bar-amber" data-dashboard-bar data-value="<?= (int)$callbackStats['completed'] ?>" data-max="<?= max(1, $callbackTotal) ?>" style="width:<?= $callbackTotal ? round($callbackStats['completed'] / $callbackTotal * 100, 1) : 0 ?>%"></span></div></div>
+    </div>
+  </section>
 </div>
 
-<div class="card" id="alerts">
-  <div class="section-title">
-    <div>
-      <h2>Notifications</h2>
-      <p class="hint" style="margin:0" data-alert-summary><?= htmlspecialchars($adminSnapshot['body']) ?></p>
+<div class="dashboard-utility-grid">
+  <section class="card dashboard-alert-card" id="alerts">
+    <div class="section-title"><div><span class="ops-eyebrow">Needs attention</span><h2>Notifications</h2><p class="hint" style="margin:0" data-alert-summary><?= htmlspecialchars($adminSnapshot['body']) ?></p></div><button class="btn btn-light" type="button" id="enableDesktopAlerts">Enable desktop alerts</button></div>
+    <div class="admin-alert-list">
+      <?php if (!$adminAlerts): ?><div class="dashboard-all-clear" data-alert-empty><span>✓</span><div><b>All clear</b><small>No urgent alerts right now.</small></div></div>
+      <?php else: foreach (array_slice($adminAlerts, 0, 4) as $alert): ?>
+        <a class="admin-alert admin-alert-<?= htmlspecialchars($alert['level']) ?>" href="<?= htmlspecialchars($alert['href']) ?>"><span class="admin-alert-dot"></span><span><b><?= htmlspecialchars($alert['title']) ?></b><small><?= htmlspecialchars($alert['detail']) ?></small></span><span class="admin-alert-arrow">&rarr;</span></a>
+      <?php endforeach; endif; ?>
     </div>
-    <button class="btn btn-light" type="button" id="enableDesktopAlerts">Enable desktop alerts</button>
-  </div>
-  <div class="admin-alert-list">
-    <?php if (!$adminAlerts): ?>
-      <div class="empty" data-alert-empty>No urgent alerts right now.</div>
-    <?php else: ?>
-      <?php foreach ($adminAlerts as $alert): ?>
-        <a class="admin-alert admin-alert-<?= htmlspecialchars($alert['level']) ?>" href="<?= htmlspecialchars($alert['href']) ?>">
-          <span class="admin-alert-dot"></span>
-          <span><b><?= htmlspecialchars($alert['title']) ?></b><small><?= htmlspecialchars($alert['detail']) ?></small></span>
-          <span class="admin-alert-arrow">&rarr;</span>
-        </a>
-      <?php endforeach; ?>
-    <?php endif; ?>
-  </div>
+  </section>
+
+  <section class="card dashboard-onboarding-card">
+    <span class="ops-eyebrow">Onboarding</span><h2>Invite a client</h2><p class="hint">Share the signup link or create the client yourself.</p>
+    <div class="dashboard-link-box"><input id="registrationLink" value="<?= htmlspecialchars($registrationLink) ?>" readonly onclick="this.select()"><button class="btn btn-light" type="button" onclick="navigator.clipboard.writeText(document.getElementById('registrationLink').value); this.textContent='Copied';">Copy</button></div>
+    <div class="actions"><a class="btn btn-light" href="<?= htmlspecialchars($registrationLink) ?>" target="_blank" rel="noopener noreferrer">Open signup</a><button class="btn btn-blue" type="button" data-panel-toggle="create-client" aria-expanded="<?= $createPanelOpen ? 'true' : 'false' ?>">+ New client</button></div>
+  </section>
 </div>
 
-<div class="card">
-  <div class="section-title">
-    <div>
-      <h2>New client signup URL</h2>
-      <p class="hint" style="margin:0">Clients can create an account with email, first name, last name, and password.</p>
-    </div>
-    <a class="btn btn-blue" href="<?= htmlspecialchars($registrationLink) ?>" target="_blank" rel="noopener noreferrer">Open signup</a>
-  </div>
-  <div class="field">
-    <label>Signup link</label>
-    <input id="registrationLink" value="<?= htmlspecialchars($registrationLink) ?>" readonly onclick="this.select()">
-  </div>
-  <button class="btn btn-light" type="button" onclick="navigator.clipboard.writeText(document.getElementById('registrationLink').value); this.textContent='Copied signup link';">Copy signup link</button>
-</div>
-
-<div class="card" id="create-client">
-  <h2>Create client</h2>
+<section class="card ops-create-panel dashboard-client-create" id="create-client" data-open="<?= $createPanelOpen ? 'true' : 'false' ?>" <?= $createPanelOpen ? '' : 'hidden' ?>>
+  <div class="section-title"><div><span class="ops-eyebrow">New account</span><h2>Create client</h2><p class="hint" style="margin:0">Start with the essentials; balances and wallet details are optional.</p></div></div>
   <form method="post">
-    <div class="grid">
-      <div class="field"><label>Name</label><input name="name" placeholder="John Smith" required></div>
-      <div class="field"><label>Email</label><input type="email" name="email" placeholder="email@example.com" required></div>
-      <div class="field"><label>Password</label><input name="password" placeholder="User password" required></div>
-      <div class="field"><label>BTC balance</label><input name="btc" type="number" step="0.00000001" placeholder="2.56"></div>
-      <div class="field"><label>Main balance (fiat)</label><input name="main_balance" type="number" step="0.01" placeholder="0.00"></div>
-      <div class="field"><label>Client country</label><select name="country" class="country-select" data-currency-target="createCurrency" required><?= renderCountryOptions('AU') ?></select></div>
-      <div class="field"><label>Main currency</label><select id="createCurrency" name="currency" required><?= renderCurrencyOptions('AUD') ?></select></div>
-      <div class="field"><label>Withdrawal fee (fixed)</label><input name="main_fee_amount" type="number" step="0.01" min="0" placeholder="0.00"></div>
-      <div class="field"><label>Require withdrawal fee</label><label class="btn btn-light" style="justify-content:flex-start;gap:8px"><input type="checkbox" name="withdrawal_fee_required" value="1" style="width:auto;height:auto"> Fee gate before withdrawal</label></div>
-      <div class="field"><label>BTC wallet address (optional)</label><input name="btc_wallet_address" placeholder="bc1... or 1... / 3..." autocapitalize="off" autocorrect="off" spellcheck="false"></div>
+    <div class="ops-form-grid">
+      <div class="field ops-span-2"><label>Name</label><input name="name" value="<?= htmlspecialchars($_POST['name'] ?? '') ?>" placeholder="John Smith" required></div>
+      <div class="field ops-span-2"><label>Email</label><input type="email" name="email" value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" placeholder="email@example.com" required></div>
+      <div class="field ops-span-2"><label>Password</label><input type="password" name="password" value="<?= htmlspecialchars($_POST['password'] ?? '') ?>" placeholder="Temporary password" required></div>
+      <div class="field"><label>Country</label><select name="country" class="country-select" data-currency-target="createCurrency" required><?= renderCountryOptions($_POST['country'] ?? 'AU') ?></select></div>
+      <div class="field"><label>Main currency</label><select id="createCurrency" name="currency" required><?= renderCurrencyOptions(cleanCurrency($_POST['currency'] ?? 'AUD')) ?></select></div>
     </div>
-    <br><button class="btn btn-blue" name="create_user">Create client</button>
+    <details class="ops-advanced"><summary>Balances, wallet and withdrawal fee</summary><div class="ops-form-grid">
+      <div class="field"><label>BTC balance</label><input name="btc" type="number" step="0.00000001" value="<?= htmlspecialchars($_POST['btc'] ?? '') ?>" placeholder="0.00000000"></div>
+      <div class="field"><label>Main balance</label><input name="main_balance" type="number" step="0.01" value="<?= htmlspecialchars($_POST['main_balance'] ?? '') ?>" placeholder="0.00"></div>
+      <div class="field"><label>Withdrawal fee</label><input name="main_fee_amount" type="number" step="0.01" min="0" value="<?= htmlspecialchars($_POST['main_fee_amount'] ?? '') ?>" placeholder="0.00"></div>
+      <div class="field"><label>Require fee</label><label class="btn btn-light dashboard-check"><input type="checkbox" name="withdrawal_fee_required" value="1" <?= !empty($_POST['withdrawal_fee_required']) ? 'checked' : '' ?>> Fee gate</label></div>
+      <div class="field ops-span-2"><label>BTC wallet address</label><input name="btc_wallet_address" value="<?= htmlspecialchars($_POST['btc_wallet_address'] ?? '') ?>" placeholder="bc1... or 1... / 3..." autocapitalize="off" autocorrect="off" spellcheck="false"></div>
+    </div></details>
+    <div class="ops-form-actions"><button class="btn btn-blue" name="create_user">Create client</button><button class="btn btn-light" type="button" data-panel-toggle="create-client">Cancel</button></div>
   </form>
-</div>
+</section>
 
-<div class="card">
+<div class="card" id="clients">
   <div class="section-title">
     <div><h2>Clients</h2><p class="hint" style="margin:0">Search and open each client in a separate inner page.</p></div>
     <span class="btn btn-light"><?= $totalUsers ?> total</span>
