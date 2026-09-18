@@ -1,0 +1,174 @@
+name: Deploy
+
+# Ships the app to the web server over SSH.
+#
+# Run it from the Actions tab: "Deploy" -> "Run workflow". It defaults to a DRY
+# RUN, which connects and lists exactly what it would change without touching
+# anything. Look at that list once, then run it again with dry run unticked.
+#
+# data/ is never synced. users.json and tickets.json hold live balances, bank
+# details, KYC and tickets, and they exist only on the server — the deploy must
+# not be able to reach them even by accident, so the exclude below is the one
+# line in this file not to edit.
+#
+# Required secrets (Settings -> Secrets and variables -> Actions):
+#   DEPLOY_HOST      harbourx.org
+#   DEPLOY_USER      the SSH user
+#   DEPLOY_PATH      absolute path to the web root, e.g. /home/<user>/public_html
+#   DEPLOY_SSH_KEY   the PRIVATE key, whole file including the BEGIN/END lines
+# Optional:
+#   DEPLOY_PORT      SSH port, defaults to 22
+#
+# The matching public key must be in the server's ~/.ssh/authorized_keys.
+#
+# To deploy automatically on every push once you trust it, uncomment the push
+# block below.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run — list changes without making them'
+        type: boolean
+        default: true
+  # push:
+  #   branches: ['claude/optimize-modernize-animations-hmb3qf']
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy to server
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the secrets are set
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          TARGET: ${{ secrets.DEPLOY_PATH }}
+          KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          missing=""
+          [ -n "$HOST" ]   || missing="$missing DEPLOY_HOST"
+          [ -n "$USER" ]   || missing="$missing DEPLOY_USER"
+          [ -n "$TARGET" ] || missing="$missing DEPLOY_PATH"
+          [ -n "$KEY" ]    || missing="$missing DEPLOY_SSH_KEY"
+          if [ -n "$missing" ]; then
+            echo "::error::missing secret(s):$missing — add them under Settings > Secrets and variables > Actions"
+            exit 1
+          fi
+          echo "all four secrets are present"
+
+      - name: Load the SSH key
+        env:
+          KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          PORT: ${{ secrets.DEPLOY_PORT }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          # Record the host key so the transfer is not talking to just anyone.
+          ssh-keyscan -p "${PORT:-22}" -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          test -s ~/.ssh/known_hosts || {
+            echo "::error::could not reach $HOST:${PORT:-22} — check DEPLOY_HOST and that the host allows SSH from GitHub"
+            exit 1
+          }
+
+      - name: Confirm the server answers
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          TARGET: ${{ secrets.DEPLOY_PATH }}
+          PORT: ${{ secrets.DEPLOY_PORT }}
+        run: |
+          ssh -i ~/.ssh/deploy_key -p "${PORT:-22}" "$USER@$HOST" \
+            "test -d '$TARGET' || { echo 'DEPLOY_PATH does not exist: $TARGET'; exit 1; }
+             echo \"web root: $TARGET\"
+             ls -la '$TARGET/data' 2>/dev/null || echo 'note: no data/ directory yet — a first deploy'"
+
+      - name: Back up the data directory
+        if: ${{ !inputs.dry_run }}
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          TARGET: ${{ secrets.DEPLOY_PATH }}
+          PORT: ${{ secrets.DEPLOY_PORT }}
+        run: |
+          # Cheap insurance. The sync excludes data/, so this should never be
+          # needed — which is exactly when people skip it and regret it.
+          ssh -i ~/.ssh/deploy_key -p "${PORT:-22}" "$USER@$HOST" \
+            "if [ -d '$TARGET/data' ]; then
+               dest=\"\$HOME/harbourx-data-backup-\$(date +%F-%H%M%S)\"
+               cp -a '$TARGET/data' \"\$dest\" && echo \"data backed up to \$dest\"
+             else
+               echo 'no data/ to back up'
+             fi"
+
+      - name: Sync the files
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          TARGET: ${{ secrets.DEPLOY_PATH }}
+          PORT: ${{ secrets.DEPLOY_PORT }}
+          DRY: ${{ inputs.dry_run }}
+        run: |
+          flags="-rlptz --checksum --human-readable --itemize-changes"
+          if [ "$DRY" = "true" ]; then
+            flags="$flags --dry-run"
+            echo "=== DRY RUN — nothing on the server will be changed ==="
+          fi
+
+          # data/ is the live client record and is never synced. The rest is
+          # either not wanted in a web root (tests, CI config, the git
+          # directory) or not used at runtime.
+          rsync $flags \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='data/' \
+            --exclude='tests/' \
+            --exclude='node_modules/' \
+            --exclude='.gitignore' \
+            --exclude='*.zip' \
+            -e "ssh -i ~/.ssh/deploy_key -p ${PORT:-22}" \
+            ./ "$USER@$HOST:$TARGET/"
+
+          if [ "$DRY" = "true" ]; then
+            echo ""
+            echo "=== that was a DRY RUN. Nothing changed. ==="
+            echo "Run the workflow again with 'Dry run' unticked to apply it."
+          fi
+
+      - name: Check the site answers
+        if: ${{ !inputs.dry_run }}
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          TARGET: ${{ secrets.DEPLOY_PATH }}
+          PORT: ${{ secrets.DEPLOY_PORT }}
+        run: |
+          # The client data must still be there, and must not be servable.
+          ssh -i ~/.ssh/deploy_key -p "${PORT:-22}" "$USER@$HOST" \
+            "ls -la '$TARGET/data' || echo '::warning::no data/ directory on the server'"
+
+          code=$(curl -s -o /dev/null -w '%{http_code}' "https://$HOST/login.html" || echo 000)
+          echo "https://$HOST/login.html -> $code"
+          [ "$code" = "200" ] || echo "::warning::the sign-in page returned $code"
+
+          leak=$(curl -s -o /dev/null -w '%{http_code}' "https://$HOST/data/users.json" || echo 000)
+          echo "https://$HOST/data/users.json -> $leak"
+          if [ "$leak" = "200" ]; then
+            echo "::error::data/users.json is publicly readable — the data/.htaccess deny rule is not being applied (nginx ignores .htaccess). Block /data/ at the web server before using this in production."
+            exit 1
+          fi
+
+      - name: Tidy up
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
