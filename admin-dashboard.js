@@ -46,4 +46,48 @@
     if (!reduceMotion) bar.style.width = '0%';
     window.requestAnimationFrame(() => { bar.style.width = `${width}%`; });
   });
+
+  const directory = document.querySelector('[data-client-directory]');
+  if (directory) {
+    const search = directory.querySelector('#clientSearch');
+    const filter = directory.querySelector('[data-client-filter]');
+    const sort = directory.querySelector('[data-client-sort]');
+    const list = directory.querySelector('[data-client-list]');
+    const records = Array.from(directory.querySelectorAll('[data-client-record]'));
+    const visibleCount = directory.querySelector('[data-client-visible]');
+    const empty = directory.querySelector('#clientEmpty');
+
+    const matchesFilter = (record, value) => {
+      if (value === 'bank') return record.dataset.bank === '1';
+      if (value === 'fee') return record.dataset.fee === '1';
+      if (value === 'all') return true;
+      return record.dataset.aml === value;
+    };
+
+    const update = () => {
+      const query = (search?.value || '').trim().toLowerCase();
+      const filterValue = filter?.value || 'all';
+      const sortValue = sort?.value || 'name';
+      const sorted = [...records].sort((a, b) => {
+        if (sortValue === 'name') return (a.dataset.name || '').localeCompare(b.dataset.name || '');
+        return Number(b.dataset[sortValue] || 0) - Number(a.dataset[sortValue] || 0);
+      });
+      sorted.forEach((record) => list?.append(record));
+
+      let count = 0;
+      records.forEach((record) => {
+        const matchesSearch = (record.dataset.search || '').includes(query);
+        const show = matchesSearch && matchesFilter(record, filterValue);
+        record.hidden = !show;
+        if (show) count++;
+      });
+      if (visibleCount) visibleCount.textContent = String(count);
+      if (empty) empty.hidden = count !== 0;
+    };
+
+    search?.addEventListener('input', update);
+    filter?.addEventListener('change', update);
+    sort?.addEventListener('change', update);
+    update();
+  }
 })();

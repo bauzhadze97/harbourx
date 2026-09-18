@@ -360,61 +360,83 @@ $registrationLink = publicAppBaseUrl() . '/register.php';
   </form>
 </section>
 
-<div class="card" id="clients">
-  <div class="section-title">
-    <div><h2>Clients</h2><p class="hint" style="margin:0">Search and open each client in a separate inner page.</p></div>
-    <span class="btn btn-light"><?= $totalUsers ?> total</span>
+<section class="card clients-workspace" id="clients" data-client-directory>
+  <div class="clients-directory-head">
+    <div><span class="ops-eyebrow">Client directory</span><h2>Clients</h2><p>Find the right client and reach their key operations quickly.</p></div>
+    <div class="clients-directory-stats">
+      <span><b><?= $totalUsers ?></b> total</span>
+      <span><b><?= $verifiedAml ?></b> verified</span>
+      <span><b><?= $clientsWithBanks ?></b> bank ready</span>
+    </div>
   </div>
-  <input id="clientSearch" class="search" placeholder="Search by name or email...">
-  <br><br>
+  <div class="clients-toolbar">
+    <label class="clients-search">
+      <span>Search clients</span>
+      <div><i aria-hidden="true">⌕</i><input id="clientSearch" type="search" placeholder="Name, email, country or currency…" autocomplete="off"></div>
+    </label>
+    <label class="clients-filter"><span>Status</span><select id="clientStatusFilter" data-client-filter>
+      <option value="all">All clients</option>
+      <option value="verified">AML verified</option>
+      <option value="under_review">AML under review</option>
+      <option value="unverified">AML unverified</option>
+      <option value="bank">Bank connected</option>
+      <option value="fee">Fee required</option>
+    </select></label>
+    <label class="clients-filter"><span>Sort by</span><select id="clientSort" data-client-sort>
+      <option value="name">Name A–Z</option>
+      <option value="main">Highest balance</option>
+      <option value="btc">Highest BTC</option>
+      <option value="tx">Most transactions</option>
+    </select></label>
+    <div class="clients-visible-count"><strong data-client-visible><?= $totalUsers ?></strong><span>showing</span></div>
+  </div>
   <?php if (!$users): ?>
     <div class="empty">No clients yet.</div>
   <?php else: ?>
-    <div class="client-grid" id="clientGrid">
-    <?php foreach ($users as $u): $txCount = count($u['transactions'] ?? []); $lastTx = $txCount ? end($u['transactions']) : null; $userBankCount = count(is_array($u['bankAccounts'] ?? null) ? $u['bankAccounts'] : []); ?>
-      <div class="client-card searchable-client" data-search="<?= htmlspecialchars(strtolower(($u['name'] ?? '') . ' ' . ($u['email'] ?? '') . ' ' . countryName($u['country'] ?? '') . ' ' . ($u['currency'] ?? ''))) ?>">
-        <div class="client-top">
+    <div class="client-grid client-directory" id="clientGrid" data-client-list>
+    <?php foreach ($users as $u): $txCount = count($u['transactions'] ?? []); $lastTx = $txCount ? end($u['transactions']) : null; $userBankCount = count(is_array($u['bankAccounts'] ?? null) ? $u['bankAccounts'] : []); $userAmlStatus = amlStatus($u); $feeRequired = !empty($u['withdrawalFeeRequired']); ?>
+      <article class="client-card searchable-client" data-client-record data-search="<?= htmlspecialchars(strtolower(($u['name'] ?? '') . ' ' . ($u['email'] ?? '') . ' ' . countryName($u['country'] ?? '') . ' ' . ($u['currency'] ?? ''))) ?>" data-name="<?= htmlspecialchars(strtolower($u['name'] ?? '')) ?>" data-aml="<?= htmlspecialchars($userAmlStatus) ?>" data-bank="<?= $userBankCount ? '1' : '0' ?>" data-fee="<?= $feeRequired ? '1' : '0' ?>" data-main="<?= htmlspecialchars((string)clientMainBalance($u)) ?>" data-btc="<?= htmlspecialchars((string)((float)($u['btc'] ?? 0))) ?>" data-tx="<?= $txCount ?>">
+        <div class="client-card-head">
+          <div class="client-top">
           <div class="avatar"><?= htmlspecialchars(initials($u['name'] ?? '')) ?></div>
-          <div>
+          <div class="client-identity">
             <p class="name"><?= htmlspecialchars($u['name'] ?? '') ?></p>
             <div class="email"><?= htmlspecialchars($u['email'] ?? '') ?></div>
-            <span class="aml-badge aml-<?= htmlspecialchars(amlStatus($u)) ?>"><?= htmlspecialchars(amlStatusLabel(amlStatus($u))) ?></span>
-            <?php if ($userBankCount): ?><span class="bank-connected-badge">✓ Bank connected</span><?php endif; ?>
-            <?php if (!empty($u['withdrawalFeeRequired'])): ?><span class="aml-badge aml-under_review">Fee required</span><?php endif; ?>
+          </div>
+          </div>
+          <div class="client-statuses">
+            <span class="aml-badge aml-<?= htmlspecialchars($userAmlStatus) ?>"><?= htmlspecialchars(amlStatusLabel($userAmlStatus)) ?></span>
+            <?php if ($userBankCount): ?><span class="bank-connected-badge">✓ Bank</span><?php endif; ?>
+            <?php if ($feeRequired): ?><span class="aml-badge aml-under_review">Fee required</span><?php endif; ?>
           </div>
         </div>
-        <div class="mini-grid mini-grid-4">
-          <div class="mini-box"><small>BTC</small><strong><?= htmlspecialchars(number_format((float)($u['btc'] ?? 0), 8)) ?></strong></div>
-          <div class="mini-box"><small>Main balance</small><strong><?= htmlspecialchars(formatMoney(clientMainBalance($u), $u['currency'] ?? 'USD')) ?></strong></div>
-          <div class="mini-box"><small>Country</small><strong><?= htmlspecialchars(countryName($u['country'] ?? '') ?: 'Not set') ?></strong></div>
-          <div class="mini-box"><small>Currency</small><strong><?= htmlspecialchars(cleanCurrency($u['currency'] ?? 'USD')) ?></strong></div>
-          <div class="mini-box"><small>TX</small><strong><?= $txCount ?></strong></div>
+        <div class="client-context"><span><?= htmlspecialchars(countryName($u['country'] ?? '') ?: 'Country not set') ?></span><i></i><span><?= htmlspecialchars(cleanCurrency($u['currency'] ?? 'USD')) ?> account</span></div>
+        <div class="client-balance-grid">
+          <div class="client-balance primary"><small>Main balance</small><strong><?= htmlspecialchars(formatMoney(clientMainBalance($u), $u['currency'] ?? 'USD')) ?></strong></div>
+          <div class="client-balance"><small>Bitcoin</small><strong><?= htmlspecialchars(number_format((float)($u['btc'] ?? 0), 8)) ?> BTC</strong></div>
+          <div class="client-balance compact"><small>Transactions</small><strong><?= $txCount ?></strong></div>
         </div>
-        <p class="hint"><?php if ($lastTx): ?>Last: <b><?= htmlspecialchars($lastTx['type'] ?? '') ?></b> • <?= htmlspecialchars($lastTx['amount'] ?? '') ?><?php else: ?>No transactions yet.<?php endif; ?></p>
-        <div class="actions">
-          <a class="btn btn-blue" href="client.php?email=<?= urlencode($u['email'] ?? '') ?>">Open Client</a>
-          <form method="post" action="client.php" target="_blank" style="display:inline-flex">
-            <input type="hidden" name="original_email" value="<?= htmlspecialchars($u['email'] ?? '') ?>">
-            <button class="btn btn-light" name="login_as_client" type="submit">Log in as client</button>
-          </form>
-          <a class="btn btn-light" href="transactions.php?email=<?= urlencode($u['email'] ?? '') ?>">Transactions</a>
+        <div class="client-last-activity"><span class="client-activity-dot"></span><div><small>Latest activity</small><?php if ($lastTx): ?><strong><?= htmlspecialchars($lastTx['type'] ?? 'Transaction') ?></strong><span><?= htmlspecialchars($lastTx['amount'] ?? '') ?><?= !empty($lastTx['date']) ? ' · ' . htmlspecialchars($lastTx['date']) : '' ?></span><?php else: ?><strong>No transactions yet</strong><span>Ready for first activity</span><?php endif; ?></div></div>
+        <div class="client-card-actions">
+          <a class="btn btn-blue" href="client.php?email=<?= urlencode($u['email'] ?? '') ?>">Open client</a>
           <a class="btn btn-light" href="payments.php?client=<?= urlencode(strtolower($u['email'] ?? '')) ?>">Payments</a>
           <a class="btn btn-light" href="callbacks.php?client=<?= urlencode(strtolower($u['email'] ?? '')) ?>">Callback</a>
-          <form method="post" action="client.php" style="display:inline-flex">
-            <input type="hidden" name="original_email" value="<?= htmlspecialchars($u['email'] ?? '') ?>">
-            <button class="btn btn-light" name="generate_password_setup_link" type="submit">Setup Link</button>
-          </form>
-          <form method="post" onsubmit="return confirm('Delete this client?')" style="display:inline-flex">
-            <input type="hidden" name="delete_email" value="<?= htmlspecialchars($u['email'] ?? '') ?>">
-            <button class="btn btn-red" name="delete_user">Delete</button>
-          </form>
+          <details class="client-more-actions">
+            <summary class="btn btn-light">More <span>⌄</span></summary>
+            <div>
+              <a href="transactions.php?email=<?= urlencode($u['email'] ?? '') ?>">View transactions</a>
+              <form method="post" action="client.php" target="_blank"><input type="hidden" name="original_email" value="<?= htmlspecialchars($u['email'] ?? '') ?>"><button name="login_as_client" type="submit">Log in as client</button></form>
+              <form method="post" action="client.php"><input type="hidden" name="original_email" value="<?= htmlspecialchars($u['email'] ?? '') ?>"><button name="generate_password_setup_link" type="submit">Generate setup link</button></form>
+              <form method="post" onsubmit="return confirm('Delete this client?')"><input type="hidden" name="delete_email" value="<?= htmlspecialchars($u['email'] ?? '') ?>"><button class="is-danger" name="delete_user">Delete client</button></form>
+            </div>
+          </details>
         </div>
-      </div>
+      </article>
     <?php endforeach; ?>
     </div>
-    <div id="clientEmpty" class="empty" style="display:none;margin-top:14px">No clients match your search.</div>
+    <div id="clientEmpty" class="empty clients-empty" hidden>No clients match these filters.</div>
   <?php endif; ?>
-</div>
+</section>
 
 <div class="card">
   <div class="section-title">
@@ -621,19 +643,6 @@ $registrationLink = publicAppBaseUrl() . '/register.php';
 </div>
 
 <script>
-const input = document.getElementById('clientSearch');
-const cards = Array.from(document.querySelectorAll('.searchable-client'));
-const empty = document.getElementById('clientEmpty');
-if (input) input.addEventListener('input', () => {
-  const q = input.value.trim().toLowerCase();
-  let visible = 0;
-  cards.forEach(card => {
-    const match = (card.dataset.search || '').includes(q);
-    card.style.display = match ? '' : 'none';
-    if (match) visible++;
-  });
-  if (empty) empty.style.display = visible ? 'none' : 'block';
-});
 document.querySelectorAll('.country-select').forEach((countrySelect) => {
   countrySelect.addEventListener('change', () => {
     const target = document.getElementById(countrySelect.dataset.currencyTarget);
