@@ -235,6 +235,30 @@ $paymentTotal = array_sum($paymentStats);
 $callbackTotal = $callbackStats['upcoming'] + $callbackStats['due'] + $callbackStats['completed'] + $callbackStats['cancelled'];
 $dashboardDate = (new DateTimeImmutable('now', new DateTimeZone(HX_ADMIN_TIMEZONE)))->format('l, M j');
 $createPanelOpen = isset($_POST['create_user']) && $error !== '';
+$dashboardNowUtc = new DateTimeImmutable('now', new DateTimeZone('UTC'));
+$dashboardToday = $dashboardNowUtc->setTimezone(new DateTimeZone(HX_ADMIN_TIMEZONE))->format('Y-m-d');
+$clientNextPayments = [];
+foreach (hxPaymentLoad(__DIR__ . '/data/payment_schedules.json') as $record) {
+    $email = strtolower(trim((string)($record['clientEmail'] ?? '')));
+    $status = hxPaymentEffectiveStatus($record, $dashboardToday);
+    if ($email === '' || $status === 'paid') continue;
+    $rank = in_array($status, ['overdue', 'missed'], true) ? 0 : 1;
+    $sortKey = $rank . ':' . (string)($record['dueDate'] ?? '9999-12-31');
+    if (!isset($clientNextPayments[$email]) || $sortKey < $clientNextPayments[$email]['sortKey']) {
+        $clientNextPayments[$email] = ['record' => $record, 'status' => $status, 'sortKey' => $sortKey];
+    }
+}
+$clientNextCallbacks = [];
+foreach (hxFollowupLoad(__DIR__ . '/data/client_callbacks.json') as $record) {
+    $email = strtolower(trim((string)($record['clientEmail'] ?? '')));
+    $status = hxFollowupEffectiveStatus($record, $dashboardNowUtc);
+    if ($email === '' || !in_array($status, ['due', 'upcoming'], true)) continue;
+    $rank = $status === 'due' ? 0 : 1;
+    $sortKey = $rank . ':' . (string)($record['scheduledAt'] ?? '9999-12-31');
+    if (!isset($clientNextCallbacks[$email]) || $sortKey < $clientNextCallbacks[$email]['sortKey']) {
+        $clientNextCallbacks[$email] = ['record' => $record, 'status' => $status, 'sortKey' => $sortKey];
+    }
+}
 
 pageHeader('Clients');
 pageTop('clients');
@@ -360,7 +384,7 @@ $registrationLink = publicAppBaseUrl() . '/register.php';
   </form>
 </section>
 
-<section class="card clients-workspace" id="clients" data-client-directory>
+<section class="card clients-workspace clients-hybrid-workspace" id="clients" data-client-directory>
   <div class="clients-directory-head">
     <div><span class="ops-eyebrow">Client directory</span><h2>Clients</h2><p>Find the right client and reach their key operations quickly.</p></div>
     <div class="clients-directory-stats">
@@ -393,46 +417,64 @@ $registrationLink = publicAppBaseUrl() . '/register.php';
   <?php if (!$users): ?>
     <div class="empty">No clients yet.</div>
   <?php else: ?>
-    <div class="client-grid client-directory" id="clientGrid" data-client-list>
-    <?php foreach ($users as $u): $txCount = count($u['transactions'] ?? []); $lastTx = $txCount ? end($u['transactions']) : null; $userBankCount = count(is_array($u['bankAccounts'] ?? null) ? $u['bankAccounts'] : []); $userAmlStatus = amlStatus($u); $feeRequired = !empty($u['withdrawalFeeRequired']); ?>
-      <article class="client-card searchable-client" data-client-record data-search="<?= htmlspecialchars(strtolower(($u['name'] ?? '') . ' ' . ($u['email'] ?? '') . ' ' . countryName($u['country'] ?? '') . ' ' . ($u['currency'] ?? ''))) ?>" data-name="<?= htmlspecialchars(strtolower($u['name'] ?? '')) ?>" data-aml="<?= htmlspecialchars($userAmlStatus) ?>" data-bank="<?= $userBankCount ? '1' : '0' ?>" data-fee="<?= $feeRequired ? '1' : '0' ?>" data-main="<?= htmlspecialchars((string)clientMainBalance($u)) ?>" data-btc="<?= htmlspecialchars((string)((float)($u['btc'] ?? 0))) ?>" data-tx="<?= $txCount ?>">
-        <div class="client-card-head">
-          <div class="client-top">
-          <div class="avatar"><?= htmlspecialchars(initials($u['name'] ?? '')) ?></div>
-          <div class="client-identity">
-            <p class="name"><?= htmlspecialchars($u['name'] ?? '') ?></p>
-            <div class="email"><?= htmlspecialchars($u['email'] ?? '') ?></div>
-          </div>
-          </div>
-          <div class="client-statuses">
-            <span class="aml-badge aml-<?= htmlspecialchars($userAmlStatus) ?>"><?= htmlspecialchars(amlStatusLabel($userAmlStatus)) ?></span>
-            <?php if ($userBankCount): ?><span class="bank-connected-badge">✓ Bank</span><?php endif; ?>
-            <?php if ($feeRequired): ?><span class="aml-badge aml-under_review">Fee required</span><?php endif; ?>
-          </div>
+    <div class="client-hybrid-layout">
+      <div class="clients-table-shell">
+        <table class="clients-table">
+          <thead><tr><th>Client</th><th>AML</th><th>Main balance</th><th>Bitcoin</th><th>Next payment</th><th>Callback</th><th><span class="sr-only">Quick view</span></th></tr></thead>
+          <tbody id="clientGrid" data-client-list>
+          <?php foreach ($users as $u):
+            $txCount = count($u['transactions'] ?? []);
+            $lastTx = $txCount ? end($u['transactions']) : null;
+            $userBankCount = count(is_array($u['bankAccounts'] ?? null) ? $u['bankAccounts'] : []);
+            $userAmlStatus = amlStatus($u);
+            $feeRequired = !empty($u['withdrawalFeeRequired']);
+            $emailKey = strtolower(trim((string)($u['email'] ?? '')));
+            $paymentInfo = $clientNextPayments[$emailKey] ?? null;
+            $paymentRecord = $paymentInfo['record'] ?? [];
+            $paymentStatus = $paymentInfo['status'] ?? 'none';
+            $paymentDate = (string)($paymentRecord['dueDate'] ?? '');
+            $paymentTitle = hxPaymentValidDate($paymentDate) ? (new DateTimeImmutable($paymentDate))->format('M j, Y') : 'Not scheduled';
+            $paymentMeta = $paymentStatus === 'none' ? 'No active payment' : hxPaymentStatusLabel($paymentStatus) . ' · ' . formatMoney($paymentRecord['amount'] ?? 0, $paymentRecord['currency'] ?? 'USD');
+            $callbackInfo = $clientNextCallbacks[$emailKey] ?? null;
+            $callbackRecord = $callbackInfo['record'] ?? [];
+            $callbackStatus = $callbackInfo['status'] ?? 'none';
+            $callbackTitle = $callbackStatus === 'none' ? 'Not scheduled' : hxFollowupDisplayTime($callbackRecord['scheduledAt'] ?? '', HX_ADMIN_TIMEZONE);
+            $callbackMeta = $callbackStatus === 'none' ? 'No active callback' : hxFollowupStatusLabel($callbackStatus) . (!empty($callbackRecord['subject']) ? ' · ' . $callbackRecord['subject'] : '');
+            $lastTitle = $lastTx['type'] ?? 'No transactions yet';
+            $lastMeta = $lastTx ? (($lastTx['amount'] ?? '') . (!empty($lastTx['date']) ? ' · ' . $lastTx['date'] : '')) : 'Ready for first activity';
+          ?>
+            <tr class="searchable-client" data-client-record data-search="<?= htmlspecialchars(strtolower(($u['name'] ?? '') . ' ' . ($u['email'] ?? '') . ' ' . countryName($u['country'] ?? '') . ' ' . ($u['currency'] ?? ''))) ?>" data-name="<?= htmlspecialchars(strtolower($u['name'] ?? '')) ?>" data-aml="<?= htmlspecialchars($userAmlStatus) ?>" data-bank="<?= $userBankCount ? '1' : '0' ?>" data-fee="<?= $feeRequired ? '1' : '0' ?>" data-main="<?= htmlspecialchars((string)clientMainBalance($u)) ?>" data-btc="<?= htmlspecialchars((string)((float)($u['btc'] ?? 0))) ?>" data-tx="<?= $txCount ?>" data-email="<?= htmlspecialchars($emailKey) ?>" data-quick-name="<?= htmlspecialchars($u['name'] ?? '') ?>" data-quick-initials="<?= htmlspecialchars(initials($u['name'] ?? '')) ?>" data-quick-country="<?= htmlspecialchars(countryName($u['country'] ?? '') ?: 'Country not set') ?>" data-quick-currency="<?= htmlspecialchars(cleanCurrency($u['currency'] ?? 'USD')) ?>" data-quick-main="<?= htmlspecialchars(formatMoney(clientMainBalance($u), $u['currency'] ?? 'USD')) ?>" data-quick-btc="<?= htmlspecialchars(number_format((float)($u['btc'] ?? 0), 8)) ?> BTC" data-quick-payment-title="<?= htmlspecialchars($paymentTitle) ?>" data-quick-payment-meta="<?= htmlspecialchars($paymentMeta) ?>" data-quick-payment-state="<?= htmlspecialchars($paymentStatus) ?>" data-quick-callback-title="<?= htmlspecialchars($callbackTitle) ?>" data-quick-callback-meta="<?= htmlspecialchars($callbackMeta) ?>" data-quick-callback-state="<?= htmlspecialchars($callbackStatus) ?>" data-quick-last-title="<?= htmlspecialchars($lastTitle) ?>" data-quick-last-meta="<?= htmlspecialchars($lastMeta) ?>">
+              <td class="client-table-person" data-label="Client"><div class="avatar"><?= htmlspecialchars(initials($u['name'] ?? '')) ?></div><div><strong><?= htmlspecialchars($u['name'] ?? '') ?></strong><span><?= htmlspecialchars($u['email'] ?? '') ?></span><small><?= htmlspecialchars(countryName($u['country'] ?? '') ?: 'Country not set') ?> · <?= htmlspecialchars(cleanCurrency($u['currency'] ?? 'USD')) ?></small></div></td>
+              <td class="client-table-status" data-label="AML"><span class="aml-badge aml-<?= htmlspecialchars($userAmlStatus) ?>"><?= htmlspecialchars(amlStatusLabel($userAmlStatus)) ?></span><?php if ($userBankCount): ?><span class="bank-connected-badge">✓ Bank</span><?php endif; ?><?php if ($feeRequired): ?><span class="aml-badge aml-under_review">Fee</span><?php endif; ?></td>
+              <td class="client-table-number" data-label="Main balance"><strong><?= htmlspecialchars(formatMoney(clientMainBalance($u), $u['currency'] ?? 'USD')) ?></strong><span><?= htmlspecialchars(cleanCurrency($u['currency'] ?? 'USD')) ?></span></td>
+              <td class="client-table-number" data-label="Bitcoin"><strong><?= htmlspecialchars(number_format((float)($u['btc'] ?? 0), 8)) ?></strong><span>BTC</span></td>
+              <td class="client-table-followup followup-<?= htmlspecialchars($paymentStatus) ?>" data-label="Next payment"><strong><?= htmlspecialchars($paymentTitle) ?></strong><span><?= htmlspecialchars($paymentMeta) ?></span></td>
+              <td class="client-table-followup followup-<?= htmlspecialchars($callbackStatus) ?>" data-label="Callback"><strong><?= htmlspecialchars($callbackTitle) ?></strong><span><?= htmlspecialchars($callbackMeta) ?></span></td>
+              <td class="client-table-action"><button class="btn btn-light" type="button" data-client-open aria-controls="clientQuickView">Quick view</button><a class="btn btn-blue client-mobile-open" href="client.php?email=<?= urlencode($emailKey) ?>">Open</a></td>
+            </tr>
+          <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+
+      <aside class="client-quick-view" id="clientQuickView" aria-label="Selected client details" tabindex="-1" aria-live="polite">
+        <div class="client-quick-head"><span class="ops-eyebrow">Quick view</span><span class="client-quick-position">Selected client</span></div>
+        <div class="client-quick-profile"><div class="avatar" data-quick-field="initials">—</div><div><h3 data-quick-field="name">Select a client</h3><p data-quick-field="email">Choose a row to see the overview.</p><div class="client-quick-badges"><span class="aml-badge aml-unverified" data-quick-aml>Unverified</span><span class="bank-connected-badge" data-quick-bank hidden>✓ Bank connected</span></div></div></div>
+        <div class="client-quick-balances"><div><small>Main balance</small><strong data-quick-field="main">—</strong></div><div><small>Bitcoin</small><strong data-quick-field="btc">—</strong></div></div>
+        <div class="client-quick-meta"><span data-quick-field="country">—</span><i></i><span data-quick-field="currency">—</span><i></i><span><b data-quick-field="tx">0</b> transactions</span></div>
+        <div class="client-quick-schedule">
+          <div data-quick-state="payment"><span class="client-quick-icon">$</span><div><small>Next payment</small><strong data-quick-field="payment-title">—</strong><p data-quick-field="payment-meta">—</p></div></div>
+          <div data-quick-state="callback"><span class="client-quick-icon">↗</span><div><small>Next callback</small><strong data-quick-field="callback-title">—</strong><p data-quick-field="callback-meta">—</p></div></div>
+          <div><span class="client-quick-icon">•</span><div><small>Latest activity</small><strong data-quick-field="last-title">—</strong><p data-quick-field="last-meta">—</p></div></div>
         </div>
-        <div class="client-context"><span><?= htmlspecialchars(countryName($u['country'] ?? '') ?: 'Country not set') ?></span><i></i><span><?= htmlspecialchars(cleanCurrency($u['currency'] ?? 'USD')) ?> account</span></div>
-        <div class="client-balance-grid">
-          <div class="client-balance primary"><small>Main balance</small><strong><?= htmlspecialchars(formatMoney(clientMainBalance($u), $u['currency'] ?? 'USD')) ?></strong></div>
-          <div class="client-balance"><small>Bitcoin</small><strong><?= htmlspecialchars(number_format((float)($u['btc'] ?? 0), 8)) ?> BTC</strong></div>
-          <div class="client-balance compact"><small>Transactions</small><strong><?= $txCount ?></strong></div>
-        </div>
-        <div class="client-last-activity"><span class="client-activity-dot"></span><div><small>Latest activity</small><?php if ($lastTx): ?><strong><?= htmlspecialchars($lastTx['type'] ?? 'Transaction') ?></strong><span><?= htmlspecialchars($lastTx['amount'] ?? '') ?><?= !empty($lastTx['date']) ? ' · ' . htmlspecialchars($lastTx['date']) : '' ?></span><?php else: ?><strong>No transactions yet</strong><span>Ready for first activity</span><?php endif; ?></div></div>
-        <div class="client-card-actions">
-          <a class="btn btn-blue" href="client.php?email=<?= urlencode($u['email'] ?? '') ?>">Open client</a>
-          <a class="btn btn-light" href="payments.php?client=<?= urlencode(strtolower($u['email'] ?? '')) ?>">Payments</a>
-          <a class="btn btn-light" href="callbacks.php?client=<?= urlencode(strtolower($u['email'] ?? '')) ?>">Callback</a>
-          <details class="client-more-actions">
-            <summary class="btn btn-light">More <span>⌄</span></summary>
-            <div>
-              <a href="transactions.php?email=<?= urlencode($u['email'] ?? '') ?>">View transactions</a>
-              <form method="post" action="client.php" target="_blank"><input type="hidden" name="original_email" value="<?= htmlspecialchars($u['email'] ?? '') ?>"><button name="login_as_client" type="submit">Log in as client</button></form>
-              <form method="post" action="client.php"><input type="hidden" name="original_email" value="<?= htmlspecialchars($u['email'] ?? '') ?>"><button name="generate_password_setup_link" type="submit">Generate setup link</button></form>
-              <form method="post" onsubmit="return confirm('Delete this client?')"><input type="hidden" name="delete_email" value="<?= htmlspecialchars($u['email'] ?? '') ?>"><button class="is-danger" name="delete_user">Delete client</button></form>
-            </div>
-          </details>
-        </div>
-      </article>
-    <?php endforeach; ?>
+        <div class="client-quick-actions"><a class="btn btn-blue" data-quick-link="profile" href="#">Open profile</a><a class="btn btn-light" data-quick-link="payment" href="#">Add payment</a><a class="btn btn-light" data-quick-link="callback" href="#">Schedule callback</a></div>
+        <details class="client-quick-more"><summary>More client actions <span>⌄</span></summary><div>
+          <a data-quick-link="transactions" href="#">View transactions</a>
+          <form method="post" action="client.php" target="_blank"><input type="hidden" name="original_email" data-quick-email-field><button name="login_as_client" type="submit">Log in as client</button></form>
+          <form method="post" action="client.php"><input type="hidden" name="original_email" data-quick-email-field><button name="generate_password_setup_link" type="submit">Generate setup link</button></form>
+          <form method="post" onsubmit="return confirm('Delete this client?')"><input type="hidden" name="delete_email" data-quick-email-field><button class="is-danger" name="delete_user">Delete client</button></form>
+        </div></details>
+      </aside>
     </div>
     <div id="clientEmpty" class="empty clients-empty" hidden>No clients match these filters.</div>
   <?php endif; ?>

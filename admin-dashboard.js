@@ -56,6 +56,71 @@
     const records = Array.from(directory.querySelectorAll('[data-client-record]'));
     const visibleCount = directory.querySelector('[data-client-visible]');
     const empty = directory.querySelector('#clientEmpty');
+    const quickView = directory.querySelector('#clientQuickView');
+
+    const setQuickText = (field, value) => {
+      const node = quickView?.querySelector(`[data-quick-field="${field}"]`);
+      if (node) node.textContent = value || '—';
+    };
+
+    const showQuickView = (record) => {
+      if (!quickView || !record) return;
+      records.forEach((item) => {
+        const selected = item === record;
+        item.classList.toggle('is-selected', selected);
+        item.querySelector('[data-client-open]')?.setAttribute('aria-pressed', String(selected));
+      });
+
+      const amlLabels = { verified: 'Verified', under_review: 'Under review', unverified: 'Unverified' };
+      setQuickText('initials', record.dataset.quickInitials);
+      setQuickText('name', record.dataset.quickName);
+      setQuickText('email', record.dataset.email);
+      setQuickText('country', record.dataset.quickCountry);
+      setQuickText('currency', `${record.dataset.quickCurrency || 'USD'} account`);
+      setQuickText('tx', record.dataset.tx || '0');
+      setQuickText('main', record.dataset.quickMain);
+      setQuickText('btc', record.dataset.quickBtc);
+      setQuickText('payment-title', record.dataset.quickPaymentTitle);
+      setQuickText('payment-meta', record.dataset.quickPaymentMeta);
+      setQuickText('callback-title', record.dataset.quickCallbackTitle);
+      setQuickText('callback-meta', record.dataset.quickCallbackMeta);
+      setQuickText('last-title', record.dataset.quickLastTitle);
+      setQuickText('last-meta', record.dataset.quickLastMeta);
+
+      const aml = quickView.querySelector('[data-quick-aml]');
+      if (aml) {
+        aml.className = `aml-badge aml-${record.dataset.aml || 'unverified'}`;
+        aml.textContent = amlLabels[record.dataset.aml] || 'Unverified';
+      }
+      const bank = quickView.querySelector('[data-quick-bank]');
+      if (bank) bank.hidden = record.dataset.bank !== '1';
+
+      const setState = (kind, state) => {
+        const node = quickView.querySelector(`[data-quick-state="${kind}"]`);
+        if (!node) return;
+        node.classList.remove('is-danger', 'is-warning', 'is-success');
+        if (['overdue', 'missed', 'due'].includes(state)) node.classList.add('is-danger');
+        else if (['pending', 'upcoming'].includes(state)) node.classList.add('is-warning');
+        else if (state === 'paid' || state === 'completed') node.classList.add('is-success');
+      };
+      setState('payment', record.dataset.quickPaymentState || 'none');
+      setState('callback', record.dataset.quickCallbackState || 'none');
+
+      const email = record.dataset.email || '';
+      const encodedEmail = encodeURIComponent(email);
+      const destinations = {
+        profile: `client.php?email=${encodedEmail}`,
+        payment: `payments.php?client=${encodedEmail}#add-payment`,
+        callback: `callbacks.php?client=${encodedEmail}#schedule-callback`,
+        transactions: `transactions.php?email=${encodedEmail}`
+      };
+      Object.entries(destinations).forEach(([kind, href]) => {
+        const link = quickView.querySelector(`[data-quick-link="${kind}"]`);
+        if (link) link.href = href;
+      });
+      quickView.querySelectorAll('[data-quick-email-field]').forEach((input) => { input.value = email; });
+      quickView.querySelectorAll('details').forEach((details) => { details.open = false; });
+    };
 
     const matchesFilter = (record, value) => {
       if (value === 'bank') return record.dataset.bank === '1';
@@ -76,15 +141,31 @@
 
       let count = 0;
       records.forEach((record) => {
-        const matchesSearch = (record.dataset.search || '').includes(query);
+        const haystack = (record.dataset.search || '').toLocaleLowerCase();
+        const matchesSearch = query.split(/\s+/).every((term) => haystack.includes(term));
         const show = matchesSearch && matchesFilter(record, filterValue);
         record.hidden = !show;
         if (show) count++;
       });
       if (visibleCount) visibleCount.textContent = String(count);
       if (empty) empty.hidden = count !== 0;
+      if (quickView) quickView.hidden = count === 0;
+      const selected = records.find((record) => record.classList.contains('is-selected') && !record.hidden);
+      if (!selected) showQuickView(sorted.find((record) => !record.hidden));
     };
 
+    records.forEach((record) => {
+      record.querySelector('[data-client-open]')?.addEventListener('click', () => {
+        showQuickView(record);
+        if (window.matchMedia('(max-width: 1100px)').matches) {
+          quickView.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+          quickView.focus({ preventScroll: true });
+        }
+      });
+      record.addEventListener('click', (event) => {
+        if (!event.target.closest('a, button, input, select, summary')) showQuickView(record);
+      });
+    });
     search?.addEventListener('input', update);
     filter?.addEventListener('change', update);
     sort?.addEventListener('change', update);
