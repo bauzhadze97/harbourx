@@ -225,6 +225,11 @@ usort($withdrawalAuthorisations, function($a, $b) {
     );
 });
 
+$adminSnapshot = currentAdminAlertSnapshot();
+$paymentStats = $adminSnapshot['paymentStats'];
+$callbackStats = $adminSnapshot['callbackStats'];
+$adminAlerts = $adminSnapshot['items'];
+
 pageHeader('Clients');
 pageTop('clients');
 if ($message) echo '<div class="notice success">' . htmlspecialchars($message) . '</div>';
@@ -249,6 +254,33 @@ $registrationLink = publicAppBaseUrl() . '/register.php';
     <div class="stat"><small>Open Tickets</small><strong><?= $openTicketCount ?></strong></div>
     <div class="stat"><small>BTC Withdrawals</small><strong><?= (int)$pendingBtcWithdrawals ?></strong></div>
     <div class="stat"><small>Withdrawal Auth</small><strong><?= count($withdrawalAuthorisations) ?></strong></div>
+    <a class="stat" href="payments.php?status=pending"><small>Payments pending</small><strong data-stat-payment-pending><?= (int)$paymentStats['pending'] ?></strong></a>
+    <a class="stat" href="payments.php?status=overdue"><small>Payments overdue</small><strong data-stat-payment-overdue><?= (int)$paymentStats['overdue'] ?></strong></a>
+    <a class="stat" href="callbacks.php?status=due"><small>Callbacks due</small><strong data-stat-callback-due><?= (int)$callbackStats['due'] ?></strong></a>
+    <a class="stat" href="callbacks.php"><small>Callbacks today</small><strong data-stat-callback-today><?= (int)$callbackStats['today'] ?></strong></a>
+  </div>
+</div>
+
+<div class="card" id="alerts">
+  <div class="section-title">
+    <div>
+      <h2>Notifications</h2>
+      <p class="hint" style="margin:0" data-alert-summary><?= htmlspecialchars($adminSnapshot['body']) ?></p>
+    </div>
+    <button class="btn btn-light" type="button" id="enableDesktopAlerts">Enable desktop alerts</button>
+  </div>
+  <div class="admin-alert-list">
+    <?php if (!$adminAlerts): ?>
+      <div class="empty" data-alert-empty>No urgent alerts right now.</div>
+    <?php else: ?>
+      <?php foreach ($adminAlerts as $alert): ?>
+        <a class="admin-alert admin-alert-<?= htmlspecialchars($alert['level']) ?>" href="<?= htmlspecialchars($alert['href']) ?>">
+          <span class="admin-alert-dot"></span>
+          <span><b><?= htmlspecialchars($alert['title']) ?></b><small><?= htmlspecialchars($alert['detail']) ?></small></span>
+          <span class="admin-alert-arrow">&rarr;</span>
+        </a>
+      <?php endforeach; ?>
+    <?php endif; ?>
   </div>
 </div>
 
@@ -325,6 +357,7 @@ $registrationLink = publicAppBaseUrl() . '/register.php';
           </form>
           <a class="btn btn-light" href="transactions.php?email=<?= urlencode($u['email'] ?? '') ?>">Transactions</a>
           <a class="btn btn-light" href="payments.php?client=<?= urlencode(strtolower($u['email'] ?? '')) ?>">Payments</a>
+          <a class="btn btn-light" href="callbacks.php?client=<?= urlencode(strtolower($u['email'] ?? '')) ?>">Callback</a>
           <form method="post" action="client.php" style="display:inline-flex">
             <input type="hidden" name="original_email" value="<?= htmlspecialchars($u['email'] ?? '') ?>">
             <button class="btn btn-light" name="generate_password_setup_link" type="submit">Setup Link</button>
@@ -566,5 +599,13 @@ document.querySelectorAll('.country-select').forEach((countrySelect) => {
     if (target && option?.dataset.currency) target.value = option.dataset.currency;
   });
 });
+
+window.hxInitialAlerts = <?= json_encode([
+  'count' => (int)$adminSnapshot['count'],
+  'body' => (string)$adminSnapshot['body'],
+  'signature' => (string)$adminSnapshot['signature'],
+  'paymentStats' => $paymentStats,
+  'callbackStats' => $callbackStats
+], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 </script>
 <?php pageFooter(); ?>

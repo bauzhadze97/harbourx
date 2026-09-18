@@ -1,6 +1,11 @@
 <?php
 require_once __DIR__ . '/btc.php';
 require_once __DIR__ . '/locale_config.php';
+require_once __DIR__ . '/payments_common.php';
+require_once __DIR__ . '/followups_common.php';
+require_once __DIR__ . '/admin_insights.php';
+
+if (!defined('HX_ADMIN_TIMEZONE')) define('HX_ADMIN_TIMEZONE', 'Asia/Tbilisi');
 
 $secureCookie = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
 session_set_cookie_params([
@@ -140,6 +145,15 @@ function requireAdmin() {
     }
 }
 
+function currentAdminAlertSnapshot() {
+    return hxAdminAlertSnapshot(
+        __DIR__ . '/data/payment_schedules.json',
+        __DIR__ . '/data/client_callbacks.json',
+        loadUsers(__DIR__ . '/data/users.json'),
+        HX_ADMIN_TIMEZONE
+    );
+}
+
 function hxMark() {
     return '<svg viewBox="0 0 32 32" fill="none" aria-hidden="true">'
         . '<path d="M7 20.5 16 11l9 9.5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>'
@@ -186,6 +200,9 @@ function themeFab() {
 function pageTop($active = 'clients') {
     $clientsClass = $active === 'clients' ? 'btn btn-blue' : 'btn btn-light';
     $paymentsClass = $active === 'payments' ? 'btn btn-blue' : 'btn btn-light';
+    $callbacksClass = $active === 'callbacks' ? 'btn btn-blue' : 'btn btn-light';
+    $alertSnapshot = currentAdminAlertSnapshot();
+    $alertCount = (int)($alertSnapshot['count'] ?? 0);
     echo '<div class="page"><div class="topbar">'
         . '<div class="brand"><div class="badge">' . hxMark() . '</div>'
         . '<div><h1>HarbourX Admin</h1><p>Client operations console</p></div></div>'
@@ -193,9 +210,12 @@ function pageTop($active = 'clients') {
         . themeToggleButton()
         . '<a class="' . $clientsClass . '" href="admin.php">Clients</a>'
         . '<a class="' . $paymentsClass . '" href="payments.php">Payments</a>'
+        . '<a class="' . $callbacksClass . '" href="callbacks.php">Callbacks</a>'
+        . '<a class="btn btn-light alert-link" href="admin.php#alerts">Alerts'
+        . '<span class="alert-count" data-alert-count' . ($alertCount ? '' : ' hidden') . '>' . $alertCount . '</span></a>'
         . '<a class="btn btn-light" href="login.html" target="_blank" rel="noopener">Client app</a>'
         . '<a class="btn btn-light" href="admin.php?logout=1">Log out</a>'
         . '</div></div>';
 }
 
-function pageFooter() { echo '</div></body></html>'; }
+function pageFooter() { echo '<script src="admin-notifications.js"></script></div></body></html>'; }

@@ -97,6 +97,11 @@ The rest of this section is the same thing done by hand.
    data/payment_schedules.json. It is also untracked runtime data and must be
    preserved alongside data/users.json during deployments.
 
+   Client callback appointments are stored in data/client_callbacks.json.
+   The admin dashboard combines overdue payments and due callbacks into its
+   notification centre; optional desktop notifications work while an admin
+   page is open in a browser that has granted notification permission.
+
 Running the checks locally
 --------------------------
 The same suite CI runs (see .github/workflows/ci.yml):
@@ -111,6 +116,7 @@ The same suite CI runs (see .github/workflows/ci.yml):
      node tests/btc-withdrawal-test.js  address, dust and balance checks
      php tests/statements-test.php   statement figures from transaction lines
      php tests/payment-schedule-test.php  payment due-date and storage checks
+     php tests/followup-test.php   callback timezone and notification checks
      node tests/statements-page-test.js  the statements page and its download
 
 The browser tests sign in as the synthetic account, so they seed
