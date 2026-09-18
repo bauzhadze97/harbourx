@@ -71,7 +71,7 @@ The rest of this section is the same thing done by hand.
 
      c. To look at the interface only, with no PHP at all:
           .\run-local.ps1 -Static
-        then open http://localhost:8000/tests/preview.html. It seeds a demo
+        then open http://localhost:8000/tests/preview.html. It seeds a test
         account into the browser so the pages render. Signing in, two-factor,
         tickets, converting and withdrawing all need PHP and will not work, and
         a static server serves .php files as plain text — keep it on localhost.
@@ -83,8 +83,8 @@ The rest of this section is the same thing done by hand.
    it holds real client details and passwords, so it is deliberately untracked.
 
      - To work against real data, copy your own data/users.json into data/.
-     - Otherwise the script seeds the synthetic demo account used by the tests:
-         demo.client@example.invalid / CiSmokeTest!2026
+     - Otherwise the script seeds the synthetic test account used by the tests:
+         test.client@example.invalid / CiSmokeTest!2026
 
    Client sign-in is at /login.html, the admin console at /admin.php, and the
    support centre at /support.html. Tickets are stored in data/tickets.json,
@@ -92,6 +92,15 @@ The rest of this section is the same thing done by hand.
 
    Everything is written straight back to data/users.json, so a local run edits
    whichever file you put there. Keep a copy before experimenting.
+
+   The admin payment schedule is stored separately in
+   data/payment_schedules.json. It is also untracked runtime data and must be
+   preserved alongside data/users.json during deployments.
+
+   Client callback appointments are stored in data/client_callbacks.json.
+   The admin dashboard combines overdue payments and due callbacks into its
+   notification centre; optional desktop notifications work while an admin
+   page is open in a browser that has granted notification permission.
 
 Running the checks locally
 --------------------------
@@ -106,6 +115,8 @@ The same suite CI runs (see .github/workflows/ci.yml):
      node tests/support-test.js     open a ticket, answer it, read it back
      node tests/btc-withdrawal-test.js  address, dust and balance checks
      php tests/statements-test.php   statement figures from transaction lines
+     php tests/payment-schedule-test.php  payment due-date and storage checks
+     php tests/followup-test.php   callback timezone and notification checks
      node tests/statements-page-test.js  the statements page and its download
 
 The browser tests sign in as the synthetic account, so they seed

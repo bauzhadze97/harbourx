@@ -1,6 +1,11 @@
 <?php
 require_once __DIR__ . '/btc.php';
 require_once __DIR__ . '/locale_config.php';
+require_once __DIR__ . '/payments_common.php';
+require_once __DIR__ . '/followups_common.php';
+require_once __DIR__ . '/admin_insights.php';
+
+if (!defined('HX_ADMIN_TIMEZONE')) define('HX_ADMIN_TIMEZONE', 'Asia/Tbilisi');
 
 $secureCookie = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
 session_set_cookie_params([
@@ -140,6 +145,15 @@ function requireAdmin() {
     }
 }
 
+function currentAdminAlertSnapshot() {
+    return hxAdminAlertSnapshot(
+        __DIR__ . '/data/payment_schedules.json',
+        __DIR__ . '/data/client_callbacks.json',
+        loadUsers(__DIR__ . '/data/users.json'),
+        HX_ADMIN_TIMEZONE
+    );
+}
+
 function hxMark() {
     return '<svg viewBox="0 0 32 32" fill="none" aria-hidden="true">'
         . '<path d="M7 20.5 16 11l9 9.5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>'
@@ -148,6 +162,7 @@ function hxMark() {
 }
 
 function pageHeader($title = 'Admin Panel') {
+    $styleVersion = (string)(@filemtime(__DIR__ . '/admin-style.css') ?: 1);
     echo '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">'
         . '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
         . '<meta name="robots" content="noindex,nofollow">'
@@ -160,7 +175,7 @@ function pageHeader($title = 'Admin Panel') {
         . '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap" media="print" onload="this.media=&quot;all&quot;">'
         . '<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap"></noscript>'
         . '<link rel="stylesheet" href="hx-motion.css">'
-        . '<link rel="stylesheet" href="admin-style.css">'
+        . '<link rel="stylesheet" href="admin-style.css?v=' . rawurlencode($styleVersion) . '">'
         . '<script src="hx-motion.js" defer></script></head><body>';
 }
 
@@ -185,15 +200,30 @@ function themeFab() {
 
 function pageTop($active = 'clients') {
     $clientsClass = $active === 'clients' ? 'btn btn-blue' : 'btn btn-light';
+    $paymentsClass = $active === 'payments' ? 'btn btn-blue' : 'btn btn-light';
+    $callbacksClass = $active === 'callbacks' ? 'btn btn-blue' : 'btn btn-light';
+    $alertSnapshot = currentAdminAlertSnapshot();
+    $alertCount = (int)($alertSnapshot['count'] ?? 0);
     echo '<div class="page"><div class="topbar">'
         . '<div class="brand"><div class="badge">' . hxMark() . '</div>'
         . '<div><h1>HarbourX Admin</h1><p>Client operations console</p></div></div>'
         . '<div class="actions">'
         . themeToggleButton()
         . '<a class="' . $clientsClass . '" href="admin.php">Clients</a>'
+        . '<a class="' . $paymentsClass . '" href="payments.php">Payments</a>'
+        . '<a class="' . $callbacksClass . '" href="callbacks.php">Callbacks</a>'
+        . '<a class="btn btn-light alert-link" href="admin.php#alerts">Alerts'
+        . '<span class="alert-count" data-alert-count' . ($alertCount ? '' : ' hidden') . '>' . $alertCount . '</span></a>'
         . '<a class="btn btn-light" href="login.html" target="_blank" rel="noopener">Client app</a>'
         . '<a class="btn btn-light" href="admin.php?logout=1">Log out</a>'
         . '</div></div>';
 }
 
-function pageFooter() { echo '</div></body></html>'; }
+function pageFooter() {
+    $notificationsVersion = (string)(@filemtime(__DIR__ . '/admin-notifications.js') ?: 1);
+    $opsVersion = (string)(@filemtime(__DIR__ . '/admin-ops.js') ?: 1);
+    $dashboardVersion = (string)(@filemtime(__DIR__ . '/admin-dashboard.js') ?: 1);
+    echo '<script src="admin-notifications.js?v=' . rawurlencode($notificationsVersion) . '"></script>'
+        . '<script src="admin-ops.js?v=' . rawurlencode($opsVersion) . '"></script>'
+        . '<script src="admin-dashboard.js?v=' . rawurlencode($dashboardVersion) . '"></script></div></body></html>';
+}

@@ -8,7 +8,7 @@
 #
 # If data/users.json is missing (a fresh clone never has it — it holds real
 # client details and is deliberately untracked) the script seeds the synthetic
-# demo account used by the test suite and prints its credentials.
+# test account used by the test suite and prints its credentials.
 #
 #   ./run-local.sh            # http://localhost:8000
 #   ./run-local.sh 3000       # a different port
@@ -42,8 +42,8 @@ printf '  PHP %s  (%s)\n' "$(php -r 'echo PHP_VERSION;')" "$(command -v php)"
 if [ ! -f data/users.json ]; then
   mkdir -p data
   cp tests/fixtures/users.json data/users.json
-  printf '  Seeded data/users.json with the demo account:\n'
-  printf '        demo.client@example.invalid  /  CiSmokeTest!2026\n'
+  printf '  Seeded data/users.json with the test account:\n'
+  printf '        test.client@example.invalid  /  CiSmokeTest!2026\n'
   printf '  To use your real data instead, copy your own data/users.json over this one.\n'
 else
   printf '  Using the existing data/users.json\n'

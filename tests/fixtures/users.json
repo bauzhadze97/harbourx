@@ -1,8 +1,8 @@
 [
     {
-        "email": "demo.client@example.invalid",
+        "email": "test.client@example.invalid",
         "password": "CiSmokeTest!2026",
-        "name": "Demo Client",
+        "name": "Test Client",
         "currency": "AUD",
         "portfolioUsd": 0,
         "btc": 1.25,
@@ -19,12 +19,12 @@
         "passwordSetup": null,
         "aml": {
             "title": "Mx",
-            "legalFirstName": "Demo",
+            "legalFirstName": "Test",
             "middleNames": "",
             "legalLastName": "Client",
             "dateOfBirth": "1990-01-01",
             "gender": "Prefer not to say",
-            "email": "demo.client@example.invalid",
+            "email": "test.client@example.invalid",
             "mobile": "+61400000000",
             "twoFactorMethod": "Authenticator app",
             "addressLine1": "1 Example Street",
@@ -40,10 +40,10 @@
         },
         "bankAccounts": [
             {
-                "id": "ci-demo-bank",
+                "id": "ci-test-bank",
                 "bankName": "Example Bank",
-                "accountHolder": "Demo Client",
-                "firstName": "Demo",
+                "accountHolder": "Test Client",
+                "firstName": "Test",
                 "lastName": "Client",
                 "bsb": "000-000",
                 "accountNumber": "00001234",
@@ -69,7 +69,7 @@
                 "status": "Completed",
                 "details": "Converted to main balance",
                 "detailsUrl": "",
-                "conversionId": "ci0000000000demo"
+                "conversionId": "ci0000000000test"
             },
             {
                 "date": "2026-03-02",

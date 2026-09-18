@@ -29,7 +29,7 @@ fixture.seedUsers();
 const BASE = process.env.BASE_URL || 'http://127.0.0.1:8899';
 const SHOTS = new URL('./screenshots/', import.meta.url).pathname;
 const CREDENTIALS = {
-  email: 'demo.client@example.invalid',
+  email: 'test.client@example.invalid',
   password: 'CiSmokeTest!2026'
 };
 
@@ -101,7 +101,7 @@ const PAGES = [
   { url: 'dashboard.html', shot: '1-dashboard', auth: true },
   { url: 'login.html', shot: '2-sign-in', auth: false },
   { url: 'aml.html', shot: '3-identity', auth: true },
-  { url: 'change_password.php?email=demo.client%40example.invalid', shot: '4-security', auth: true },
+  { url: 'change_password.php?email=test.client%40example.invalid', shot: '4-security', auth: true },
   { url: 'register.php', shot: '5-create-account', auth: false },
   { url: 'admin.php', shot: '6-admin-sign-in', auth: false },
   { url: 'support.html', shot: '7-support', auth: true },

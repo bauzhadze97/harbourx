@@ -16,7 +16,7 @@ const { execSync } = require('child_process');
 const path = require('path');
 const BASE = process.env.BASE_URL || 'http://127.0.0.1:8899';
 const ROOT = path.resolve(__dirname, '..');
-const CREDS = { email: 'demo.client@example.invalid', password: 'CiSmokeTest!2026' };
+const CREDS = { email: 'test.client@example.invalid', password: 'CiSmokeTest!2026' };
 let fail = 0;
 const check = (ok, label, detail='') => { if(!ok) fail++; console.log(`  ${ok?'ok  ':'FAIL'} ${label}${detail?' — '+detail:''}`); };
 
