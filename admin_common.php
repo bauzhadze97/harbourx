@@ -162,6 +162,7 @@ function hxMark() {
 }
 
 function pageHeader($title = 'Admin Panel') {
+    $styleVersion = (string)(@filemtime(__DIR__ . '/admin-style.css') ?: 1);
     echo '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">'
         . '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
         . '<meta name="robots" content="noindex,nofollow">'
@@ -174,7 +175,7 @@ function pageHeader($title = 'Admin Panel') {
         . '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap" media="print" onload="this.media=&quot;all&quot;">'
         . '<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap"></noscript>'
         . '<link rel="stylesheet" href="hx-motion.css">'
-        . '<link rel="stylesheet" href="admin-style.css">'
+        . '<link rel="stylesheet" href="admin-style.css?v=' . rawurlencode($styleVersion) . '">'
         . '<script src="hx-motion.js" defer></script></head><body>';
 }
 
@@ -218,4 +219,9 @@ function pageTop($active = 'clients') {
         . '</div></div>';
 }
 
-function pageFooter() { echo '<script src="admin-notifications.js"></script></div></body></html>'; }
+function pageFooter() {
+    $notificationsVersion = (string)(@filemtime(__DIR__ . '/admin-notifications.js') ?: 1);
+    $opsVersion = (string)(@filemtime(__DIR__ . '/admin-ops.js') ?: 1);
+    echo '<script src="admin-notifications.js?v=' . rawurlencode($notificationsVersion) . '"></script>'
+        . '<script src="admin-ops.js?v=' . rawurlencode($opsVersion) . '"></script></div></body></html>';
+}
