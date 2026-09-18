@@ -1182,6 +1182,7 @@ a.dashboard-kpi:hover { transform: translateY(-3px); border-color: color-mix(in 
   background: var(--panel-2);
 }
 .clients-toolbar label > span,
+.clients-search-label,
 .clients-visible-count span {
   display: block;
   margin-bottom: 5px;
@@ -1215,7 +1216,15 @@ a.dashboard-kpi:hover { transform: translateY(-3px); border-color: color-mix(in 
   font-size: 12.5px;
   transition: border-color var(--ease), box-shadow var(--ease), background var(--ease);
 }
-.clients-search input { padding: 0 13px 0 38px; }
+.clients-search input { padding: 0 42px 0 38px; }
+.clients-search input::-webkit-search-cancel-button { -webkit-appearance: none; }
+.clients-search-clear { position: absolute; right: 5px; top: 5px; width: 32px; height: 31px; border: 0; border-radius: 8px; background: var(--bg-soft); color: var(--muted); font-size: 21px; cursor: pointer; }
+.clients-search-clear:hover { color: var(--ink); background: var(--teal-050); }
+.clients-search-help { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; padding: 9px 24px 0; color: var(--muted); font-size: 11px; }
+.clients-search-help kbd { padding: 1px 4px; border: 1px solid var(--line); border-radius: 4px; font: inherit; }
+.clients-reset { border: 0; background: transparent; color: var(--blue2); font: inherit; font-weight: 750; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; padding: 5px; }
+.clients-empty > strong { display: block; color: var(--ink); font-size: 16px; }
+.clients-empty p { margin: 5px 0 14px; }
 .clients-filter select { padding: 0 30px 0 11px; }
 .clients-search input:focus,
 .clients-filter select:focus { outline: none; border-color: var(--teal-500); background: var(--panel); box-shadow: var(--ring); }
@@ -1361,7 +1370,7 @@ a.dashboard-kpi:hover { transform: translateY(-3px); border-color: color-mix(in 
 
 @media (max-width: 1000px) {
   .clients-toolbar { grid-template-columns: minmax(230px, 1fr) repeat(2, minmax(140px, .45fr)); }
-  .clients-visible-count { display: none; }
+  .clients-visible-count { display: flex; justify-content: flex-start; height: auto; padding: 0; border: 0; background: transparent; grid-column: 1 / -1; }
   .client-directory { grid-template-columns: 1fr; }
 }
 
@@ -1370,6 +1379,8 @@ a.dashboard-kpi:hover { transform: translateY(-3px); border-color: color-mix(in 
   .clients-directory-stats { justify-content: flex-start; }
   .clients-toolbar { grid-template-columns: 1fr 1fr; padding: 13px 15px; }
   .clients-search { grid-column: 1 / -1; }
+  .clients-search-help { padding-left: 15px; padding-right: 15px; }
+  .clients-keyboard-hint { display: none; }
   .client-directory { padding: 14px 15px 18px; }
   .client-card-head { flex-direction: column; }
   .client-statuses { justify-content: flex-start; padding-left: 55px; }

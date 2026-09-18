@@ -57,6 +57,8 @@
     const visibleCount = directory.querySelector('[data-client-visible]');
     const empty = directory.querySelector('#clientEmpty');
     const quickView = directory.querySelector('#clientQuickView');
+    const clear = directory.querySelector('[data-client-clear]');
+    const resetButtons = directory.querySelectorAll('[data-client-reset]');
 
     const setQuickText = (field, value) => {
       const node = quickView?.querySelector(`[data-quick-field="${field}"]`);
@@ -148,6 +150,8 @@
         if (show) count++;
       });
       if (visibleCount) visibleCount.textContent = String(count);
+      if (clear) clear.hidden = !search?.value;
+      resetButtons.forEach((button) => { button.hidden = !query && filterValue === 'all'; });
       if (empty) empty.hidden = count !== 0;
       if (quickView) quickView.hidden = count === 0;
       const selected = records.find((record) => record.classList.contains('is-selected') && !record.hidden);
@@ -167,6 +171,28 @@
       });
     });
     search?.addEventListener('input', update);
+    const clearSearch = () => {
+      if (search) search.value = '';
+      update();
+      search?.focus();
+    };
+    clear?.addEventListener('click', clearSearch);
+    resetButtons.forEach((button) => button.addEventListener('click', () => {
+      if (filter) filter.value = 'all';
+      clearSearch();
+    }));
+    search?.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        clearSearch();
+      }
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== '/' || event.metaKey || event.ctrlKey || event.altKey) return;
+      if (event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+      event.preventDefault();
+      search?.focus();
+    });
     filter?.addEventListener('change', update);
     sort?.addEventListener('change', update);
     update();

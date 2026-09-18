@@ -394,10 +394,10 @@ $registrationLink = publicAppBaseUrl() . '/register.php';
     </div>
   </div>
   <div class="clients-toolbar">
-    <label class="clients-search">
-      <span>Search clients</span>
-      <div><i aria-hidden="true">⌕</i><input id="clientSearch" type="search" placeholder="Name, email, country or currency…" autocomplete="off"></div>
-    </label>
+    <div class="clients-search">
+      <label for="clientSearch" class="clients-search-label">Search clients</label>
+      <div><i aria-hidden="true">⌕</i><input id="clientSearch" type="search" placeholder="Name, email, country or currency…" autocomplete="off" spellcheck="false" aria-describedby="clientSearchHelp" aria-controls="clientGrid"><button class="clients-search-clear" type="button" data-client-clear aria-label="Clear search" hidden>×</button></div>
+    </div>
     <label class="clients-filter"><span>Status</span><select id="clientStatusFilter" data-client-filter>
       <option value="all">All clients</option>
       <option value="verified">AML verified</option>
@@ -412,8 +412,9 @@ $registrationLink = publicAppBaseUrl() . '/register.php';
       <option value="btc">Highest BTC</option>
       <option value="tx">Most transactions</option>
     </select></label>
-    <div class="clients-visible-count"><strong data-client-visible><?= $totalUsers ?></strong><span>showing</span></div>
+    <div class="clients-visible-count" role="status" aria-live="polite" aria-atomic="true"><strong data-client-visible><?= $totalUsers ?></strong><span>of <?= $totalUsers ?> clients</span></div>
   </div>
+  <div class="clients-search-help"><span id="clientSearchHelp">Results update as you type. <span class="clients-keyboard-hint"><kbd>/</kbd> to search · <kbd>Esc</kbd> to clear</span></span><button type="button" class="clients-reset" data-client-reset hidden>Reset filters</button></div>
   <?php if (!$users): ?>
     <div class="empty">No clients yet.</div>
   <?php else: ?>
@@ -476,7 +477,7 @@ $registrationLink = publicAppBaseUrl() . '/register.php';
         </div></details>
       </aside>
     </div>
-    <div id="clientEmpty" class="empty clients-empty" hidden>No clients match these filters.</div>
+    <div id="clientEmpty" class="empty clients-empty" hidden><strong>No clients found</strong><p>Try part of a name or email, or reset your filters.</p><button type="button" class="btn btn-light" data-client-reset>Reset filters</button></div>
   <?php endif; ?>
 </section>
 
