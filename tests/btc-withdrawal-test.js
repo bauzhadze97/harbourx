@@ -105,9 +105,92 @@ const check = (ok, label, detail = '') => {
   const after = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/users.json'), 'utf8'));
   check(Math.abs(after[0].btc - 0.74998) < 1e-9, 'the stored balance matches', String(after[0].btc));
 
+  // --- per-client release fee -----------------------------------------------
+  // The admin can require a fee before a withdrawal is released. The bank flow
+  // has always shown it; the Bitcoin flow used to enforce it server-side while
+  // never displaying it, so the submit simply bounced with no way through.
+  fixture.seedUsers();
+  const withFee = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/users.json'), 'utf8'));
+  withFee[0].withdrawalFeeRequired = true;
+  withFee[0].withdrawalFeeAmount = 25;
+  withFee[0].withdrawalFeePercent = 1;
+  withFee[0].withdrawalFeeNote = 'Pay the release fee to the account on your invoice.';
+  fs.writeFileSync(path.join(ROOT, 'data/users.json'), JSON.stringify(withFee, null, 4));
+
+  const feeCtx = await browser.newContext();
+  const feeUser = (await (await feeCtx.request.post(`${BASE}/login.php`, { data: CLIENT })).json()).user;
+  const RATE = 145000;   // the fallback the page uses when the price feeds are unreachable
+
+  r = await feeCtx.request.post(`${BASE}/btc_withdrawals.php`,
+    { data: { address: GOOD, amount: 0.1, btcRate: RATE } });
+  body = await r.json();
+  check(r.status() === 422 && body.feeRequired === true, 'the endpoint holds the send until the fee is acknowledged');
+  check(Math.abs(body.fee - (25 + 0.01 * 0.1 * RATE)) < 0.005, 'and quotes fixed plus percentage', String(body.fee));
+
+  // --- the dialog shows it --------------------------------------------------
+  const page = await feeCtx.newPage();
+  await page.goto(`${BASE}/tests/blank.html`);
+  await page.evaluate((u) => {
+    localStorage.setItem('user', JSON.stringify(u));
+    localStorage.setItem('hx-theme', 'dark');
+  }, feeUser);
+  await page.goto(`${BASE}/dashboard.html`, { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(2200);
+
+  await page.click('[data-open-btc-withdraw]');
+  await page.waitForTimeout(400);
+  check(await page.$eval('#btcWithdrawReleaseFeeRow', el => el.style.display === 'none'),
+    'the fee row stays hidden until there is an amount');
+
+  await page.fill('#btcWithdrawAmount', '0.1');
+  await page.fill('#btcWithdrawAddress', GOOD);
+  await page.waitForTimeout(1400);   // the quote is debounced
+
+  const feeRowShown = await page.$eval('#btcWithdrawReleaseFeeRow', el => el.style.display !== 'none');
+  check(feeRowShown, 'the release fee is shown in the summary');
+  check(await page.$eval('#btcWithdrawFeeNote', el => el.style.display !== 'none'),
+    'and the note explaining it is paid separately');
+
+  const shownFee = await page.$eval('#btcWithdrawReleaseFee', el => el.textContent);
+  const shownValue = await page.$eval('#btcWithdrawFiat', el => el.textContent);
+  const num = (t) => Number(String(t).replace(/[^0-9.]/g, ''));
+  check(Math.abs(num(shownFee) - (25 + 0.01 * num(shownValue))) < 0.02,
+    'the figure is fixed plus a percentage of the value shown beside it',
+    `${shownFee} on ${shownValue}`);
+
+  // The Bitcoin total must not move: the fee is paid separately.
+  check(await page.$eval('#btcWithdrawTotalSummary', el => el.textContent.trim()) === '0.10002000 BTC',
+    'the BTC total debited is unchanged by it');
+
+  // --- and the send can be completed ----------------------------------------
+  await page.click('#submitBtcWithdrawBtn');
+  await page.waitForTimeout(700);
+  check(await page.$eval('#feeModal', el => el.getAttribute('aria-hidden') === 'false'),
+    'reviewing opens the fee gate');
+  check((await page.$eval('#feeModalNote', el => el.textContent)).includes('invoice'),
+    "the gate shows the administrator's own note");
+  check((await page.$eval('#feeModalLead', el => el.textContent)).includes('Bitcoin send'),
+    'and says Bitcoin send, not bank withdrawal');
+
+  await page.check('#feeAckCheckbox');
+  await page.click('#confirmFeeBtn');
+  await page.waitForTimeout(1600);
+  check(await page.$eval('#btcWithdrawAlert', el => el.style.display !== 'none'),
+    'acknowledging it lets the request through');
+
+  const feeStored = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/users.json'), 'utf8'));
+  const feeTx = feeStored[0].transactions.find((t) => t.type === 'Bitcoin Withdrawal');
+  check(!!feeTx && Number(feeTx.btcWithdrawalReleaseFee) > 0,
+    'the release fee is recorded on the transaction', String(feeTx && feeTx.btcWithdrawalReleaseFee));
+
+  await page.close();
+  await feeCtx.close();
+
   // --- AML gate -------------------------------------------------------------
-  after[0].amlStatus = 'unverified';
-  fs.writeFileSync(path.join(ROOT, 'data/users.json'), JSON.stringify(after, null, 4));
+  fixture.seedUsers();
+  const after2 = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/users.json'), 'utf8'));
+  after2[0].amlStatus = 'unverified';
+  fs.writeFileSync(path.join(ROOT, 'data/users.json'), JSON.stringify(after2, null, 4));
   const ctx2 = await browser.newContext();
   await ctx2.request.post(`${BASE}/login.php`, { data: CLIENT });
   r = await ctx2.request.post(`${BASE}/btc_withdrawals.php`, { data: { address: GOOD, amount: 0.1 } });

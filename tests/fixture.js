@@ -48,6 +48,10 @@ function arm() {
 /** Remember a data file as it is now and put it back when the run ends. */
 function preserve(file) {
   arm();
+  // Only the first snapshot is the caller's own file; a later one is whatever
+  // an earlier seed left behind. A test that re-seeds mid-run would otherwise
+  // have that written back over the original at exit.
+  if (pending.some((entry) => entry.file === file)) return file;
   pending.push({ file, original: fs.existsSync(file) ? fs.readFileSync(file) : null });
   return file;
 }

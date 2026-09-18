@@ -289,7 +289,7 @@
         <button class="close-btn" id="closeFeeModalBtn" type="button" aria-label="Close">×</button>
       </div>
       <div class="modal-body">
-        <p class="hint">A release fee must be paid before this bank withdrawal can be submitted for processing. Your withdrawal amount is not reduced by the fee.</p>
+        <p class="hint" id="feeModalLead">A release fee must be paid before this bank withdrawal can be submitted for processing. Your withdrawal amount is not reduced by the fee.</p>
 
         <div class="info-box">
           <p class="info-title">Fee due now</p>
@@ -401,7 +401,12 @@
           <div class="summary-row flow-total"><span>Total debited</span><strong id="btcWithdrawTotalSummary">0.00000000 BTC</strong></div>
           <div class="summary-row"><span>Remaining balance</span><strong id="btcWithdrawRemaining">0.00000000 BTC</strong></div>
           <div class="summary-row" id="btcWithdrawFiatRow"><span>Approximate value</span><strong id="btcWithdrawFiat">0.00</strong></div>
+          <div class="summary-row" id="btcWithdrawReleaseFeeRow" style="display:none"><span>Release fee (paid separately)</span><strong id="btcWithdrawReleaseFee">0.00</strong></div>
         </div>
+
+        <p class="hint" id="btcWithdrawFeeNote" style="display:none;margin:14px 0 0">
+          A release fee applies to this withdrawal. You confirm payment of it in the next step; it is paid separately and does not come out of the Bitcoin you send.
+        </p>
 
         <div class="btc-warning">
           <span aria-hidden="true">⚠</span>

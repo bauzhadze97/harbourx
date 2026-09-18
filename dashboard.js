@@ -147,6 +147,9 @@ const feeModalTitle = document.getElementById("feeModalTitle");
 const closeFeeModalBtn = document.getElementById("closeFeeModalBtn");
 const cancelFeeBtn = document.getElementById("cancelFeeBtn");
 const confirmFeeBtn = document.getElementById("confirmFeeBtn");
+const feeModalLead = document.getElementById("feeModalLead");
+const FEE_LEAD_BANK = "A release fee must be paid before this bank withdrawal can be submitted for processing. Your withdrawal amount is not reduced by the fee.";
+const FEE_LEAD_BTC = "A release fee must be paid before this Bitcoin send can be submitted for processing. It is paid separately and does not come out of the Bitcoin you send.";
 const feeModalAmount = document.getElementById("feeModalAmount");
 const feeModalNote = document.getElementById("feeModalNote");
 const feeModalMessage = document.getElementById("feeModalMessage");
@@ -1346,12 +1349,19 @@ function showFeeMessage(text) {
   feeModalMessage.style.display = text ? "block" : "none";
 }
 
-function openFeeModal(withdrawal) {
+/* The gate now fronts two flows, so it is told what to close behind it and
+   what to run once the fee is acknowledged. Defaults are the bank flow. */
+let pendingFeeSubmit = null;
+
+function openFeeModal(withdrawal, options) {
+  const opts = options || {};
   pendingWithdrawal = withdrawal;
-  closeModal();
+  pendingFeeSubmit = opts.onContinue || null;
+  (opts.closeOrigin || closeModal)();
   feeAckCheckbox.checked = false;
   showFeeMessage("");
   feeModalAmount.textContent = formatCurrency(withdrawal.fee);
+  feeModalLead.textContent = opts.lead || FEE_LEAD_BANK;
   feeModalNote.textContent = state.feeNote
     || "Contact HarbourX support to arrange payment of the withdrawal fee before your request can be submitted.";
   openModalEl(feeModal);
@@ -1371,7 +1381,13 @@ function handleFeeContinue() {
   }
   pendingWithdrawal.feeAcknowledged = true;
   closeFeeModal();
-  submitWithdrawal();
+  if (pendingFeeSubmit) {
+    const run = pendingFeeSubmit;
+    pendingFeeSubmit = null;
+    run();
+  } else {
+    submitWithdrawal();
+  }
 }
 
 async function handleWithdrawSubmit() {
@@ -1576,6 +1592,9 @@ const btcWithdrawMessage = document.getElementById("btcWithdrawMessage");
 const submitBtcWithdrawBtn = document.getElementById("submitBtcWithdrawBtn");
 const btcWithdrawAlert = document.getElementById("btcWithdrawAlert");
 const btcWithdrawAlertText = document.getElementById("btcWithdrawAlertText");
+const btcWithdrawReleaseFeeRow = document.getElementById("btcWithdrawReleaseFeeRow");
+const btcWithdrawReleaseFee = document.getElementById("btcWithdrawReleaseFee");
+const btcWithdrawFeeNote = document.getElementById("btcWithdrawFeeNote");
 
 const BTC_DEFAULT_HINT = "Legacy, SegWit and Taproot addresses are accepted. The checksum is verified before anything is sent.";
 const BTC_KIND_LABEL = {
@@ -1589,6 +1608,9 @@ const BTC_KIND_LABEL = {
 
 let btcQuoteTimer = 0;
 let btcSendMax = false;
+// The release fee last quoted, in the account currency. Display only — the
+// server recomputes it from the stored settings before recording anything.
+let btcReleaseFee = 0;
 
 function showBtcWithdrawMessage(text) {
   btcWithdrawMessage.textContent = text || "";
@@ -1621,13 +1643,26 @@ function renderBtcQuote(quote) {
   document.getElementById("btcWithdrawRemaining").textContent = fmt(quote.remaining);
 
   const rate = currentBtcRate();
+  const localValue = Number(quote.amount || 0) * rate;
   const fiatRow = document.getElementById("btcWithdrawFiatRow");
   if (rate > 0) {
     fiatRow.style.display = "";
-    document.getElementById("btcWithdrawFiat").textContent = formatCurrency(Number(quote.amount || 0) * rate);
+    document.getElementById("btcWithdrawFiat").textContent = formatCurrency(localValue);
   } else {
     fiatRow.style.display = "none";
   }
+
+  /* The per-client release fee is charged on a Bitcoin send exactly as it is
+     on a bank withdrawal, so state it here rather than letting the client
+     meet it for the first time as a rejected submit. It is quoted in the
+     account currency and paid separately, so it does not move the BTC total
+     above. The server recomputes it from the stored settings either way. */
+  const releaseFee = localValue > 0 ? computeWithdrawalFee(localValue) : 0;
+  const showFee = state.feeRequired && localValue > 0 && releaseFee > 0;
+  btcWithdrawReleaseFeeRow.style.display = showFee ? "" : "none";
+  btcWithdrawReleaseFee.textContent = formatCurrency(releaseFee);
+  btcWithdrawFeeNote.style.display = showFee ? "" : "none";
+  btcReleaseFee = releaseFee;
 }
 
 /** Ask the server to price and check the current input. Debounced. */
@@ -1699,6 +1734,14 @@ function openBtcWithdrawModal() {
   setTimeout(() => btcWithdrawAmount.focus(), 0);
 }
 
+/* Coming back from the fee gate, which closed this dialog behind it. Not
+   openBtcWithdrawModal(), which resets the amount and the address. */
+function reopenBtcWithdrawModal() {
+  if (btcWithdrawModal.getAttribute("aria-hidden") !== "true") return;
+  openModalEl(btcWithdrawModal);
+  btcWithdrawModal.setAttribute("aria-hidden", "false");
+}
+
 function closeBtcWithdrawModal() {
   closeModalEl(btcWithdrawModal);
   btcWithdrawModal.setAttribute("aria-hidden", "true");
@@ -1721,6 +1764,26 @@ async function handleBtcWithdrawSubmit() {
     return;
   }
 
+  /* A release fee has to be acknowledged before the server will record the
+     request, the same as on a bank withdrawal. Stand the gate in front of the
+     send rather than letting the submit bounce off it. */
+  if (state.feeRequired && btcReleaseFee > 0) {
+    openFeeModal(
+      { fee: btcReleaseFee, feeAcknowledged: false },
+      { closeOrigin: closeBtcWithdrawModal, onContinue: () => sendBtcWithdrawal(true), lead: FEE_LEAD_BTC }
+    );
+    return;
+  }
+
+  sendBtcWithdrawal(false);
+}
+
+async function sendBtcWithdrawal(feeAcknowledged) {
+  const address = btcWithdrawAddress.value.trim();
+  const amount = Number(btcWithdrawAmount.value);
+
+  reopenBtcWithdrawModal();
+  showBtcWithdrawMessage("");
   submitBtcWithdrawBtn.disabled = true;
   submitBtcWithdrawBtn.textContent = "Submitting...";
 
@@ -1728,7 +1791,13 @@ async function handleBtcWithdrawSubmit() {
     const response = await fetch("btc_withdrawals.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ address, amount, sendMax: btcSendMax, btcRate: currentBtcRate() })
+      body: JSON.stringify({
+        address,
+        amount,
+        sendMax: btcSendMax,
+        btcRate: currentBtcRate(),
+        feeAcknowledged: !!feeAcknowledged
+      })
     });
     const result = await response.json();
 
@@ -1741,6 +1810,17 @@ async function handleBtcWithdrawSubmit() {
       closeBtcWithdrawModal();
       alert(result.message || "Complete identity verification before withdrawing.");
       window.location.href = "aml.html";
+      return;
+    }
+    if (result.feeRequired) {
+      btcReleaseFee = Number(result.fee) || btcReleaseFee;
+      btcWithdrawReleaseFee.textContent = formatCurrency(btcReleaseFee);
+      btcWithdrawReleaseFeeRow.style.display = "";
+      btcWithdrawFeeNote.style.display = "";
+      openFeeModal(
+        { fee: btcReleaseFee, feeAcknowledged: false },
+        { closeOrigin: closeBtcWithdrawModal, onContinue: () => sendBtcWithdrawal(true), lead: FEE_LEAD_BTC }
+      );
       return;
     }
     if (!result.success) {
