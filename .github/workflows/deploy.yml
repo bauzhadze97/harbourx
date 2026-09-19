@@ -158,6 +158,13 @@ jobs:
           ssh -i ~/.ssh/deploy_key -p "${PORT:-22}" "$USER@$HOST" \
             "ls -la '$TARGET/data' || echo '::warning::no data/ directory on the server'"
 
+          # The root serves the public home page and must answer for itself;
+          # the sign-in page is checked separately because the two are now
+          # different pages.
+          home=$(curl -s -o /dev/null -w '%{http_code}' "https://$HOST/" || echo 000)
+          echo "https://$HOST/ -> $home"
+          [ "$home" = "200" ] || echo "::warning::the home page returned $home"
+
           code=$(curl -s -o /dev/null -w '%{http_code}' "https://$HOST/login.html" || echo 000)
           echo "https://$HOST/login.html -> $code"
           [ "$code" = "200" ] || echo "::warning::the sign-in page returned $code"

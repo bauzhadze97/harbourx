@@ -2,7 +2,7 @@
 #
 # Runs the HarbourX portal on this computer (macOS / Linux).
 #
-# Starts PHP's built-in web server in this folder and opens the sign-in page.
+# Starts PHP's built-in web server in this folder and opens the site.
 # Nothing is installed and nothing leaves the machine — the app reads and writes
 # data/users.json in place, exactly as it does on the real host.
 #
@@ -52,7 +52,8 @@ fi
 # --- 3. Serve ---------------------------------------------------------------
 URL="http://localhost:${PORT}/"
 printf '  Serving on %s\n' "$URL"
-printf '        client   %s\n' "$URL"
+printf '        home     %s\n' "$URL"
+printf '        sign in  http://localhost:%s/login.html\n' "$PORT"
 printf '        admin    http://localhost:%s/admin.php\n\n' "$PORT"
 printf '  Press Ctrl+C to stop.\n\n'
 

@@ -119,6 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <button class="btn" type="submit">Create account and continue</button>
     </form>
     <a class="link" href="login.html">Already have an account?</a>
+    <a class="link" href="./">&larr; Back to harbourx.org</a>
     <script>
       const registerCountry = document.getElementById('registerCountry');
       const registerCurrency = document.getElementById('registerCurrency');
