@@ -60,13 +60,17 @@ jobs:
 
       - name: No client data committed
         run: |
-          # data/users.json holds plaintext passwords and KYC details; it must
-          # never be tracked. Fail loudly rather than leak it in a future commit.
-          if git ls-files --error-unmatch data/users.json 'data.*/users.json' data/tickets.json 2>/dev/null; then
-            echo "::error::client data files are tracked by git — they must stay untracked"
+          # data/ holds plaintext passwords and KYC details, and uploads/ holds
+          # passport scans. The only thing tracked in either is the deny rule
+          # that keeps the web server out. Checking a list of filenames was the
+          # old test, and it passed happily for a users.json.backup.
+          stray=$(git ls-files data/ 'data.*/' uploads/ | grep -v '/\.htaccess$' || true)
+          if [ -n "$stray" ]; then
+            echo "::error::client data is tracked by git — it must stay untracked:"
+            echo "$stray"
             exit 1
           fi
-          echo "no client data tracked"
+          echo "nothing tracked under data/ or uploads/ but the deny rules"
 
   smoke:
     name: Smoke test

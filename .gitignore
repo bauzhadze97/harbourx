@@ -3,11 +3,15 @@ node_modules
 
 # Runtime client data — contains plaintext passwords and KYC/PII.
 # Never commit these; they live on the server only.
-data/users.json
-data.*/users.json
-data/tickets.json
-data/payment_schedules.json
-data/client_callbacks.json
+#
+# Everything in these directories is ignored, not a list of filenames. The list
+# was the whole protection, so a users.json.backup made before an experiment —
+# exactly the thing a careful person does — was committable, and would have
+# carried every password and KYC record with it. Only the deny rule is tracked.
+data/*
+!data/.htaccess
+data.*/*
+!data.*/.htaccess
 
 # Uploaded identity documents. The directory and its deny rule are tracked;
 # what clients put in it never is.
