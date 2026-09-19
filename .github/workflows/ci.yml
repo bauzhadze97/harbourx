@@ -40,7 +40,7 @@ jobs:
       - name: JavaScript syntax
         run: |
           status=0
-          for file in theme.js hx-motion.js dashboard.js; do
+          for file in theme.js hx-motion.js site.js dashboard.js; do
             node --check "$file" || status=1
           done
           node --check tests/smoke.mjs || status=1

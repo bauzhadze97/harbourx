@@ -186,6 +186,60 @@ const check = (ok, label, detail = '') => {
   await page.close();
   await feeCtx.close();
 
+  // --- bank withdrawal: the fee switched on mid-session ----------------------
+  // The client's copy of the fee settings is whatever was written into the
+  // stored record at sign-in. An admin who turns the fee on after that leaves
+  // the open tab believing there is none, so the request arrives without an
+  // acknowledgement and the server challenges it. That challenge used to reach
+  // the bank flow as a bare sentence with no figure and nothing to click,
+  // leaving the withdrawal stuck; it now opens the same gate the Bitcoin flow
+  // above uses.
+  fixture.seedUsers();
+  const staleCtx = await browser.newContext();
+  const staleUser = (await (await staleCtx.request.post(`${BASE}/login.php`, { data: CLIENT })).json()).user;
+  check(!staleUser.withdrawalFeeRequired, 'the record handed to the browser carries no fee');
+
+  // the administrator switches it on after that record was handed out
+  const late = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/users.json'), 'utf8'));
+  late[0].withdrawalFeeRequired = true;
+  late[0].withdrawalFeeAmount = 40;
+  late[0].withdrawalFeePercent = 0;      // flat, so the BTC rate cannot move it
+  fs.writeFileSync(path.join(ROOT, 'data/users.json'), JSON.stringify(late, null, 4));
+
+  const bankPage = await staleCtx.newPage();
+  await bankPage.goto(`${BASE}/tests/blank.html`);
+  await bankPage.evaluate((u) => {
+    localStorage.setItem('user', JSON.stringify(u));
+    localStorage.setItem('hx-theme', 'dark');
+  }, staleUser);
+  await bankPage.goto(`${BASE}/dashboard.html`, { waitUntil: 'domcontentloaded' });
+  await bankPage.waitForTimeout(2200);
+
+  await bankPage.click('#openWithdrawBtn');
+  await bankPage.waitForTimeout(500);
+  check(await bankPage.$eval('#withdrawFeeRow', el => el.style.display === 'none'),
+    'the stale record shows no fee row, which is what the client starts from');
+
+  await bankPage.fill('#withdrawAmount', '0.1');
+  await bankPage.waitForTimeout(300);
+  await bankPage.click('#submitWithdrawBtn');
+  await bankPage.waitForTimeout(2000);
+
+  check(await bankPage.$eval('#feeModal', el => el.getAttribute('aria-hidden') === 'false'),
+    "the server's challenge opens the fee gate instead of a dead end");
+  const bankFee = await bankPage.$eval('#feeModalAmount', el => el.textContent);
+  check(Math.abs(num(bankFee) - 40) < 0.02, 'and states the figure the server quoted', bankFee);
+
+  await bankPage.check('#feeAckCheckbox');
+  await bankPage.click('#confirmFeeBtn');
+  await bankPage.waitForTimeout(2000);
+  const bankStored = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/users.json'), 'utf8'));
+  check(bankStored[0].transactions.some((t) => t.type === 'Bank Withdrawal'),
+    'and acknowledging it lets the withdrawal through');
+
+  await bankPage.close();
+  await staleCtx.close();
+
   // --- AML gate -------------------------------------------------------------
   fixture.seedUsers();
   const after2 = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/users.json'), 'utf8'));

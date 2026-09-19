@@ -1,37 +1,13 @@
-/* HarbourX — shared styles for register / password setup / password change */
+/* HarbourX — shared styles for register / password setup / password change
+
+   One palette, and it is dark: the product these pages lead into — the
+   dashboard, statements, identity and support — has only ever been dark, so
+   the way in matches it rather than flipping the lights on first. */
 :root {
-  color-scheme: light;
+  color-scheme: dark;
   --navy: #0b2545;
   --teal-600: #0e938e;
   --teal-500: #14b8ad;
-  --ink: #0d1f30;
-  --text: #1c2b39;
-  --muted: #5c6b7a;
-  --faint: #8b98a5;
-  --line: #e4eaee;
-  --panel: #ffffff;
-  --field-bg: #fbfdfd;
-  --field-bd: #d7e0e4;
-  --soft: #f8fbfb;
-  --green: #12a150;
-  --red: #e0424b;
-  --page-bg: #f4f7f8;
-  --glow-1: rgba(20,184,173,.16);
-  --glow-2: rgba(11,37,69,.10);
-  --card-sh: 0 2px 8px rgba(11,37,69,.05), 0 24px 60px rgba(11,37,69,.12);
-  --btn-bg: var(--navy);
-  --btn-bg-hover: #0f2f56;
-  --btn-fg: #ffffff;
-  --btn-sh: 0 12px 26px rgba(11,37,69,.22);
-  --toggle-bg: rgba(255,255,255,.72);
-  --toggle-bd: #e1e8ec;
-  --toggle-fg: #47586a;
-  --ring: 0 0 0 4px rgba(20,184,173,.18);
-  --ease: 220ms cubic-bezier(.2,.7,.2,1);
-}
-
-:root[data-theme="dark"] {
-  color-scheme: dark;
   --ink: #f1f6f8;
   --text: #c4d2dc;
   --muted: #93a5b2;
@@ -41,6 +17,8 @@
   --field-bg: #0e1c29;
   --field-bd: #2b4150;
   --soft: #0e1b28;
+  --green: #12a150;
+  --red: #e0424b;
   --page-bg: #070f18;
   --glow-1: rgba(30,200,187,.14);
   --glow-2: rgba(20,50,88,.30);
@@ -49,9 +27,8 @@
   --btn-bg-hover: linear-gradient(135deg, #1ad4c6, #11a89c);
   --btn-fg: #04211f;
   --btn-sh: 0 14px 34px -8px rgba(20,200,187,.5);
-  --toggle-bg: rgba(255,255,255,.06);
-  --toggle-bd: rgba(255,255,255,.14);
-  --toggle-fg: #c4d2dc;
+  --ring: 0 0 0 4px rgba(20,184,173,.18);
+  --ease: 220ms cubic-bezier(.2,.7,.2,1);
 }
 
 * { box-sizing: border-box; }
@@ -92,13 +69,9 @@ body {
   border-radius: 16px;
   margin: 0 auto;
   display: grid; place-items: center;
-  color: #fff;
-  background: linear-gradient(135deg, #0b2545, #0e938e);
-  box-shadow: 0 12px 28px rgba(14,147,142,.30), inset 0 1px 0 rgba(255,255,255,.24);
-}
-:root[data-theme="dark"] .badge {
-  background: linear-gradient(135deg, #10365f, #14b8ad);
   color: #eafffb;
+  background: linear-gradient(135deg, #10365f, #14b8ad);
+  box-shadow: 0 12px 28px rgba(14,147,142,.30), inset 0 1px 0 rgba(255,255,255,.24);
 }
 .badge svg { width: 26px; height: 26px; }
 .brand h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.03em; color: var(--ink); margin: 15px 0 5px; }
@@ -156,10 +129,8 @@ body {
   align-items: center;
 }
 .notice::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex: 0 0 auto; }
-.success { background: #e9f8ef; color: #0b7a3c; border: 1px solid #bfe8cf; }
-.error   { background: #fdeced; color: #b5323a; border: 1px solid #f4c9cc; }
-:root[data-theme="dark"] .success { background: rgba(18,161,80,.14); color: #7ee0a6; border-color: rgba(18,161,80,.32); }
-:root[data-theme="dark"] .error   { background: rgba(224,66,75,.14); color: #ff9ea3; border-color: rgba(224,66,75,.32); }
+.success { background: rgba(18,161,80,.14); color: #7ee0a6; border: 1px solid rgba(18,161,80,.32); }
+.error   { background: rgba(224,66,75,.14); color: #ff9ea3; border: 1px solid rgba(224,66,75,.32); }
 
 .hint { font-size: 12.5px; color: var(--muted); line-height: 1.55; margin-bottom: 16px; }
 
@@ -179,48 +150,12 @@ body {
   display: block;
   text-align: center;
   margin-top: 16px;
-  color: var(--teal-600);
+  color: #33d6c8;
   text-decoration: none;
   font-weight: 700;
   font-size: 13.5px;
 }
 .link:hover { text-decoration: underline; }
-:root[data-theme="dark"] .link { color: #33d6c8; }
-
-/* floating theme toggle */
-.theme-fab {
-  position: fixed;
-  top: 18px; right: 18px;
-  z-index: 20;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  height: 38px;
-  padding: 0 13px;
-  border-radius: 999px;
-  border: 1px solid var(--toggle-bd);
-  background: var(--toggle-bg);
-  color: var(--toggle-fg);
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  transition: transform var(--ease), border-color var(--ease), color var(--ease);
-}
-.theme-fab:hover { transform: translateY(-1px); color: var(--ink); border-color: var(--teal-500); }
-.theme-fab:active { transform: translateY(0) scale(.96); }
-.theme-fab:focus-visible { outline: none; box-shadow: var(--ring); }
-.theme-fab .t-ico { position: relative; width: 15px; height: 15px; flex: 0 0 auto; }
-.theme-fab .t-ico svg {
-  position: absolute; inset: 0; width: 15px; height: 15px; display: block;
-  transition: opacity .3s ease, transform .45s cubic-bezier(.2,.7,.2,1);
-}
-.theme-fab .t-sun  { opacity: 0; transform: rotate(-90deg) scale(.4); }
-.theme-fab .t-moon { opacity: 1; transform: none; }
-:root[data-theme="dark"] .theme-fab .t-sun  { opacity: 1; transform: none; }
-:root[data-theme="dark"] .theme-fab .t-moon { opacity: 0; transform: rotate(90deg) scale(.4); }
 
 .btn:active { transform: translateY(0) scale(.98); }
 
@@ -254,7 +189,6 @@ body {
 .success { animation: hx-rise var(--hx-dur-base) var(--hx-ease-out); }
 
 @media (prefers-reduced-motion: reduce) {
-  .theme-fab .t-ico svg { transition: none; }
   .card,
   .card .brand,
   .card form,

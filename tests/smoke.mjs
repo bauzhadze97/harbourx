@@ -62,12 +62,22 @@ const EXTERNAL_HOSTS = [
 const isExternal = text =>
   EXTERNAL_HOSTS.some(host => text.includes(host)) || /net::ERR/.test(text);
 
+/* Chromium logs a subresource that would not load as "Failed to load resource:
+   the server responded with a status of NNN", and that line names no URL. From
+   the console alone a third party's outage — a blocked chat widget, a
+   rate-limited price feed — is indistinguishable from the app's own broken
+   asset, so judging it here means either missing real failures or inventing
+   them whenever a network is unfriendly. The response handler below is the one
+   that knows the URL, and it flags every same-origin failure; this line is
+   redundant for those and misleading for the rest. */
+const isResourceFailure = text => /Failed to load resource/.test(text);
+
 /** Collect anything the page reports as broken in the app's own code. */
 function watch(page) {
   const errors = [];
   page.on('pageerror', e => errors.push(`pageerror: ${e.message}`));
   page.on('console', m => {
-    if (m.type() === 'error' && !isExternal(m.text()) && !/status of (401|404)/.test(m.text())) {
+    if (m.type() === 'error' && !isExternal(m.text()) && !isResourceFailure(m.text())) {
       errors.push(`console: ${m.text()}`);
     }
   });
@@ -133,7 +143,10 @@ const PAGES = [
   { url: 'register.php', shot: '5-create-account', auth: false },
   { url: 'admin.php', shot: '6-admin-sign-in', auth: false },
   { url: 'support.html', shot: '7-support', auth: true },
-  { url: 'statements.html', shot: '8-statements', auth: true }
+  { url: 'statements.html', shot: '8-statements', auth: true },
+  { url: 'terms.html', shot: '13-terms', auth: false },
+  { url: 'privacy.html', shot: '14-privacy', auth: false },
+  { url: 'complaints.html', shot: '15-complaints', auth: false }
 ];
 
 // CI installs its own Chromium; CHROMIUM_EXECUTABLE lets a workstation or
@@ -197,6 +210,70 @@ try {
     const authed = await context.request.get(`${BASE}/`, { maxRedirects: 0 });
     check((authed.headers()['location'] || '').includes('dashboard.html'),
       'signed-in / points at the dashboard', authed.headers()['location']);
+
+    await context.close();
+  }
+
+  // -------------------------------------------------- the public site's SEO
+  console.log('\nSearch and sharing');
+  {
+    const context = await browser.newContext();
+
+    /* robots.txt and the sitemap have to be served, not just committed — a
+       404 here is invisible until a crawler finds it. */
+    for (const [file, must] of [
+      ['robots.txt', 'Sitemap: https://harbourx.org/sitemap.xml'],
+      ['sitemap.xml', '<loc>https://harbourx.org/</loc>']
+    ]) {
+      const r = await context.request.get(`${BASE}/${file}`);
+      const body = await r.text();
+      check(r.status() === 200 && body.includes(must), `${file} is served and points the right way`,
+        `status ${r.status()}`);
+    }
+
+    // The share image is referenced absolutely, so check the file it names.
+    const img = await context.request.get(`${BASE}/assets/og-image.jpg`);
+    check(img.status() === 200 && Number(img.headers()['content-length'] || 1) > 1000,
+      'the social share image exists', `status ${img.status()}`);
+
+    /* The FAQ answers a search engine is shown come from a JSON-LD block that
+       repeats the page's own FAQ section. Two copies of the same words drift,
+       and the structured-data copy drifts silently — nobody reads it. Assert
+       they match, so editing one without the other fails here instead. */
+    const page = await context.newPage();
+    await page.goto(`${BASE}/home.html`, { waitUntil: 'domcontentloaded' });
+    const seo = await page.evaluate(() => {
+      const blocks = [...document.querySelectorAll('script[type="application/ld+json"]')]
+        .map(el => JSON.parse(el.textContent));
+      const faqBlock = blocks.find(b => b['@type'] === 'FAQPage');
+      return {
+        types: blocks.map(b => b['@type']),
+        structured: (faqBlock ? faqBlock.mainEntity : []).map(q => q.name),
+        onPage: [...document.querySelectorAll('.faq summary')].map(el => el.textContent.trim()),
+        title: document.title,
+        canonical: document.querySelector('link[rel=canonical]')?.href || '',
+        description: document.querySelector('meta[name=description]')?.content || ''
+      };
+    });
+
+    check(seo.types.includes('FinancialService') && seo.types.includes('FAQPage'),
+      'the home page carries structured data', seo.types.join(', '));
+    check(seo.onPage.length > 0 && JSON.stringify(seo.structured) === JSON.stringify(seo.onPage),
+      'and its FAQ block matches the questions on the page',
+      `${seo.structured.length} structured vs ${seo.onPage.length} on page`);
+    check(seo.title.length > 10 && seo.title.length <= 70, 'the title is a usable length', `${seo.title.length} chars`);
+    check(seo.description.length > 50 && seo.description.length <= 165,
+      'and the description is too', `${seo.description.length} chars`);
+    check(seo.canonical.endsWith('harbourx.org/'), 'the canonical URL is the site root', seo.canonical);
+
+    await page.close();
+
+    // Nothing behind the sign-in should be inviting a crawler in.
+    for (const url of ['dashboard.html', 'statements.html', 'aml.html', 'support.html']) {
+      const r = await context.request.get(`${BASE}/${url}`);
+      check((await r.text()).includes('name="robots" content="noindex'),
+        `${url} asks not to be indexed`);
+    }
 
     await context.close();
   }

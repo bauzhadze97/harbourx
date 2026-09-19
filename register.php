@@ -73,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="color-scheme" content="light dark">
+<meta name="color-scheme" content="dark">
 <title>HarbourX · Create account</title>
 <script src="theme.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -86,7 +86,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <script src="hx-motion.js" defer></script>
 </head>
 <body>
-<?= themeFab() ?>
 <div class="card">
   <div class="brand">
     <div class="badge"><?= hxMark() ?></div>

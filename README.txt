@@ -87,7 +87,8 @@ The rest of this section is the same thing done by hand.
      - Otherwise the script seeds the synthetic test account used by the tests:
          test.client@example.invalid / CiSmokeTest!2026
 
-   The public home page is at / (index.php serves home.html), client sign-in
+   The public home page is at / (index.php serves home.html), with the policy
+   pages at /terms.html, /privacy.html and /complaints.html. Client sign-in is
    at /login.html, the admin console at /admin.php, and the support centre at
    /support.html. Tickets are stored in data/tickets.json, which like
    data/users.json is untracked and lives on the server only.
@@ -134,6 +135,42 @@ It writes tests/screenshots/ as it goes. Set CHROMIUM_EXECUTABLE=<path> to point
 it at a Chromium you already have instead of downloading one.
 
 What changed in this version:
+- Fixed a bank withdrawal that could not be completed. The client's copy of the
+  per-account withdrawal fee is whatever was written into the stored record at
+  sign-in, so an administrator who switched the fee on during a session left
+  that tab believing there was none: the fee row never appeared, the gate never
+  opened, and the request went to the server unacknowledged. The server
+  answered with a fee challenge — which the bank flow ignored, showing a bare
+  sentence with no figure and nothing to click, so the withdrawal simply could
+  not be finished. It now does what the Bitcoin flow has always done: adopts
+  the server's figure, which is the authoritative one, shows it, and opens the
+  same gate. tests/btc-withdrawal-test.js covers the case.
+- Removed the light theme from everything a client sees. The dashboard,
+  statements, identity and support pages have only ever been dark; the home
+  page, sign-in, create-account and set-password pages carried a second palette
+  and a switch to reach it, so the journey changed colour halfway through.
+  Those four pages now have one palette, the dark one, and no switch. A client
+  who had chosen light before still gets dark, because there is no longer a
+  rule for a browser to apply. The operations console is untouched — it is an
+  internal tool and keeps its toggle.
+- Added the Terms of Service, Privacy Policy and Complaints pages, which the
+  home page's footer had been pointing at the support centre for want of
+  anywhere better. They share the home page's header, footer and design, so a
+  policy reads as part of the company rather than a text file someone uploaded.
+
+  They are drafts. Every fact only HarbourX can supply — the registered
+  company, the regulator, the jurisdiction, retention periods, the ombudsman —
+  is marked in square brackets, and each page says plainly at the top that a
+  lawyer has to review it before publication. What they do get right is the
+  product: how custody, conversion, settlement, verification and the fee
+  actually work here, and which third parties the site really loads.
+- Added the search and sharing basics the public site had none of: robots.txt,
+  sitemap.xml, an Open Graph image so a shared link carries the brand, and
+  structured data (organisation, website and the FAQ) on the home page. The
+  pages behind sign-in now ask not to be indexed, in the page as well as in
+  robots.txt. tests/smoke.mjs checks all of it, including that the structured
+  FAQ still matches the questions on the page — two copies of the same words
+  drift, and the copy nobody reads drifts silently.
 - Added a public home page, and made it what the domain root serves. The root
   used to bounce every anonymous visitor straight to the sign-in form, so the
   site had no front of house at all: nothing explained what HarbourX does to

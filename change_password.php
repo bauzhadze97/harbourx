@@ -81,6 +81,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- A client's own workspace. Kept out of search results here as well as in
+     robots.txt: robots.txt asks a crawler not to fetch the page, this tells one
+     that reached it anyway — through a shared link, say — not to index it. -->
+<meta name="robots" content="noindex, nofollow">
 <meta name="color-scheme" content="dark">
 <title>HarbourX · Security</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">

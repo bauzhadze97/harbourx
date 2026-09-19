@@ -192,12 +192,6 @@ function themeToggleButton() {
         . '<span data-theme-label>Dark</span></button>';
 }
 
-function themeFab() {
-    return '<button type="button" class="theme-fab" data-theme-toggle aria-label="Switch theme">'
-        . themeToggleIcons()
-        . '<span data-theme-label>Dark</span></button>';
-}
-
 function pageTop($active = 'clients') {
     $clientsClass = $active === 'clients' ? 'btn btn-blue' : 'btn btn-light';
     $paymentsClass = $active === 'payments' ? 'btn btn-blue' : 'btn btn-light';

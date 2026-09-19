@@ -1866,6 +1866,12 @@ async function submitWithdrawal() {
   submitWithdrawBtn.disabled = true;
   submitWithdrawBtn.textContent = "Submitting...";
 
+  /* Set when the server answers with a fee challenge. The `finally` below
+     clears pendingWithdrawal so a finished attempt cannot be replayed, but the
+     gate that is about to open needs that same object to submit again once the
+     fee is acknowledged. */
+  let awaitingFee = false;
+
   try {
     const response = await fetch("withdrawals.php", {
       method: "POST",
@@ -1886,6 +1892,32 @@ async function submitWithdrawal() {
       window.location.replace("login.html");
       return;
     }
+    /* The client's copy of the fee settings is whatever was written into the
+       stored record at sign-in, so an admin who switches the fee on during a
+       session leaves this tab believing there is none: the gate in
+       handleWithdrawSubmit never fires and the request arrives unacknowledged.
+       The server answers that with a fee challenge — which reached the client
+       as a bare sentence with no figure and no way to acknowledge it, leaving
+       the withdrawal stuck with nothing to click. The Bitcoin flow has always
+       handled the same challenge; this is the bank flow doing the same.
+
+       The server's figure is the authoritative one — it is recomputed there
+       from the stored settings on every attempt and never read from the
+       request — so adopt it rather than the stale local calculation. */
+    if (result.feeRequired) {
+      const serverFee = Number(result.fee) || Number(pendingWithdrawal.fee) || 0;
+      state.feeRequired = true;
+      /* Only the total comes back, not the fixed/percentage split behind it.
+         With no local formula to fall back on, treat it as a flat fee so the
+         summary row states the real number instead of nothing. */
+      if (!state.feeAmount && !state.feePercent) state.feeAmount = serverFee;
+      pendingWithdrawal.fee = serverFee;
+      updateExpectedAmountLabel();
+      awaitingFee = true;
+      openFeeModal({ ...pendingWithdrawal, fee: serverFee, feeAcknowledged: false });
+      return;
+    }
+
     if (!result.success) throw new Error(result.message || "Unable to save the withdrawal request.");
 
     if (Array.isArray(result.transactions)) {
@@ -1924,7 +1956,8 @@ async function submitWithdrawal() {
   } catch (error) {
     showWithdrawMessage(error.message || "Unable to save the withdrawal request.");
   } finally {
-    pendingWithdrawal = null;
+    // The fee gate owns it until it is acknowledged or cancelled.
+    if (!awaitingFee) pendingWithdrawal = null;
     submitWithdrawBtn.disabled = false;
     submitWithdrawBtn.textContent = "Review withdrawal";
   }

@@ -18,9 +18,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="color-scheme" content="light dark">
+<meta name="color-scheme" content="dark">
 <title>HarbourX · Digital asset custody, conversion and local settlement</title>
-<meta name="description" content="HarbourX is a private client platform for holding Bitcoin, converting to your local currency and settling straight to your own bank — with custody, compliance and reporting built in.">
+<meta name="description" content="Hold Bitcoin and stablecoins, convert at a rate you can see, and settle to your own bank — custody, compliance and reporting in one private workspace.">
 <meta name="theme-color" content="#061523">
 
 <!-- Open Graph, so a shared link carries the brand rather than a bare URL. -->
@@ -29,9 +29,114 @@
 <meta property="og:title" content="HarbourX · Digital asset custody, conversion and local settlement">
 <meta property="og:description" content="Hold, convert and cash out digital assets with the right structure — custody, compliance and local bank settlement in one private workspace.">
 <meta property="og:url" content="https://harbourx.org/">
+<meta property="og:image" content="https://harbourx.org/assets/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="HarbourX — digital assets, held with the right structure.">
+<meta name="twitter:image" content="https://harbourx.org/assets/og-image.jpg">
 <meta name="twitter:card" content="summary_large_image">
 
 <link rel="canonical" href="https://harbourx.org/">
+
+<!-- Structured data. The FAQ block below mirrors the questions in the page's
+     own FAQ section; tests/smoke.mjs asserts the two stay in step, so a question
+     edited in one place and not the other fails the build rather than quietly
+     publishing an answer nobody can find on the page. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FinancialService",
+  "@id": "https://harbourx.org/#organisation",
+  "name": "HarbourX",
+  "url": "https://harbourx.org/",
+  "description": "A private client platform for holding digital assets, converting them to a local currency and settling to the client's own bank account.",
+  "email": "support@harbourx.org",
+  "serviceType": [
+    "Digital asset custody",
+    "Currency conversion",
+    "Bank settlement"
+  ],
+  "areaServed": "Worldwide",
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "contactType": "customer support",
+    "email": "support@harbourx.org",
+    "url": "https://harbourx.org/support.html",
+    "availableLanguage": [
+      "en"
+    ]
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "@id": "https://harbourx.org/#website",
+  "name": "HarbourX",
+  "url": "https://harbourx.org/",
+  "publisher": {
+    "@id": "https://harbourx.org/#organisation"
+  },
+  "inLanguage": "en"
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What does it cost to hold an account?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Nothing. There is no account fee and no custody charge for holding a balance. The only fee is on a conversion, and it is quoted as a line of its own before you confirm — the example on this page shows exactly how it appears."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Which assets and currencies are supported?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Bitcoin, Ethereum and USDC on the asset side. Your portfolio can be priced and settled in 32 local currencies, and a payout account can be connected in each of them."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How long does identity verification take?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Usually one to two business days from the point your documents are uploaded. The status is shown in your dashboard the whole time, so you are never left guessing, and you can keep using the account for deposits while it runs."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I withdraw to an account that is not in my name?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. A payout account has to be held in the same name as the HarbourX account. It is the single rule that keeps settlement clean, and it is what lets every later transfer to that account go through without a fresh review."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is two-factor authentication required?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "It is set up when you open the account and we strongly recommend leaving it on. HarbourX uses standard authenticator apps, and you are given backup codes at enrolment for the day your phone is not with you."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is HarbourX giving me investment advice?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. HarbourX holds, converts and settles the assets you already own. Nothing on this site is a recommendation to buy or sell anything, and digital assets can lose value quickly — the risk of holding them stays with you."
+      }
+    }
+  ]
+}
+</script>
 
 <script src="theme.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -73,10 +178,6 @@
     </nav>
 
     <div class="head-actions">
-      <button type="button" class="theme-btn" data-theme-toggle aria-label="Switch theme">
-        <svg class="t-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-        <svg class="t-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8 6 18M18 6l1.8-1.8"/></svg>
-      </button>
       <a class="btn btn--ghost" href="login.html">Sign in</a>
       <a class="btn btn--primary" href="register.php" data-ripple>Open an account</a>
       <button type="button" class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false" aria-controls="navDrawer">
@@ -100,10 +201,6 @@
         </span>
         <span><b>HarbourX</b><small>harbourx.org</small></span>
       </span>
-      <button type="button" class="theme-btn" data-theme-toggle aria-label="Switch theme">
-        <svg class="t-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-        <svg class="t-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8 6 18M18 6l1.8-1.8"/></svg>
-      </button>
     </div>
 
     <ul>
@@ -715,125 +812,51 @@
       <p><b>Risk notice.</b> Digital assets are volatile and their value can fall as well as rise. HarbourX holds, converts and settles assets you already own; nothing on this page is financial, tax or investment advice, and no return is promised or implied. Consider your own circumstances, and take independent advice where you need it, before acting.</p>
       <div class="foot-legal__row">
         <p>© <span id="year">2026</span> HarbourX. All rights reserved.</p>
-        <!-- Terms and Privacy have no page of their own yet, so they point at
-             the support centre rather than at an anchor on this page. Swap
-             both hrefs the moment the real policy pages exist. -->
         <ul>
-          <li><a href="support.html">Terms</a></li>
-          <li><a href="support.html">Privacy</a></li>
-          <li><a href="support.html">Complaints</a></li>
+          <li><a href="terms.html">Terms</a></li>
+          <li><a href="privacy.html">Privacy</a></li>
+          <li><a href="complaints.html">Complaints</a></li>
         </ul>
       </div>
     </div>
   </div>
 </footer>
 
+<script src="site.js" defer></script>
 <script>
-/* ============================================================================
-   home.html behaviour
-   ----------------------------------------------------------------------------
-   Three small things, none of which the page depends on: the header's solid
-   state once it leaves the hero, the phone menu, and a live price in the hero
-   card. Everything renders and reads correctly with this file blocked.
-   ========================================================================== */
+/* The one thing on this page that no other page needs: a live price in the
+   hero card. The header, drawer and footer year are in site.js, which the
+   policy pages share. */
 (function () {
   "use strict";
 
-  var yr = document.getElementById("year");
-  if (yr) yr.textContent = new Date().getFullYear();
+  var el = document.getElementById("heroBtcPrice");
+  if (!el) return;
 
-  /* ---------------------------------------------- solid header on scroll */
-  var head = document.getElementById("siteHead");
-  var ticking = false;
-
-  function syncHead() {
-    ticking = false;
-    /* 40px is far enough that a nudge does not flip it, and short enough that
-       the bar is opaque before the hero's headline scrolls under it. */
-    head.classList.toggle("is-stuck", window.scrollY > 40);
-  }
-  function onScroll() {
-    if (ticking) return;
-    ticking = true;
-    window.requestAnimationFrame(syncHead);
-  }
-  if (head) {
-    syncHead();
-    window.addEventListener("scroll", onScroll, { passive: true });
-  }
-
-  /* ------------------------------------------------------- the phone menu */
-  var drawer = document.getElementById("navDrawer");
-  var toggle = document.getElementById("navToggle");
-
-  function setMenu(open) {
-    if (!drawer || !toggle) return;
-    drawer.classList.toggle("is-open", open);
-    document.body.classList.toggle("nav-open", open);
-    toggle.setAttribute("aria-expanded", String(open));
-    if (open) {
-      var first = drawer.querySelector("a, button");
-      if (first) first.focus();
-    } else {
-      toggle.focus();
-    }
-  }
-
-  if (toggle && drawer) {
-    toggle.addEventListener("click", function () {
-      setMenu(!drawer.classList.contains("is-open"));
-    });
-
-    /* The scrim and every link inside close it — a link that only scrolls the
-       page would otherwise leave the menu sitting over the destination. */
-    drawer.addEventListener("click", function (event) {
-      if (event.target.closest("[data-nav-close]")) setMenu(false);
-    });
-
-    document.addEventListener("keydown", function (event) {
-      if (event.key === "Escape" && drawer.classList.contains("is-open")) setMenu(false);
-    });
-
-    /* Reaching the desktop breakpoint hides the toggle, so the menu must not
-       be left open behind it. */
-    if (window.matchMedia) {
-      var wide = window.matchMedia("(min-width: 1081px)");
-      var onWide = function (e) { if (e.matches) setMenu(false); };
-      if (wide.addEventListener) wide.addEventListener("change", onWide);
-      else if (wide.addListener) wide.addListener(onWide);
-    }
-  }
-
-  /* ------------------------------------------- live BTC price, best effort
-     The same two feeds and the same fallback the sign-in page uses: if both
+  /* The same two feeds and the same fallback the sign-in page uses: if both
      are unreachable the figure already in the markup stays put, so the card
      never shows an empty row. */
-  (function price() {
-    var el = document.getElementById("heroBtcPrice");
-    if (!el) return;
+  var feeds = [
+    { url: "https://api.coinbase.com/v2/prices/BTC-USD/spot", read: function (d) { return Number(d && d.data && d.data.amount); } },
+    { url: "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd", read: function (d) { return Number(d && d.bitcoin && d.bitcoin.usd); } }
+  ];
 
-    var feeds = [
-      { url: "https://api.coinbase.com/v2/prices/BTC-USD/spot", read: function (d) { return Number(d && d.data && d.data.amount); } },
-      { url: "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd", read: function (d) { return Number(d && d.bitcoin && d.bitcoin.usd); } }
-    ];
+  function show(value) {
+    el.textContent = "$" + value.toLocaleString(undefined, { maximumFractionDigits: 0 });
+  }
 
-    function show(value) {
-      el.textContent = "$" + value.toLocaleString(undefined, { maximumFractionDigits: 0 });
-    }
-
-    function tryFeed(i) {
-      if (i >= feeds.length) return;
-      fetch(feeds[i].url, { cache: "no-store" })
-        .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
-        .then(function (d) {
-          var v = feeds[i].read(d);
-          if (v > 0) show(v);
-          else tryFeed(i + 1);
-        })
-        .catch(function () { tryFeed(i + 1); });
-    }
-    tryFeed(0);
-  })();
+  function tryFeed(i) {
+    if (i >= feeds.length) return;
+    fetch(feeds[i].url, { cache: "no-store" })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+      .then(function (d) {
+        var v = feeds[i].read(d);
+        if (v > 0) show(v);
+        else tryFeed(i + 1);
+      })
+      .catch(function () { tryFeed(i + 1); });
+  }
+  tryFeed(0);
 })();
 </script>
 

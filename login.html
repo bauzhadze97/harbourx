@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="color-scheme" content="light dark">
+<meta name="color-scheme" content="dark">
 <title>HarbourX · Sign in</title>
 <meta name="description" content="Secure access to your HarbourX digital asset portfolio.">
 <script src="theme.js"></script>
@@ -15,41 +15,14 @@
 <link rel="stylesheet" href="hx-motion.css">
 <script src="hx-motion.js" defer></script>
 <style>
+  /* One palette. The product behind this page — the dashboard, statements,
+     identity and support — has only ever been dark, so the way in is too. */
   :root {
-    color-scheme: light;
+    color-scheme: dark;
     --navy-900: #071829;
     --navy-800: #0b2545;
     --teal-600: #0e938e;
     --teal-500: #14b8ad;
-    --ink: #0d1f30;
-    --text: #1c2b39;
-    --muted: #5c6b7a;
-    --faint: #8b98a5;
-    --line: #e4eaee;
-    --field-bd: #d7e0e4;
-    --field-bg: #ffffff;
-    --panel: #ffffff;
-    --main-bg: #f6f8f9;
-    --main-glow: rgba(20,184,173,.08);
-    --card-bd: transparent;
-    --card-sh: none;
-    --submit-bg: var(--navy-800);
-    --submit-bg-hover: #0f2f56;
-    --submit-fg: #ffffff;
-    --submit-sh: 0 12px 26px rgba(11,37,69,.24);
-    --submit-sh-hover: 0 16px 32px rgba(11,37,69,.30);
-    --toggle-bg: rgba(255,255,255,.72);
-    --toggle-bd: #e1e8ec;
-    --toggle-fg: #47586a;
-    --err-bg: #fdeced;
-    --err-bd: #f4c9cc;
-    --err-fg: #b5323a;
-    --ring: 0 0 0 4px rgba(20,184,173,.18);
-    --ease: 220ms cubic-bezier(.2,.7,.2,1);
-  }
-
-  :root[data-theme="dark"] {
-    color-scheme: dark;
     --ink: #f1f6f8;
     --text: #c4d2dc;
     --muted: #93a5b2;
@@ -67,12 +40,11 @@
     --submit-fg: #04211f;
     --submit-sh: 0 14px 34px -8px rgba(20,200,187,.5);
     --submit-sh-hover: 0 18px 44px -10px rgba(20,200,187,.62);
-    --toggle-bg: rgba(255,255,255,.06);
-    --toggle-bd: rgba(255,255,255,.14);
-    --toggle-fg: #c4d2dc;
     --err-bg: rgba(197,50,58,.16);
     --err-bd: rgba(244,201,204,.26);
     --err-fg: #ff9ea3;
+    --ring: 0 0 0 4px rgba(20,184,173,.18);
+    --ease: 220ms cubic-bezier(.2,.7,.2,1);
   }
 
   * { box-sizing: border-box; }
@@ -233,40 +205,6 @@
     transition: background-color .35s ease;
   }
 
-  .theme-fab {
-    position: absolute;
-    top: 20px; right: 20px;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    height: 40px;
-    padding: 0 14px;
-    border-radius: 999px;
-    border: 1px solid var(--toggle-bd);
-    background: var(--toggle-bg);
-    color: var(--toggle-fg);
-    font: inherit;
-    font-size: 12.5px;
-    font-weight: 700;
-    letter-spacing: -0.01em;
-    cursor: pointer;
-    -webkit-backdrop-filter: blur(8px);
-    backdrop-filter: blur(8px);
-    transition: transform var(--ease), border-color var(--ease), color var(--ease), background var(--ease);
-  }
-  .theme-fab:hover { transform: translateY(-1px); color: var(--ink); border-color: var(--teal-500); }
-  .theme-fab:active { transform: translateY(0) scale(.96); }
-  .theme-fab:focus-visible { outline: none; box-shadow: var(--ring); }
-  .theme-fab .t-ico { position: relative; width: 16px; height: 16px; flex: 0 0 auto; }
-  .theme-fab .t-ico svg {
-    position: absolute; inset: 0; width: 16px; height: 16px; display: block;
-    transition: opacity .3s ease, transform .45s cubic-bezier(.2,.7,.2,1);
-  }
-  .theme-fab .t-sun  { opacity: 0; transform: rotate(-90deg) scale(.4); }
-  .theme-fab .t-moon { opacity: 1; transform: none; }
-  :root[data-theme="dark"] .theme-fab .t-sun  { opacity: 1; transform: none; }
-  :root[data-theme="dark"] .theme-fab .t-moon { opacity: 0; transform: rotate(90deg) scale(.4); }
-
   .auth-card {
     width: 100%;
     max-width: 404px;
@@ -278,12 +216,6 @@
     box-shadow: var(--card-sh);
     transition: background-color .35s ease, border-color .35s ease, box-shadow .35s ease;
   }
-  :root:not([data-theme="dark"]) .auth-card {
-    background: transparent;
-    padding: 0;
-    border: 0;
-  }
-
   .m-brand {
     display: none;
     align-items: center;
@@ -396,9 +328,8 @@
     color: var(--muted);
     text-align: center;
   }
-  .auth-alt a { color: var(--teal-600); font-weight: 700; text-decoration: none; }
+  .auth-alt a { color: #33d6c8; font-weight: 700; text-decoration: none; }
   .auth-alt a:hover { text-decoration: underline; }
-  :root[data-theme="dark"] .auth-alt a { color: #33d6c8; }
 
   .auth-legal {
     margin-top: 26px;
@@ -478,7 +409,6 @@
   .a-features li:hover .a-ficon { transform: scale(1.12) rotate(-6deg); }
 
   @media (prefers-reduced-motion: reduce) {
-    .theme-fab .t-ico svg { transition: none; }
     .a-brand, .a-hero h2, .a-hero > p, .a-features li,
     .a-ticker, .a-foot, .auth-card, .auth-error { animation: none; }
     .fld .wrap:focus-within,
@@ -533,14 +463,6 @@
   </aside>
 
   <main class="auth-main">
-    <button type="button" class="theme-fab" data-theme-toggle aria-label="Switch theme">
-      <span class="t-ico">
-        <svg class="t-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-        <svg class="t-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8 6 18M18 6l1.8-1.8"/></svg>
-      </span>
-      <span data-theme-label>Dark</span>
-    </button>
-
     <div class="auth-card">
       <a class="m-brand" href="./" aria-label="HarbourX home">
         <span class="a-mark">

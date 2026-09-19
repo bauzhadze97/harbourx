@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<!--
+  HarbourX Terms of Service
+
+  The header, drawer and footer are the home page's, so the three policy pages
+  and the marketing site stay one piece of design. Behaviour is in site.js.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<title>HarbourX · Terms of Service</title>
+<meta name="description" content="The terms on which HarbourX holds, converts and settles digital assets for its clients.">
+<meta name="theme-color" content="#040c15">
+<link rel="canonical" href="https://harbourx.org/terms.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="HarbourX">
+<meta property="og:title" content="HarbourX · Terms of Service">
+<meta property="og:description" content="The terms on which HarbourX holds, converts and settles digital assets for its clients.">
+<meta property="og:url" content="https://harbourx.org/terms.html">
+<meta property="og:image" content="https://harbourx.org/assets/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="HarbourX — digital assets, held with the right structure.">
+<meta name="twitter:image" content="https://harbourx.org/assets/og-image.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<script src="theme.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap"></noscript>
+<link rel="stylesheet" href="hx-motion.css">
+<link rel="stylesheet" href="home.css">
+<script src="hx-motion.js" defer></script>
+<script src="site.js" defer></script>
+</head>
+<body>
+
+<a class="skip-link" href="./#main">Skip to content</a>
+
+<header class="site-head" id="siteHead">
+  <div class="wrap site-head__inner">
+    <a class="brand" href="./" aria-label="HarbourX home">
+      <span class="brand__mark">
+        <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+          <path d="M7 20.5 16 11l9 9.5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M11 25.5 16 20.5l5 5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/>
+        </svg>
+      </span>
+      <span>
+        <b>HarbourX</b>
+        <small>harbourx.org</small>
+      </span>
+    </a>
+
+    <nav class="site-nav" aria-label="Main">
+      <ul>
+        <li><a href="./#solutions">Solutions</a></li>
+        <li><a href="./#approach">Our approach</a></li>
+        <li><a href="./#process">How it works</a></li>
+        <li><a href="./#clients">Clients</a></li>
+        <li><a href="./#faq">FAQ</a></li>
+      </ul>
+    </nav>
+
+    <div class="head-actions">
+      <a class="btn btn--ghost" href="login.html">Sign in</a>
+      <a class="btn btn--primary" href="register.php" data-ripple>Open an account</a>
+      <button type="button" class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false" aria-controls="navDrawer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- The phone menu. Inert until the toggle opens it. -->
+<div class="nav-drawer" id="navDrawer">
+  <div class="nav-drawer__scrim" data-nav-close></div>
+  <div class="nav-drawer__panel" role="dialog" aria-modal="true" aria-label="Menu">
+    <div class="nav-drawer__top">
+      <span class="brand">
+        <span class="brand__mark">
+          <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <path d="M7 20.5 16 11l9 9.5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M11 25.5 16 20.5l5 5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/>
+          </svg>
+        </span>
+        <span><b>HarbourX</b><small>harbourx.org</small></span>
+      </span>
+    </div>
+
+    <ul>
+      <li><a href="./#solutions" data-nav-close>Solutions</a></li>
+      <li><a href="./#approach" data-nav-close>Our approach</a></li>
+      <li><a href="./#process" data-nav-close>How it works</a></li>
+      <li><a href="./#clients" data-nav-close>Clients</a></li>
+      <li><a href="./#faq" data-nav-close>FAQ</a></li>
+      <li><a href="support.html" data-nav-close>Support</a></li>
+    </ul>
+
+    <a class="btn btn--primary" href="register.php">Open an account</a>
+    <a class="btn btn--ghost" href="login.html">Sign in</a>
+  </div>
+</div>
+
+<main id="main">
+
+  <section class="doc-head">
+    <div class="wrap">
+      <span class="eyebrow">Legal</span>
+      <h1>Terms of Service</h1>
+      <p class="lead">The agreement between you and HarbourX when you open an account, hold digital assets with us, convert them, or settle to your bank.</p>
+      <div class="doc-meta">
+        <span>Version [1.0]</span>
+        <span>Last updated [date]</span>
+        <span>Applies to harbourx.org and the HarbourX client portal</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap doc-body">
+    <nav class="doc-toc" aria-label="On this page">
+      <h2>On this page</h2>
+      <ol>
+        <li><a href="#who-we-are">1. Who we are</a></li>
+        <li><a href="#what-we-do">2. What this service is, and what it is not</a></li>
+        <li><a href="#eligibility">3. Who can open an account</a></li>
+        <li><a href="#verification">4. Identity verification</a></li>
+        <li><a href="#your-account">5. Your account and its security</a></li>
+        <li><a href="#custody">6. Holding your assets</a></li>
+        <li><a href="#conversion">7. Conversion and pricing</a></li>
+        <li><a href="#withdrawals">8. Withdrawals and settlement</a></li>
+        <li><a href="#risk">9. Risk</a></li>
+        <li><a href="#acceptable-use">10. What you must not do</a></li>
+        <li><a href="#suspension">11. Suspension and closing an account</a></li>
+        <li><a href="#liability">12. Liability</a></li>
+        <li><a href="#changes">13. Changes to these terms</a></li>
+        <li><a href="#law">14. Governing law and disputes</a></li>
+        <li><a href="#contact">15. Contact</a></li>
+      </ol>
+    </nav>
+
+    <div class="doc-prose">
+      <div class="doc-flag">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4.5"/><circle cx="12" cy="17" r=".6" fill="currentColor"/><path d="M10.3 3.9 2.6 17.4a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+        <div>
+          <b>This is a draft, not legal advice.</b>
+          Every <em>[square bracket]</em> below is a fact only HarbourX can supply, and the
+          whole document needs a lawyer qualified in the governing jurisdiction to
+          review it before it is published. Written against how the platform
+          actually works, so the facts about the product are right — the law around
+          them is what needs checking.
+        </div>
+      </div>
+
+      <section>
+        <h2 id="who-we-are">1. Who we are</h2>
+
+        <p><strong>HarbourX</strong> is operated by <em>[registered company name]</em>, a company registered in
+        <em>[jurisdiction]</em> under number <em>[company number]</em>, with its registered office at
+        <em>[registered address]</em>. In these terms, “HarbourX”, “we” and “us” mean that company, and
+        “you” means the person who holds the account.</p>
+        <p>We are <em>[registered / licensed / not licensed]</em> with <em>[regulator and licence number, or a plain
+        statement that no licence is held and what that means for you]</em>. This is one of the
+        most important facts on the page, so it must be stated exactly and kept current.</p>
+      </section>
+
+      <section>
+        <h2 id="what-we-do">2. What this service is, and what it is not</h2>
+
+        <p>HarbourX is a custody and settlement service. We hold digital assets you already own,
+        convert them to a supported currency at your instruction, and settle the proceeds to a
+        bank account in your own name. That is the whole of it.</p>
+        <p>We do not give financial, investment, tax or legal advice. Nothing on this site, in the
+        portal, or in any message from our team is a recommendation to buy, sell or hold anything.
+        We do not manage your assets, we do not trade on your behalf, and we never promise a
+        return. Any decision about what you hold, and when you convert it, is yours alone.</p>
+      </section>
+
+      <section>
+        <h2 id="eligibility">3. Who can open an account</h2>
+
+        <p>To hold a HarbourX account you must:</p>
+        <ul>
+          <li>be at least 18 years old and able to enter a binding contract;</li>
+          <li>be acting for yourself, not for an undisclosed third party;</li>
+          <li>not be resident in, or a national of, a country we cannot serve — the current list
+          is at <em>[link to the restricted-countries list]</em>;</li>
+          <li>not appear on any sanctions list we are required to screen against; and</li>
+          <li>complete the identity checks in section 4.</li>
+        </ul>
+        <p>We may refuse to open an account, and may close one, without being able to tell you why —
+        there are circumstances where the law forbids us from explaining. Where we can tell you, we will.</p>
+      </section>
+
+      <section>
+        <h2 id="verification">4. Identity verification</h2>
+
+        <p>Before you can convert or withdraw, we have to know who you are. You agree to give us
+        accurate identity and address documents, and to tell us within <em>[number]</em> days if anything
+        in them changes.</p>
+        <p>You can watch the status of your own verification in your dashboard from the moment you
+        submit it. While it is under review you can still deposit and hold; conversion and
+        settlement open once it is complete.</p>
+        <p>If we cannot verify you, or if documents you give us turn out to be false, we will close
+        the account and return the balance to a source we are satisfied is yours.</p>
+      </section>
+
+      <section>
+        <h2 id="your-account">5. Your account and its security</h2>
+
+        <p>Your account is yours alone. You may not share it, sell it, or let anyone else use it.</p>
+        <p>You are responsible for keeping your password and your second factor safe. Two-factor
+        authentication is set up when you open the account, and we strongly recommend leaving it
+        switched on — you are given backup codes at enrolment for the day your phone is not with you.</p>
+        <p>Tell us immediately at <a href="mailto:support@harbourx.org">support@harbourx.org</a> if you
+        think someone else has reached your account. Until you do, instructions given with your
+        credentials are treated as given by you.</p>
+      </section>
+
+      <section>
+        <h2 id="custody">6. Holding your assets</h2>
+
+        <p>Assets you deposit are recorded to your account and held separately from our own.
+        <em>[State here exactly how: which custodian, whether balances are pooled or segregated on-chain,
+        and what happens to your assets if HarbourX becomes insolvent. A client's legal claim in an
+        insolvency turns on this paragraph, so it cannot be left vague.]</em></p>
+        <p>We do not lend out, stake, rehypothecate or otherwise use your assets. They sit where you
+        put them until you instruct otherwise.</p>
+        <p>Deposits appear in your portfolio once the relevant network has confirmed them. A deposit
+        sent to an address we did not give you, or in an asset we do not support, may be
+        unrecoverable — we will help where we can, but we cannot promise to.</p>
+      </section>
+
+      <section>
+        <h2 id="conversion">7. Conversion and pricing</h2>
+
+        <p>When you ask us to convert, we quote you four figures before you confirm: the market rate
+        we are pricing against, the gross value, our fee, and the amount that will land in your
+        balance. Confirming the quote is your instruction to proceed.</p>
+        <p>A quote is good for the moment it is shown. Digital asset prices move, and if the market
+        moves materially between quote and confirmation we may re-quote rather than fill at a price
+        that is no longer real.</p>
+        <p>Our fee is stated as its own line and is never hidden inside a worse rate. The current
+        schedule is at <em>[link to the fee schedule]</em>. We will give you <em>[number]</em> days' notice
+        before a fee increase takes effect.</p>
+      </section>
+
+      <section>
+        <h2 id="withdrawals">8. Withdrawals and settlement</h2>
+
+        <p>You may withdraw to a bank account held in the same name as your HarbourX account. An
+        account in someone else's name will be refused; this is the rule that keeps settlement clean,
+        and it is not one we can waive.</p>
+        <p>A payout account is verified once and then used for every later settlement without a fresh
+        review. Settlement times depend on your bank and the payment rails involved, and we will tell
+        you what to expect before you confirm.</p>
+        <p>Where a release fee applies to your account, it is shown in the withdrawal summary and again
+        at the point of confirmation, with the amount stated. It is paid separately and does not reduce
+        the amount you are withdrawing.</p>
+        <p>We may hold a withdrawal where we are required to by law, where verification is incomplete,
+        or where we have a reasonable concern about fraud or coercion. If we do, we will tell you as
+        much as we are permitted to.</p>
+      </section>
+
+      <section>
+        <h2 id="risk">9. Risk</h2>
+
+        <p>Digital assets are volatile. Their value can fall as well as rise, quickly and without
+        warning, and you can lose money. Past movement tells you nothing about future movement.</p>
+        <p>Holding assets with HarbourX does not protect you from that. We hold and move what you own;
+        what it is worth is the market's business, not ours.</p>
+        <p>Digital assets are <em>[covered / not covered]</em> by <em>[the relevant compensation or deposit
+        guarantee scheme, or a plain statement that no such protection applies]</em>. State this plainly:
+        it is the fact clients most often assume wrongly.</p>
+      </section>
+
+      <section>
+        <h2 id="acceptable-use">10. What you must not do</h2>
+
+        <p>You must not use HarbourX to launder money, finance terrorism, evade sanctions or tax, or
+        move the proceeds of crime. You must not use it on behalf of someone you have not disclosed
+        to us, or to disguise the origin of funds.</p>
+        <p>You must not attempt to interfere with the platform — no probing, scraping, automated
+        access outside any interface we publish, or attempts to reach another client's data.</p>
+        <p>We monitor for these things because we are required to, and we report what we are required
+        to report.</p>
+      </section>
+
+      <section>
+        <h2 id="suspension">11. Suspension and closing an account</h2>
+
+        <p>You may close your account at any time once any pending instruction has settled. Tell us
+        through the support centre and we will return your balance to a verified destination in your name.</p>
+        <p>We may suspend or close your account if you breach these terms, if we are required to by law
+        or by a regulator, or if keeping it open would expose you or us to a risk we are not willing
+        to carry. Except where the law forbids it, we will give you <em>[number]</em> days' notice and a
+        reasonable opportunity to withdraw your balance first.</p>
+      </section>
+
+      <section>
+        <h2 id="liability">12. Liability</h2>
+
+        <p>Nothing in these terms limits our liability for fraud, for death or personal injury caused
+        by our negligence, or for anything else that cannot lawfully be limited.</p>
+        <p>Subject to that, we are not liable for losses caused by the market moving, by your own
+        instructions, by a failure of a blockchain network or a bank, or by your losing control of
+        your credentials. <em>[State the overall cap on liability and how it is calculated. A cap that is
+        not clearly stated is a cap that will not be relied on.]</em></p>
+      </section>
+
+      <section>
+        <h2 id="changes">13. Changes to these terms</h2>
+
+        <p>We may change these terms. Where a change materially affects you we will give you
+        <em>[number]</em> days' notice by email and in the portal before it takes effect, and you may close
+        your account before it does if you do not accept it. Smaller corrections take effect when
+        published, and the version and date at the top of this page always tell you which version you
+        are reading.</p>
+      </section>
+
+      <section>
+        <h2 id="law">14. Governing law and disputes</h2>
+
+        <p>These terms are governed by the law of <em>[jurisdiction]</em>, and the courts of
+        <em>[jurisdiction]</em> have exclusive jurisdiction over any dispute.</p>
+        <p>Before it reaches a court, please raise it with us: our
+        <a href="complaints.html">complaints process</a> sets out how, and what happens next.</p>
+      </section>
+
+      <section>
+        <h2 id="contact">15. Contact</h2>
+
+        <p>Write to <a href="mailto:support@harbourx.org">support@harbourx.org</a> or open a ticket in the
+        <a href="support.html">support centre</a>, which reaches a person rather than a form queue.</p>
+        <p>Postal address for formal notices: <em>[registered address]</em>.</p>
+      </section>
+    </div>
+  </div>
+
+</main>
+
+<!-- =========================================================== footer -->
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <span class="brand">
+          <span class="brand__mark">
+            <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+              <path d="M7 20.5 16 11l9 9.5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M11 25.5 16 20.5l5 5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/>
+            </svg>
+          </span>
+          <span><b>HarbourX</b><small>harbourx.org</small></span>
+        </span>
+        <p class="foot-about">A private client platform for holding digital assets, converting them to your local currency and settling to your own bank.</p>
+      </div>
+
+      <div class="foot-col">
+        <h4>Platform</h4>
+        <ul>
+          <li><a href="./#solutions">Solutions</a></li>
+          <li><a href="./#approach">Our approach</a></li>
+          <li><a href="./#process">How it works</a></li>
+          <li><a href="./#faq">Questions</a></li>
+        </ul>
+      </div>
+
+      <div class="foot-col">
+        <h4>Your account</h4>
+        <ul>
+          <li><a href="register.php">Open an account</a></li>
+          <li><a href="login.html">Sign in</a></li>
+          <li><a href="statements.html">Statements</a></li>
+          <li><a href="change_password.php">Security</a></li>
+        </ul>
+      </div>
+
+      <div class="foot-col">
+        <h4>Support</h4>
+        <ul>
+          <li><a href="support.html">Support centre</a></li>
+          <li><a href="aml.html">Identity verification</a></li>
+          <li><a href="mailto:support@harbourx.org">support@harbourx.org</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="foot-legal">
+      <p><b>Risk notice.</b> Digital assets are volatile and their value can fall as well as rise. HarbourX holds, converts and settles assets you already own; nothing on this page is financial, tax or investment advice, and no return is promised or implied. Consider your own circumstances, and take independent advice where you need it, before acting.</p>
+      <div class="foot-legal__row">
+        <p>© <span id="year">2026</span> HarbourX. All rights reserved.</p>
+        <ul>
+          <li><a href="terms.html">Terms</a></li>
+          <li><a href="privacy.html">Privacy</a></li>
+          <li><a href="complaints.html">Complaints</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- Tidio live chat. Third-party and loaded async, so it never blocks the
+     page: if code.tidio.co is slow or unreachable, everything here still
+     renders and works exactly as it does without it. -->
+<script src="//code.tidio.co/1rfzzsxqktvftfto6ml44xvorkoducnj.js" async></script>
+
+</body>
+</html>

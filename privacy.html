@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<!--
+  HarbourX Privacy Policy
+
+  The header, drawer and footer are the home page's, so the three policy pages
+  and the marketing site stay one piece of design. Behaviour is in site.js.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<title>HarbourX · Privacy Policy</title>
+<meta name="description" content="What personal data HarbourX collects, why, who it is shared with, and the rights you have over it.">
+<meta name="theme-color" content="#040c15">
+<link rel="canonical" href="https://harbourx.org/privacy.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="HarbourX">
+<meta property="og:title" content="HarbourX · Privacy Policy">
+<meta property="og:description" content="What personal data HarbourX collects, why, who it is shared with, and the rights you have over it.">
+<meta property="og:url" content="https://harbourx.org/privacy.html">
+<meta property="og:image" content="https://harbourx.org/assets/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="HarbourX — digital assets, held with the right structure.">
+<meta name="twitter:image" content="https://harbourx.org/assets/og-image.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<script src="theme.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap"></noscript>
+<link rel="stylesheet" href="hx-motion.css">
+<link rel="stylesheet" href="home.css">
+<script src="hx-motion.js" defer></script>
+<script src="site.js" defer></script>
+</head>
+<body>
+
+<a class="skip-link" href="./#main">Skip to content</a>
+
+<header class="site-head" id="siteHead">
+  <div class="wrap site-head__inner">
+    <a class="brand" href="./" aria-label="HarbourX home">
+      <span class="brand__mark">
+        <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+          <path d="M7 20.5 16 11l9 9.5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M11 25.5 16 20.5l5 5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/>
+        </svg>
+      </span>
+      <span>
+        <b>HarbourX</b>
+        <small>harbourx.org</small>
+      </span>
+    </a>
+
+    <nav class="site-nav" aria-label="Main">
+      <ul>
+        <li><a href="./#solutions">Solutions</a></li>
+        <li><a href="./#approach">Our approach</a></li>
+        <li><a href="./#process">How it works</a></li>
+        <li><a href="./#clients">Clients</a></li>
+        <li><a href="./#faq">FAQ</a></li>
+      </ul>
+    </nav>
+
+    <div class="head-actions">
+      <a class="btn btn--ghost" href="login.html">Sign in</a>
+      <a class="btn btn--primary" href="register.php" data-ripple>Open an account</a>
+      <button type="button" class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false" aria-controls="navDrawer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- The phone menu. Inert until the toggle opens it. -->
+<div class="nav-drawer" id="navDrawer">
+  <div class="nav-drawer__scrim" data-nav-close></div>
+  <div class="nav-drawer__panel" role="dialog" aria-modal="true" aria-label="Menu">
+    <div class="nav-drawer__top">
+      <span class="brand">
+        <span class="brand__mark">
+          <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <path d="M7 20.5 16 11l9 9.5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M11 25.5 16 20.5l5 5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/>
+          </svg>
+        </span>
+        <span><b>HarbourX</b><small>harbourx.org</small></span>
+      </span>
+    </div>
+
+    <ul>
+      <li><a href="./#solutions" data-nav-close>Solutions</a></li>
+      <li><a href="./#approach" data-nav-close>Our approach</a></li>
+      <li><a href="./#process" data-nav-close>How it works</a></li>
+      <li><a href="./#clients" data-nav-close>Clients</a></li>
+      <li><a href="./#faq" data-nav-close>FAQ</a></li>
+      <li><a href="support.html" data-nav-close>Support</a></li>
+    </ul>
+
+    <a class="btn btn--primary" href="register.php">Open an account</a>
+    <a class="btn btn--ghost" href="login.html">Sign in</a>
+  </div>
+</div>
+
+<main id="main">
+
+  <section class="doc-head">
+    <div class="wrap">
+      <span class="eyebrow">Legal</span>
+      <h1>Privacy Policy</h1>
+      <p class="lead">What HarbourX collects about you, why we are allowed to hold it, who else sees it, and what you can make us do with it.</p>
+      <div class="doc-meta">
+        <span>Version [1.0]</span>
+        <span>Last updated [date]</span>
+        <span>Applies to harbourx.org and the HarbourX client portal</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap doc-body">
+    <nav class="doc-toc" aria-label="On this page">
+      <h2>On this page</h2>
+      <ol>
+        <li><a href="#controller">1. Who controls your data</a></li>
+        <li><a href="#what-we-collect">2. What we collect, and why</a></li>
+        <li><a href="#legal-basis">3. Why we are allowed to hold it</a></li>
+        <li><a href="#sharing">4. Who else sees it</a></li>
+        <li><a href="#third-parties">5. Third-party services on this site</a></li>
+        <li><a href="#storage">6. Cookies and what is stored in your browser</a></li>
+        <li><a href="#retention">7. How long we keep it</a></li>
+        <li><a href="#transfers">8. Sending data abroad</a></li>
+        <li><a href="#security">9. How we protect it</a></li>
+        <li><a href="#your-rights">10. Your rights</a></li>
+        <li><a href="#changes">11. Changes to this policy</a></li>
+      </ol>
+    </nav>
+
+    <div class="doc-prose">
+      <div class="doc-flag">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4.5"/><circle cx="12" cy="17" r=".6" fill="currentColor"/><path d="M10.3 3.9 2.6 17.4a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+        <div>
+          <b>This is a draft, not legal advice.</b>
+          Every <em>[square bracket]</em> below is a fact only HarbourX can supply, and the
+          whole document needs a lawyer qualified in the governing jurisdiction to
+          review it before it is published. Written against how the platform
+          actually works, so the facts about the product are right — the law around
+          them is what needs checking.
+        </div>
+      </div>
+
+      <section>
+        <h2 id="controller">1. Who controls your data</h2>
+
+        <p>The controller of your personal data is <em>[registered company name]</em>, registered in
+        <em>[jurisdiction]</em> under number <em>[company number]</em>, at <em>[registered address]</em>.</p>
+        <p>Our data protection contact is <em>[name or role]</em> at
+        <a href="mailto:privacy@harbourx.org">privacy@harbourx.org</a>.
+        <em>[If a Data Protection Officer is required in your jurisdiction, name them here.]</em></p>
+      </section>
+
+      <section>
+        <h2 id="what-we-collect">2. What we collect, and why</h2>
+
+        <p>We collect what we need to run the account and what the law requires us to keep. Nothing
+        on this list is optional decoration.</p>
+        <div class="doc-table">
+          <div><b>Identity</b><span>Name, date of birth, nationality, passport or ID document, photograph. Required by anti-money-laundering law before you can convert or withdraw.</span></div>
+          <div><b>Contact</b><span>Email address, postal address, phone number. Used to reach you about your own account.</span></div>
+          <div><b>Financial</b><span>Bank account details, transaction history, balances, conversion and withdrawal records. Needed to operate the account and to produce your statements.</span></div>
+          <div><b>Technical</b><span>IP address, browser and device information, sign-in times, session identifiers. Used to keep the account secure and to detect misuse.</span></div>
+          <div><b>Support</b><span>Tickets you open, chat messages, and our replies. Used to answer you and to show what was said if it is later disputed.</span></div>
+        </div>
+      </section>
+
+      <section>
+        <h2 id="legal-basis">3. Why we are allowed to hold it</h2>
+
+        <ul>
+          <li><strong>To perform our contract with you</strong> — running the account, converting, settling to your bank.</li>
+          <li><strong>To meet a legal obligation</strong> — identity verification, sanctions screening, transaction monitoring, record keeping and reporting.</li>
+          <li><strong>Our legitimate interests</strong> — keeping the platform secure, preventing fraud, and improving the service. We do not let this override your interests where they weigh more heavily.</li>
+          <li><strong>Your consent</strong> — where we ask for it specifically, such as for marketing. You can withdraw it at any time without affecting anything else.</li>
+        </ul>
+        <p><em>[Name the specific articles or sections of the legislation that applies in your jurisdiction.]</em></p>
+      </section>
+
+      <section>
+        <h2 id="sharing">4. Who else sees it</h2>
+
+        <p>We do not sell your personal data. We share it only where the service or the law requires:</p>
+        <ul>
+          <li><strong>Identity verification providers</strong> — <em>[name them]</em>, to check the documents you submit.</li>
+          <li><strong>Banks and payment providers</strong> — to settle money to your account.</li>
+          <li><strong>Our custody and blockchain infrastructure providers</strong> — <em>[name them]</em>.</li>
+          <li><strong>Regulators, law enforcement and courts</strong> — where we are legally required to report or to answer a lawful request.</li>
+          <li><strong>Professional advisers</strong> — auditors and lawyers, under a duty of confidence.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 id="third-parties">5. Third-party services on this site</h2>
+
+        <p>Three third parties are loaded by pages you visit. This list is exhaustive and is kept
+        accurate against what the site actually loads.</p>
+        <div class="doc-table">
+          <div><b>Tidio</b><span>The live chat widget on the home, sign-in and create-account pages. It receives your IP address, browser information and anything you type into the chat. It is loaded on public pages only — never on the dashboard, statements or identity pages. See Tidio's own privacy policy at <a href="https://www.tidio.com/privacy-policy/" rel="noopener">tidio.com/privacy-policy</a>.</span></div>
+          <div><b>Coinbase and CoinGecko</b><span>Public price feeds, queried by your browser to show a live Bitcoin price. They receive your IP address and nothing else. No account data reaches them.</span></div>
+          <div><b>Google Fonts</b><span>Serves the typeface. It receives your IP address. <em>[If you would rather it did not, the font can be self-hosted — say so here once it is.]</em></span></div>
+        </div>
+      </section>
+
+      <section>
+        <h2 id="storage">6. Cookies and what is stored in your browser</h2>
+
+        <p>We use a session cookie to keep you signed in. It is marked HttpOnly and SameSite, and on
+        a secure connection it is marked Secure. Without it the portal cannot tell one signed-in
+        client from another, so it cannot be refused.</p>
+        <p>We also use your browser's local storage to remember your display preferences and to hold
+        your own account record between pages. It never leaves your device and we cannot read it.</p>
+        <p><em>[Tidio sets its own cookies. If your jurisdiction requires a consent banner before
+        non-essential third-party scripts load, that banner has to gate the chat widget — it is not
+        covered by the session-cookie exemption.]</em></p>
+      </section>
+
+      <section>
+        <h2 id="retention">7. How long we keep it</h2>
+
+        <p>Identity and transaction records are kept for <em>[number]</em> years after the account closes,
+        because anti-money-laundering law requires it. We cannot delete them sooner even if you ask.</p>
+        <p>Support tickets and chat transcripts are kept for <em>[number]</em> years. Technical logs are kept
+        for <em>[number]</em> months. Anything we no longer have a reason to hold is deleted.</p>
+      </section>
+
+      <section>
+        <h2 id="transfers">8. Sending data abroad</h2>
+
+        <p><em>[List the countries your providers operate in, and the safeguard relied on for each
+        transfer — an adequacy decision, standard contractual clauses, or another lawful mechanism.
+        If no data leaves your jurisdiction, say that instead; it is a better answer.]</em></p>
+      </section>
+
+      <section>
+        <h2 id="security">9. How we protect it</h2>
+
+        <p>Traffic between your browser and HarbourX is encrypted. Accounts are protected by two-factor
+        authentication. Access to client records inside HarbourX is limited to staff who need it, and
+        what they do with it is logged.</p>
+        <p>No system is perfectly secure, and we will not pretend otherwise. If a breach affects your
+        rights we will tell you and the regulator within the time the law allows.</p>
+      </section>
+
+      <section>
+        <h2 id="your-rights">10. Your rights</h2>
+
+        <p>You can ask us to:</p>
+        <ul>
+          <li>give you a copy of the personal data we hold about you;</li>
+          <li>correct anything that is wrong;</li>
+          <li>delete data we no longer have a lawful reason to keep;</li>
+          <li>restrict or object to how we use it;</li>
+          <li>hand it to you, or to someone else, in a portable format; and</li>
+          <li>withdraw consent where consent is what we relied on.</li>
+        </ul>
+        <p>Write to <a href="mailto:privacy@harbourx.org">privacy@harbourx.org</a>. We answer within
+        <em>[number]</em> days. Where a legal obligation stops us doing what you ask — record-keeping
+        duties usually — we will tell you which one and why.</p>
+        <p>You can also complain to <em>[the supervisory authority and its contact details]</em>. You do not
+        have to come to us first, though we would rather you did.</p>
+      </section>
+
+      <section>
+        <h2 id="changes">11. Changes to this policy</h2>
+
+        <p>We will post any change here and update the version and date at the top. Where a change
+        materially affects you we will tell you by email before it takes effect.</p>
+      </section>
+    </div>
+  </div>
+
+</main>
+
+<!-- =========================================================== footer -->
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <span class="brand">
+          <span class="brand__mark">
+            <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+              <path d="M7 20.5 16 11l9 9.5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M11 25.5 16 20.5l5 5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/>
+            </svg>
+          </span>
+          <span><b>HarbourX</b><small>harbourx.org</small></span>
+        </span>
+        <p class="foot-about">A private client platform for holding digital assets, converting them to your local currency and settling to your own bank.</p>
+      </div>
+
+      <div class="foot-col">
+        <h4>Platform</h4>
+        <ul>
+          <li><a href="./#solutions">Solutions</a></li>
+          <li><a href="./#approach">Our approach</a></li>
+          <li><a href="./#process">How it works</a></li>
+          <li><a href="./#faq">Questions</a></li>
+        </ul>
+      </div>
+
+      <div class="foot-col">
+        <h4>Your account</h4>
+        <ul>
+          <li><a href="register.php">Open an account</a></li>
+          <li><a href="login.html">Sign in</a></li>
+          <li><a href="statements.html">Statements</a></li>
+          <li><a href="change_password.php">Security</a></li>
+        </ul>
+      </div>
+
+      <div class="foot-col">
+        <h4>Support</h4>
+        <ul>
+          <li><a href="support.html">Support centre</a></li>
+          <li><a href="aml.html">Identity verification</a></li>
+          <li><a href="mailto:support@harbourx.org">support@harbourx.org</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="foot-legal">
+      <p><b>Risk notice.</b> Digital assets are volatile and their value can fall as well as rise. HarbourX holds, converts and settles assets you already own; nothing on this page is financial, tax or investment advice, and no return is promised or implied. Consider your own circumstances, and take independent advice where you need it, before acting.</p>
+      <div class="foot-legal__row">
+        <p>© <span id="year">2026</span> HarbourX. All rights reserved.</p>
+        <ul>
+          <li><a href="terms.html">Terms</a></li>
+          <li><a href="privacy.html">Privacy</a></li>
+          <li><a href="complaints.html">Complaints</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- Tidio live chat. Third-party and loaded async, so it never blocks the
+     page: if code.tidio.co is slow or unreachable, everything here still
+     renders and works exactly as it does without it. -->
+<script src="//code.tidio.co/1rfzzsxqktvftfto6ml44xvorkoducnj.js" async></script>
+
+</body>
+</html>

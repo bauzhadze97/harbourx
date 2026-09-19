@@ -1,0 +1,39 @@
+# HarbourX — what a crawler may look at.
+#
+# Everything public lives at the root: the home page and the three policy
+# pages. Everything else is either a client's own workspace or the operations
+# console, and neither belongs in a search index — the Disallow lines below are
+# about keeping them out of results, not about security. Access control is done
+# by the session check in each page and by the web server's own rules; a
+# crawler that ignores this file is stopped there, not here.
+
+User-agent: *
+
+# The client workspace. Signed-in pages, and the endpoints behind them.
+Disallow: /dashboard.html
+Disallow: /statements.html
+Disallow: /support.html
+Disallow: /aml.html
+Disallow: /change_password.php
+Disallow: /setup_password.php
+Disallow: /twofactor.php
+Disallow: /logout.php
+
+# The operations console.
+Disallow: /admin.php
+Disallow: /client.php
+Disallow: /payments.php
+Disallow: /callbacks.php
+Disallow: /transactions.php
+Disallow: /withdrawals.php
+Disallow: /btc_withdrawals.php
+Disallow: /bank_accounts.php
+
+# Client records. Blocked at the web server as well — this line is belt to
+# that braces, and must never be the only thing standing in front of them.
+Disallow: /data/
+
+# Test fixtures and the static preview, which are not part of the site.
+Disallow: /tests/
+
+Sitemap: https://harbourx.org/sitemap.xml

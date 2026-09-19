@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<!--
+  HarbourX complaints policy
+
+  The header, drawer and footer are the home page's, so the three policy pages
+  and the marketing site stay one piece of design. Behaviour is in site.js.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<title>HarbourX · Complaints</title>
+<meta name="description" content="How to complain to HarbourX, what happens next, and how to escalate if our answer is not good enough.">
+<meta name="theme-color" content="#040c15">
+<link rel="canonical" href="https://harbourx.org/complaints.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="HarbourX">
+<meta property="og:title" content="HarbourX · Complaints">
+<meta property="og:description" content="How to complain to HarbourX, what happens next, and how to escalate if our answer is not good enough.">
+<meta property="og:url" content="https://harbourx.org/complaints.html">
+<meta property="og:image" content="https://harbourx.org/assets/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="HarbourX — digital assets, held with the right structure.">
+<meta name="twitter:image" content="https://harbourx.org/assets/og-image.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<script src="theme.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap"></noscript>
+<link rel="stylesheet" href="hx-motion.css">
+<link rel="stylesheet" href="home.css">
+<script src="hx-motion.js" defer></script>
+<script src="site.js" defer></script>
+</head>
+<body>
+
+<a class="skip-link" href="./#main">Skip to content</a>
+
+<header class="site-head" id="siteHead">
+  <div class="wrap site-head__inner">
+    <a class="brand" href="./" aria-label="HarbourX home">
+      <span class="brand__mark">
+        <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+          <path d="M7 20.5 16 11l9 9.5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M11 25.5 16 20.5l5 5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/>
+        </svg>
+      </span>
+      <span>
+        <b>HarbourX</b>
+        <small>harbourx.org</small>
+      </span>
+    </a>
+
+    <nav class="site-nav" aria-label="Main">
+      <ul>
+        <li><a href="./#solutions">Solutions</a></li>
+        <li><a href="./#approach">Our approach</a></li>
+        <li><a href="./#process">How it works</a></li>
+        <li><a href="./#clients">Clients</a></li>
+        <li><a href="./#faq">FAQ</a></li>
+      </ul>
+    </nav>
+
+    <div class="head-actions">
+      <a class="btn btn--ghost" href="login.html">Sign in</a>
+      <a class="btn btn--primary" href="register.php" data-ripple>Open an account</a>
+      <button type="button" class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false" aria-controls="navDrawer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- The phone menu. Inert until the toggle opens it. -->
+<div class="nav-drawer" id="navDrawer">
+  <div class="nav-drawer__scrim" data-nav-close></div>
+  <div class="nav-drawer__panel" role="dialog" aria-modal="true" aria-label="Menu">
+    <div class="nav-drawer__top">
+      <span class="brand">
+        <span class="brand__mark">
+          <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <path d="M7 20.5 16 11l9 9.5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M11 25.5 16 20.5l5 5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/>
+          </svg>
+        </span>
+        <span><b>HarbourX</b><small>harbourx.org</small></span>
+      </span>
+    </div>
+
+    <ul>
+      <li><a href="./#solutions" data-nav-close>Solutions</a></li>
+      <li><a href="./#approach" data-nav-close>Our approach</a></li>
+      <li><a href="./#process" data-nav-close>How it works</a></li>
+      <li><a href="./#clients" data-nav-close>Clients</a></li>
+      <li><a href="./#faq" data-nav-close>FAQ</a></li>
+      <li><a href="support.html" data-nav-close>Support</a></li>
+    </ul>
+
+    <a class="btn btn--primary" href="register.php">Open an account</a>
+    <a class="btn btn--ghost" href="login.html">Sign in</a>
+  </div>
+</div>
+
+<main id="main">
+
+  <section class="doc-head">
+    <div class="wrap">
+      <span class="eyebrow">Legal</span>
+      <h1>Complaints</h1>
+      <p class="lead">If something has gone wrong, this is how to tell us, what we will do about it, how long it will take, and where to go if our answer is not good enough.</p>
+      <div class="doc-meta">
+        <span>Version [1.0]</span>
+        <span>Last updated [date]</span>
+        <span>Applies to harbourx.org and the HarbourX client portal</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap doc-body">
+    <nav class="doc-toc" aria-label="On this page">
+      <h2>On this page</h2>
+      <ol>
+        <li><a href="#principle">1. How we treat a complaint</a></li>
+        <li><a href="#how">2. How to complain</a></li>
+        <li><a href="#what-to-include">3. What to tell us</a></li>
+        <li><a href="#what-happens">4. What happens next</a></li>
+        <li><a href="#outcome">5. Our answer</a></li>
+        <li><a href="#escalation">6. If you are not satisfied</a></li>
+        <li><a href="#records">7. What we do with complaints</a></li>
+      </ol>
+    </nav>
+
+    <div class="doc-prose">
+      <div class="doc-flag">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4.5"/><circle cx="12" cy="17" r=".6" fill="currentColor"/><path d="M10.3 3.9 2.6 17.4a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+        <div>
+          <b>This is a draft, not legal advice.</b>
+          Every <em>[square bracket]</em> below is a fact only HarbourX can supply, and the
+          whole document needs a lawyer qualified in the governing jurisdiction to
+          review it before it is published. Written against how the platform
+          actually works, so the facts about the product are right — the law around
+          them is what needs checking.
+        </div>
+      </div>
+
+      <section>
+        <h2 id="principle">1. How we treat a complaint</h2>
+
+        <p>A complaint is not a nuisance; it is the cheapest information we will ever get about what
+        is broken. We would rather hear it than not.</p>
+        <p>You will not be charged for complaining, your account will not be treated differently for
+        it, and you do not need to use any particular form of words.</p>
+      </section>
+
+      <section>
+        <h2 id="how">2. How to complain</h2>
+
+        <p>Any of these reaches the same place:</p>
+        <ul>
+          <li>Open a ticket in the <a href="support.html">support centre</a> and mark it as a complaint.</li>
+          <li>Email <a href="mailto:complaints@harbourx.org">complaints@harbourx.org</a>.</li>
+          <li>Write to us at <em>[registered address]</em>, marked for the attention of <em>[role]</em>.</li>
+        </ul>
+        <p>The live chat is good for a quick question, but a complaint should go to one of the above so
+        there is a record of it.</p>
+      </section>
+
+      <section>
+        <h2 id="what-to-include">3. What to tell us</h2>
+
+        <p>The more of this you can give us, the faster we can get to an answer:</p>
+        <ul>
+          <li>your name and the email address on your account;</li>
+          <li>what happened, and when;</li>
+          <li>any reference number — a withdrawal, conversion or ticket reference;</li>
+          <li>what you would like us to do about it.</li>
+        </ul>
+        <p>Never send us your password or your two-factor codes. We will never ask for them, and any
+        message that does is not from us.</p>
+      </section>
+
+      <section>
+        <h2 id="what-happens">4. What happens next</h2>
+
+        <div class="doc-table">
+          <div><b>Within [1] business day</b><span>We acknowledge your complaint in writing and give it a reference.</span></div>
+          <div><b>Within [number] business days</b><span>We investigate and either resolve it or write to tell you where it has got to and when to expect an answer.</span></div>
+          <div><b>Within [8] weeks</b><span>We send a final response: what we found, what we are doing about it, and what to do if you disagree.</span></div>
+        </div>
+        <p>If we need something from you to get any further, we will ask once and clearly, and we will
+        tell you what happens if we do not hear back.</p>
+      </section>
+
+      <section>
+        <h2 id="outcome">5. Our answer</h2>
+
+        <p>Our final response will say plainly whether we think your complaint is upheld, partly upheld
+        or not upheld, and why. Where we got it wrong we will say so, put it right, and tell you what
+        we have changed so it does not happen to the next person.</p>
+        <p>Where we do not agree with you, we will explain our reasoning rather than simply restating
+        the outcome.</p>
+      </section>
+
+      <section>
+        <h2 id="escalation">6. If you are not satisfied</h2>
+
+        <p>Tell us — a final response is not the end of the conversation. Ask for it to be reviewed by
+        <em>[role: the person senior to whoever answered]</em> and we will look again.</p>
+        <p>You can also take it outside HarbourX:</p>
+        <ul>
+          <li><strong>Independent dispute resolution:</strong> <em>[name the ombudsman or ADR scheme, its
+          website, and the time limit for referring a complaint to it — usually six months from our
+          final response]</em>.</li>
+          <li><strong>Data protection matters:</strong> <em>[the supervisory authority and its contact details]</em>.</li>
+          <li><strong>The courts</strong> of <em>[jurisdiction]</em>, as set out in our
+          <a href="terms.html">Terms of Service</a>.</li>
+        </ul>
+        <p><em>[If HarbourX is not covered by an ombudsman scheme, say so here plainly rather than leaving
+        the question open. A client is entitled to know before they open an account.]</em></p>
+      </section>
+
+      <section>
+        <h2 id="records">7. What we do with complaints</h2>
+
+        <p>We keep a record of every complaint for <em>[number]</em> years, and we review them together at
+        <em>[frequency]</em> to find the causes that keep coming back. The point of the record is to fix
+        the pattern, not to file the individual case.</p>
+      </section>
+    </div>
+  </div>
+
+</main>
+
+<!-- =========================================================== footer -->
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <span class="brand">
+          <span class="brand__mark">
+            <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+              <path d="M7 20.5 16 11l9 9.5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M11 25.5 16 20.5l5 5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/>
+            </svg>
+          </span>
+          <span><b>HarbourX</b><small>harbourx.org</small></span>
+        </span>
+        <p class="foot-about">A private client platform for holding digital assets, converting them to your local currency and settling to your own bank.</p>
+      </div>
+
+      <div class="foot-col">
+        <h4>Platform</h4>
+        <ul>
+          <li><a href="./#solutions">Solutions</a></li>
+          <li><a href="./#approach">Our approach</a></li>
+          <li><a href="./#process">How it works</a></li>
+          <li><a href="./#faq">Questions</a></li>
+        </ul>
+      </div>
+
+      <div class="foot-col">
+        <h4>Your account</h4>
+        <ul>
+          <li><a href="register.php">Open an account</a></li>
+          <li><a href="login.html">Sign in</a></li>
+          <li><a href="statements.html">Statements</a></li>
+          <li><a href="change_password.php">Security</a></li>
+        </ul>
+      </div>
+
+      <div class="foot-col">
+        <h4>Support</h4>
+        <ul>
+          <li><a href="support.html">Support centre</a></li>
+          <li><a href="aml.html">Identity verification</a></li>
+          <li><a href="mailto:support@harbourx.org">support@harbourx.org</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="foot-legal">
+      <p><b>Risk notice.</b> Digital assets are volatile and their value can fall as well as rise. HarbourX holds, converts and settles assets you already own; nothing on this page is financial, tax or investment advice, and no return is promised or implied. Consider your own circumstances, and take independent advice where you need it, before acting.</p>
+      <div class="foot-legal__row">
+        <p>© <span id="year">2026</span> HarbourX. All rights reserved.</p>
+        <ul>
+          <li><a href="terms.html">Terms</a></li>
+          <li><a href="privacy.html">Privacy</a></li>
+          <li><a href="complaints.html">Complaints</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- Tidio live chat. Third-party and loaded async, so it never blocks the
+     page: if code.tidio.co is slow or unreachable, everything here still
+     renders and works exactly as it does without it. -->
+<script src="//code.tidio.co/1rfzzsxqktvftfto6ml44xvorkoducnj.js" async></script>
+
+</body>
+</html>
