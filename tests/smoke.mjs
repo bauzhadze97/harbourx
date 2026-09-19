@@ -39,18 +39,24 @@ const check = (ok, label, detail = '') => {
   console.log(`${ok ? '  ok  ' : '  FAIL'} ${label}${detail ? ` — ${detail}` : ''}`);
 };
 
-/* Third-party endpoints the app is designed to survive without: the price feeds
-   and Google Fonts. How they fail depends on where the test runs — unreachable
-   in a sandbox, CORS-rejected from a GitHub runner, rate-limited elsewhere — so
-   the test judges the app's own code and ignores errors naming these hosts. That
-   exclusion is only safe because `feeds down still shows a price` below asserts
-   the fallback actually works. */
+/* Third-party endpoints the app is designed to survive without: the price feeds,
+   Google Fonts and the Tidio chat widget. How they fail depends on where the
+   test runs — unreachable in a sandbox, CORS-rejected from a GitHub runner,
+   rate-limited elsewhere — so the test judges the app's own code and ignores
+   errors naming these hosts. That exclusion is only safe because `feeds down
+   still shows a price` below asserts the price fallback actually works, and
+   because the chat widget is loaded async and owns no page content: a page that
+   renders correctly here renders correctly whether or not Tidio answers.
+   Matching is by substring, so the bare domains cover every subdomain the
+   widget reaches for. */
 const EXTERNAL_HOSTS = [
   'api.coingecko.com',
   'api.coinbase.com',
   'api.binance.com',
   'fonts.googleapis.com',
-  'fonts.gstatic.com'
+  'fonts.gstatic.com',
+  'tidio.co',
+  'tidiochat.com'
 ];
 
 const isExternal = text =>

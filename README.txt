@@ -150,6 +150,17 @@ What changed in this version:
   Two things on the page are marked in the markup as placeholders and need
   real content before it is published: the four figures in the statistics
   band, and the three client quotes.
+- Added the Tidio live chat widget to the three public pages — the home page,
+  sign-in and create-account. It is a third-party script loaded with `async`,
+  so it never blocks a page and a page renders and works identically when
+  code.tidio.co is slow or unreachable. It is deliberately not on the pages
+  behind sign-in: the dashboard, statements and identity pages show balances,
+  bank details and KYC, and the product already has its own ticketing in the
+  support centre. To move or remove it, the tag is at the foot of home.html,
+  login.html and register.php; the account key is in the script URL.
+  tests/smoke.mjs treats tidio.co the way it already treats the price feeds
+  and Google Fonts — the suite judges this app's own code, not a third party's
+  availability.
 - Added monthly statements. Statements was a link to the transaction list on the
   dashboard; it is now a page of its own at statements.html, built like Security
   and Support. The left column lists every month that has activity, the right
