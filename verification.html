@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<!--
+  Identity verification.
+
+  Two ways to prove who you are, side by side rather than one after the other:
+  send a document, or sit with someone for ten minutes. A client picks whichever
+  suits them; the page does not imply an order and does not make either one a
+  step in a wizard.
+
+  Everything here talks to verification.php, which stores documents outside
+  anything the web server will hand out and files session requests into the same
+  callbacks list the operations console already works from.
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- A client's own workspace. Kept out of search results here as well as in
+       robots.txt: robots.txt asks a crawler not to fetch the page, this tells one
+       that reached it anyway — through a shared link, say — not to index it. -->
+  <meta name="robots" content="noindex, nofollow">
+  <title>HarbourX · Verification</title>
+  <meta name="description" content="Upload an identity document or book a live verification session with HarbourX.">
+  <meta name="color-scheme" content="dark">
+  <script src="theme.js?v=20260919-1948"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap"></noscript>
+  <link rel="stylesheet" href="hx-motion.css?v=20260919-1948">
+  <link rel="stylesheet" href="portal.css?v=20260919-1948">
+  <script src="hx-motion.js?v=20260919-1948" defer></script>
+</head>
+<body>
+  <div class="portal-shell">
+    <aside class="portal-sidebar" id="portalSidebar">
+      <a class="portal-brand" href="dashboard.html"><svg viewBox="0 0 42 42" aria-hidden="true"><path d="M6 29 21 9l15 20"/><path d="m13 33 8-11 8 11"/></svg><strong>HarbourX</strong></a>
+      <nav class="portal-nav" aria-label="Primary navigation">
+        <a href="dashboard.html"><i>⌂</i>Overview</a><a href="dashboard.html#portfolio"><i>◔</i>Portfolio</a><a href="dashboard.html#transactions"><i>☷</i>Transactions</a><a href="dashboard.html"><i>↓</i>Deposit</a><a href="dashboard.html"><i>↑</i>Withdraw</a><a href="statements.html"><i>▤</i>Statements</a><a class="active" href="verification.html"><i>✓</i>Verification</a><a href="change_password.php"><i>◇</i>Security</a><a href="support.html"><i>?</i>Support</a>
+      </nav>
+    </aside>
+
+    <div class="portal-workspace">
+      <header class="portal-topbar">
+        <button class="portal-menu" id="portalMenu" type="button" aria-label="Open navigation">☰</button>
+        <label class="portal-search"><span>⌕</span><input type="search" id="verifySearch" placeholder="Search verification help…"></label>
+        <div class="portal-user"><span class="portal-avatar" id="userInitials">HX</span><div><strong id="userName">HarbourX client</strong><small>Verification</small></div></div>
+      </header>
+
+      <main class="portal-main">
+        <div class="portal-breadcrumb"><a href="dashboard.html">Dashboard</a> &nbsp;›&nbsp; Verification</div>
+        <div class="portal-heading">
+          <div>
+            <h1>Verification</h1>
+            <p>Two ways to confirm your identity. Do whichever suits you — either one is enough on its own.</p>
+          </div>
+          <a class="portal-back" href="aml.html">Your personal details →</a>
+        </div>
+
+        <div class="message" id="pageMessage"></div>
+
+        <section class="portal-card verify-hero" id="verifyStatus" data-reveal hidden>
+          <span class="verify-check" aria-hidden="true">✓</span>
+          <div class="verify-copy">
+            <h2 id="statusTitle">Verification complete</h2>
+            <p id="statusCopy">Your identity has been verified.</p>
+          </div>
+          <div class="verify-meta">
+            <span class="status status-verified" id="statusBadge">Verified</span>
+            <small id="statusNote"></small>
+          </div>
+        </section>
+
+        <div class="verify-layout">
+
+          <!-- ============================================ left: the document -->
+          <section class="portal-card verify-panel" data-reveal="left">
+            <div class="security-title">
+              <span class="security-icon" aria-hidden="true">▤</span>
+              <div>
+                <h2>Upload your document</h2>
+                <p>A passport, national ID, driving licence or proof of address.</p>
+              </div>
+            </div>
+
+            <p class="verify-lead">
+              Send it as a PDF. If you have a photo, most phones can save one as a PDF from
+              the share menu — or scan it with any free scanner app.
+            </p>
+
+            <label class="doc-drop" id="docDrop">
+              <input type="file" id="docInput" accept="application/pdf,.pdf" aria-label="Choose a PDF document to upload">
+              <span class="doc-drop-icon" aria-hidden="true">↑</span>
+              <strong id="dropTitle">Upload your document</strong>
+              <small>Drop a PDF here, or click to choose one · 10 MB maximum</small>
+            </label>
+
+            <div class="doc-empty" id="docEmpty">Nothing sent yet.</div>
+            <div class="doc-list" id="docList"></div>
+
+            <ul class="verify-steps">
+              <li><b>1</b><span>Send a clear, complete scan — all four corners, nothing cropped.</span></li>
+              <li><b>2</b><span>Our compliance team reviews it, usually within one to two business days.</span></li>
+              <li><b>3</b><span>You will see the result here and in your dashboard.</span></li>
+            </ul>
+          </section>
+
+          <!-- ======================================= right: the live session -->
+          <section class="portal-card verify-panel" data-reveal="right">
+            <div class="security-title">
+              <span class="security-icon" aria-hidden="true">▷</span>
+              <div>
+                <h2>Verify by screen share</h2>
+                <p>A short live session with a member of our team.</p>
+              </div>
+            </div>
+
+            <p class="verify-lead">
+              Prefer to show us rather than send something? Pick a time and we will email you
+              a joining link. You share your screen, we confirm your details together, and it
+              is usually done in ten minutes.
+            </p>
+
+            <div id="sessionBooked" hidden>
+              <div class="session-booked">
+                <span>Session booked</span>
+                <strong id="sessionWhen">—</strong>
+                <small id="sessionNote">We will email your joining link before it starts.</small>
+                <button class="portal-back" type="button" id="cancelSessionBtn">Cancel this session</button>
+              </div>
+            </div>
+
+            <form class="session-form" id="sessionForm">
+              <label for="sessionAt">Date and time that suits you</label>
+              <input type="datetime-local" id="sessionAt" required>
+
+              <label for="sessionMessage">Anything we should know first? (optional)</label>
+              <textarea id="sessionMessage" maxlength="400" placeholder="For example: I no longer have the address document you asked for."></textarea>
+
+              <button class="portal-back" type="submit" id="bookSessionBtn">Request this session</button>
+            </form>
+
+            <ul class="verify-steps">
+              <li><b>1</b><span>Pick a time at least half an hour from now, in your own timezone.</span></li>
+              <li><b>2</b><span>We email you a joining link before it starts.</span></li>
+              <li><b>3</b><span>Have your ID with you. We will never ask for your password or your two-factor codes.</span></li>
+            </ul>
+          </section>
+
+        </div>
+
+        <footer class="portal-footer">
+          <span>© <span id="year">2026</span> HarbourX</span>
+          <nav>
+            <a href="support.html">Support</a>
+            <a href="privacy.html">Privacy</a>
+            <a href="dashboard.html">Dashboard</a>
+          </nav>
+        </footer>
+      </main>
+    </div>
+  </div>
+
+<script>
+/* ============================================================================
+   verification.html
+   ----------------------------------------------------------------------------
+   Everything on this page is one request to verification.php and one re-render
+   of whatever it answers with. The server owns the state; this file never
+   guesses at it, so a second tab open on the same page cannot show something
+   different from the first.
+   ========================================================================== */
+(function () {
+  "use strict";
+
+  var yearEl = document.getElementById("year");
+  if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+  /* The name in the corner comes from the record the dashboard stored; it is a
+     courtesy, not a source of truth, so a missing one changes nothing. */
+  try {
+    var stored = JSON.parse(localStorage.getItem("user") || "null");
+    if (stored && stored.name) {
+      document.getElementById("userName").textContent = stored.name;
+      document.getElementById("userInitials").textContent =
+        stored.name.split(/\s+/).slice(0, 2).map(function (p) { return p.charAt(0); }).join("").toUpperCase() || "HX";
+    }
+  } catch (e) { /* no stored user; the defaults in the markup stand */ }
+
+  var menuBtn = document.getElementById("portalMenu");
+  var sidebar = document.getElementById("portalSidebar");
+  if (menuBtn && sidebar) {
+    menuBtn.addEventListener("click", function () { sidebar.classList.toggle("is-open"); });
+  }
+
+  var pageMessage = document.getElementById("pageMessage");
+  var docDrop = document.getElementById("docDrop");
+  var docInput = document.getElementById("docInput");
+  var docList = document.getElementById("docList");
+  var docEmpty = document.getElementById("docEmpty");
+  var dropTitle = document.getElementById("dropTitle");
+  var sessionForm = document.getElementById("sessionForm");
+  var sessionBooked = document.getElementById("sessionBooked");
+  var sessionWhen = document.getElementById("sessionWhen");
+  var sessionNote = document.getElementById("sessionNote");
+  var bookBtn = document.getElementById("bookSessionBtn");
+  var cancelBtn = document.getElementById("cancelSessionBtn");
+  var statusCard = document.getElementById("verifyStatus");
+
+  var booked = null;
+
+  function say(text, tone) {
+    pageMessage.textContent = text || "";
+    pageMessage.className = "message" + (text ? " " + (tone || "info") : "");
+    pageMessage.style.display = text ? "block" : "none";
+    if (text && window.hxMotion && typeof window.hxMotion.flash === "function") {
+      window.hxMotion.flash(pageMessage);
+    }
+  }
+
+  function readableSize(bytes) {
+    var kb = Number(bytes || 0) / 1024;
+    return kb < 1024 ? Math.max(1, Math.round(kb)) + " KB" : (kb / 1024).toFixed(1) + " MB";
+  }
+
+  function readableDate(value) {
+    var date = new Date(value);
+    return isNaN(date.getTime()) ? "" : date.toLocaleString(undefined,
+      { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  }
+
+  var STATUS_COPY = {
+    verified: ["Verification complete", "Your identity has been verified. Nothing further is needed.", "status-verified", "Verified"],
+    under_review: ["We are reviewing your identity", "Someone is looking at what you sent. You do not need to do anything else for now.", "status-under_review", "Under review"],
+    unverified: ["Your identity is not verified yet", "Send a document or book a session below — either one is enough.", "status-unverified", "Not verified"]
+  };
+
+  function renderStatus(status) {
+    var copy = STATUS_COPY[status] || STATUS_COPY.unverified;
+    statusCard.hidden = false;
+    document.getElementById("statusTitle").textContent = copy[0];
+    document.getElementById("statusCopy").textContent = copy[1];
+    var badge = document.getElementById("statusBadge");
+    badge.className = "status " + copy[2];
+    badge.textContent = copy[3];
+    statusCard.querySelector(".verify-check").textContent = status === "verified" ? "✓" : "◷";
+  }
+
+  function renderDocuments(documents) {
+    docList.textContent = "";
+    docEmpty.hidden = documents.length > 0;
+    dropTitle.textContent = documents.length > 0 ? "Upload another document" : "Upload your document";
+
+    documents.forEach(function (doc) {
+      var row = document.createElement("div");
+      row.className = "doc-row";
+
+      var icon = document.createElement("i");
+      icon.setAttribute("aria-hidden", "true");
+      icon.textContent = "▤";
+
+      var middle = document.createElement("div");
+      var name = document.createElement("b");
+      name.textContent = doc.name;
+      var meta = document.createElement("small");
+      meta.textContent = readableSize(doc.size) + " · sent " + readableDate(doc.uploadedAt)
+        + (doc.status && doc.status !== "received" ? " · " + doc.status : "");
+      middle.appendChild(name);
+      middle.appendChild(meta);
+
+      var actions = document.createElement("div");
+      actions.className = "doc-row-actions";
+
+      var view = document.createElement("a");
+      view.href = "verification.php?file=" + encodeURIComponent(doc.id);
+      view.textContent = "Download";
+      actions.appendChild(view);
+
+      if (doc.status !== "accepted") {
+        var remove = document.createElement("button");
+        remove.type = "button";
+        remove.textContent = "Remove";
+        remove.addEventListener("click", function () {
+          if (!window.confirm("Remove " + doc.name + "? You can send it again afterwards.")) return;
+          send({ action: "remove", id: doc.id });
+        });
+        actions.appendChild(remove);
+      }
+
+      row.appendChild(icon);
+      row.appendChild(middle);
+      row.appendChild(actions);
+      docList.appendChild(row);
+    });
+  }
+
+  function renderSession(session) {
+    booked = session;
+    if (session) {
+      sessionBooked.hidden = false;
+      sessionForm.hidden = true;
+      sessionWhen.textContent = readableDate(session.scheduledAt);
+      sessionNote.textContent = "We will email your joining link before it starts. Shown in your own timezone.";
+    } else {
+      sessionBooked.hidden = true;
+      sessionForm.hidden = false;
+    }
+  }
+
+  function render(state) {
+    renderStatus(state.amlStatus);
+    renderDocuments(state.documents || []);
+    renderSession(state.session || null);
+  }
+
+  /** Every call answers with the whole state, so there is one place to render. */
+  function send(fields, file) {
+    var body = new FormData();
+    Object.keys(fields).forEach(function (key) { body.append(key, fields[key]); });
+    if (file) body.append("document", file);
+
+    docDrop.classList.add("is-busy");
+    return fetch("verification.php", { method: "POST", body: body })
+      .then(function (response) {
+        if (response.status === 401) {
+          window.location.replace("login.html");
+          return null;
+        }
+        return response.json();
+      })
+      .then(function (result) {
+        if (!result) return;
+        if (!result.success) {
+          say(result.message || "That did not work. Try again.", "error");
+          return;
+        }
+        render(result);
+        say(result.message || "", "success");
+      })
+      .catch(function () {
+        say("We could not reach HarbourX. Check your connection and try again.", "error");
+      })
+      .then(function () {
+        docDrop.classList.remove("is-busy");
+      });
+  }
+
+  /* ---------------------------------------------------------- the document */
+
+  function upload(file) {
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      say("That file is larger than 10 MB. Try a lower-quality scan.", "error");
+      return;
+    }
+    say("Uploading " + file.name + "…", "info");
+    send({ action: "upload" }, file).then(function () { docInput.value = ""; });
+  }
+
+  docInput.addEventListener("change", function () { upload(docInput.files && docInput.files[0]); });
+
+  ["dragenter", "dragover"].forEach(function (type) {
+    docDrop.addEventListener(type, function (event) {
+      event.preventDefault();
+      docDrop.classList.add("is-over");
+    });
+  });
+  ["dragleave", "drop"].forEach(function (type) {
+    docDrop.addEventListener(type, function (event) {
+      event.preventDefault();
+      docDrop.classList.remove("is-over");
+    });
+  });
+  docDrop.addEventListener("drop", function (event) {
+    var files = event.dataTransfer && event.dataTransfer.files;
+    upload(files && files[0]);
+  });
+
+  /* ----------------------------------------------------------- the session */
+
+  sessionForm.addEventListener("submit", function (event) {
+    event.preventDefault();
+    var at = document.getElementById("sessionAt").value;
+    if (!at) {
+      say("Pick a date and time first.", "error");
+      return;
+    }
+    bookBtn.disabled = true;
+    send({
+      action: "book",
+      at: at,
+      /* The server needs to know which clock the client read that time off.
+         Without it a booking made in Tbilisi lands four hours out. */
+      timezone: (window.Intl && Intl.DateTimeFormat().resolvedOptions().timeZone) || "UTC",
+      note: document.getElementById("sessionMessage").value
+    }).then(function () { bookBtn.disabled = false; });
+  });
+
+  cancelBtn.addEventListener("click", function () {
+    if (!booked) return;
+    if (!window.confirm("Cancel this session? You can book another one straight away.")) return;
+    send({ action: "cancel", id: booked.id });
+  });
+
+  /* The earliest time the server will take, so the picker does not offer one
+     it is about to refuse. */
+  var soonest = new Date(Date.now() + 45 * 60 * 1000);
+  soonest.setSeconds(0, 0);
+  document.getElementById("sessionAt").min =
+    new Date(soonest.getTime() - soonest.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+
+  /* ------------------------------------------------------------ first load */
+
+  fetch("verification.php", { headers: { "Accept": "application/json" } })
+    .then(function (response) {
+      if (response.status === 401) {
+        window.location.replace("login.html");
+        return null;
+      }
+      return response.json();
+    })
+    .then(function (state) {
+      if (state && state.success) render(state);
+    })
+    .catch(function () {
+      say("We could not load your verification status. Refresh to try again.", "error");
+    });
+})();
+</script>
+
+</body>
+</html>

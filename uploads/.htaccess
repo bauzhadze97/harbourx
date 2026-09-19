@@ -1,0 +1,18 @@
+# Uploaded client identity documents. Passports, bank letters, proof of
+# address — the most sensitive files the platform holds, and there is no URL
+# that should ever serve one directly.
+#
+# Documents are fetched through verification.php, which checks the session
+# first and only ever hands a file to the client who uploaded it or to a
+# signed-in administrator.
+#
+# Apache reads this. nginx does not read .htaccess at all, so on nginx the
+# same block has to be written into the server config — see README.txt.
+Deny from all
+
+# Belt to that braces: even if the deny above is not applied, nothing in here
+# should ever be handed to PHP.
+<FilesMatch "\.(php|phtml|php[0-9]|phar|cgi|pl|py|sh|html?|svg)$">
+    Deny from all
+</FilesMatch>
+php_flag engine off

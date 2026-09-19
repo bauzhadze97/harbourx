@@ -8,6 +8,11 @@ data.*/users.json
 data/tickets.json
 data/payment_schedules.json
 data/client_callbacks.json
+
+# Uploaded identity documents. The directory and its deny rule are tracked;
+# what clients put in it never is.
+uploads/*
+!uploads/.htaccess
 *.zip
 
 # local screenshot/verification scratch (root only — tests/ has its own

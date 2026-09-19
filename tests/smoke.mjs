@@ -154,6 +154,7 @@ const PAGES = [
   { url: 'admin.php', shot: '6-admin-sign-in', auth: false },
   { url: 'support.html', shot: '7-support', auth: true },
   { url: 'statements.html', shot: '8-statements', auth: true },
+  { url: 'verification.html', shot: '16-verification', auth: true },
   { url: 'terms.html', shot: '13-terms', auth: false },
   { url: 'privacy.html', shot: '14-privacy', auth: false },
   { url: 'complaints.html', shot: '15-complaints', auth: false }

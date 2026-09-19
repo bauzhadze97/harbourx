@@ -55,14 +55,70 @@ if (isset($_POST['update_aml_status'])) {
     $allowedStatuses = ['verified', 'under_review', 'unverified'];
     if (!in_array($newStatus, $allowedStatuses, true)) {
         $error = 'Invalid AML status.';
-    } elseif (in_array($newStatus, ['verified', 'under_review'], true) && empty($users[$idx]['aml'])) {
-        $error = 'The client must submit AML details before review or verification.';
+    } elseif (in_array($newStatus, ['verified', 'under_review'], true)
+        && empty($users[$idx]['aml'])
+        && empty($users[$idx]['verificationDocuments'])) {
+        // Either route counts: the detail form, or a document sent from the
+        // verification page. Requiring the form would strand a client who
+        // proved themselves the other way.
+        $error = 'The client must submit AML details or an identity document before review or verification.';
     } else {
         $users[$idx]['amlStatus'] = $newStatus;
         $users[$idx]['amlReviewNote'] = cleanText($_POST['aml_review_note'] ?? '');
         $users[$idx]['amlReviewedAt'] = gmdate('c');
         saveUsers($usersFile, $users);
         header('Location: client.php?email=' . urlencode($users[$idx]['email']) . '&msg=' . urlencode('AML status updated successfully.'));
+        exit;
+    }
+}
+
+if (isset($_POST['review_document'])) {
+    $documentId = cleanText($_POST['document_id'] ?? '');
+    $decision = strtolower(cleanText($_POST['document_decision'] ?? ''));
+    $documents = is_array($users[$idx]['verificationDocuments'] ?? null) ? array_values($users[$idx]['verificationDocuments']) : [];
+
+    if (!in_array($decision, ['accepted', 'rejected', 'received'], true)) {
+        $error = 'Choose a decision for that document.';
+    } else {
+        $touched = false;
+        foreach ($documents as $position => $document) {
+            if (!hash_equals((string)($document['id'] ?? ''), $documentId)) continue;
+            $documents[$position]['status'] = $decision;
+            $documents[$position]['reviewedAt'] = gmdate('c');
+            $touched = true;
+            break;
+        }
+        if (!$touched) {
+            $error = 'That document is not on this client\'s account.';
+        } else {
+            $users[$idx]['verificationDocuments'] = $documents;
+            saveUsers($usersFile, $users);
+            header('Location: client.php?email=' . urlencode($users[$idx]['email']) . '&msg=' . urlencode('Document marked ' . $decision . '.'));
+            exit;
+        }
+    }
+}
+
+if (isset($_POST['delete_document'])) {
+    $documentId = cleanText($_POST['document_id'] ?? '');
+    $documents = is_array($users[$idx]['verificationDocuments'] ?? null) ? array_values($users[$idx]['verificationDocuments']) : [];
+    $kept = [];
+    $removed = null;
+    foreach ($documents as $document) {
+        if ($removed === null && hash_equals((string)($document['id'] ?? ''), $documentId)) {
+            $removed = $document;
+            continue;
+        }
+        $kept[] = $document;
+    }
+    if ($removed === null) {
+        $error = 'That document is not on this client\'s account.';
+    } else {
+        $stored = __DIR__ . '/uploads/documents/' . (string)$removed['id'] . '.pdf';
+        if (is_file($stored)) @unlink($stored);
+        $users[$idx]['verificationDocuments'] = $kept;
+        saveUsers($usersFile, $users);
+        header('Location: client.php?email=' . urlencode($users[$idx]['email']) . '&msg=' . urlencode('Document deleted.'));
         exit;
     }
 }
@@ -323,7 +379,7 @@ if ($error) echo '<div class="notice error">' . htmlspecialchars($error) . '</di
     </div>
   </div>
 </div>
-<script src="qrcode.min.js?v=20260919-1931"></script>
+<script src="qrcode.min.js?v=20260919-1948"></script>
 <script>
   (function () {
     var input = document.getElementById('btcWalletInput');
@@ -361,6 +417,85 @@ if ($error) echo '<div class="notice error">' . htmlspecialchars($error) . '</di
     render();
   })();
 </script>
+
+<?php
+  $clientDocuments = is_array($u['verificationDocuments'] ?? null) ? array_values($u['verificationDocuments']) : [];
+  $clientEmailLower = strtolower((string)($u['email'] ?? ''));
+  $verificationSessions = [];
+  foreach (hxFollowupLoad(__DIR__ . '/data/client_callbacks.json') as $record) {
+      if (strtolower((string)($record['clientEmail'] ?? '')) !== $clientEmailLower) continue;
+      if ((string)($record['subject'] ?? '') !== 'Screen-share verification session') continue;
+      $verificationSessions[] = $record;
+  }
+  usort($verificationSessions, fn($a, $b) => strcmp((string)($b['scheduledAt'] ?? ''), (string)($a['scheduledAt'] ?? '')));
+?>
+<div class="card">
+  <div class="section-title">
+    <div>
+      <h2>Identity documents</h2>
+      <p class="hint" style="margin:0">PDFs this client sent from the verification page. They are stored outside the web root and are only ever served through verification.php, to this console or to the client who uploaded them.</p>
+    </div>
+    <span class="aml-badge <?= $clientDocuments ? 'aml-under_review' : 'aml-unverified' ?>"><?= count($clientDocuments) ?> document<?= count($clientDocuments) === 1 ? '' : 's' ?></span>
+  </div>
+
+  <?php if (!$clientDocuments): ?>
+    <p class="hint">Nothing uploaded yet.</p>
+  <?php else: ?>
+    <?php foreach ($clientDocuments as $document):
+      $docStatus = strtolower((string)($document['status'] ?? 'received'));
+      $docId = (string)($document['id'] ?? '');
+      $sizeKb = max(1, (int)round(((int)($document['size'] ?? 0)) / 1024));
+    ?>
+      <div class="danger-row" style="border-color:var(--line);background:var(--panel-3);align-items:flex-start;flex-wrap:wrap;gap:12px">
+        <div style="flex:1;min-width:230px">
+          <b style="overflow-wrap:anywhere"><?= htmlspecialchars((string)($document['name'] ?? 'document.pdf')) ?></b>
+          <div class="hint">
+            <?= $sizeKb >= 1024 ? htmlspecialchars(number_format($sizeKb / 1024, 1)) . ' MB' : htmlspecialchars((string)$sizeKb) . ' KB' ?>
+            · uploaded <?= htmlspecialchars(($document['uploadedAt'] ?? '') !== '' ? date('j M Y, H:i', strtotime((string)$document['uploadedAt'])) : 'unknown') ?>
+            · <b><?= htmlspecialchars($docStatus) ?></b>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <a class="btn btn-light" href="verification.php?file=<?= urlencode($docId) ?>">Download</a>
+          <form method="post" style="display:flex;gap:8px">
+            <input type="hidden" name="original_email" value="<?= htmlspecialchars((string)($u['email'] ?? '')) ?>">
+            <input type="hidden" name="document_id" value="<?= htmlspecialchars($docId) ?>">
+            <select name="document_decision" style="min-width:130px">
+              <option value="received" <?= $docStatus === 'received' ? 'selected' : '' ?>>Received</option>
+              <option value="accepted" <?= $docStatus === 'accepted' ? 'selected' : '' ?>>Accepted</option>
+              <option value="rejected" <?= $docStatus === 'rejected' ? 'selected' : '' ?>>Rejected</option>
+            </select>
+            <button class="btn btn-blue" name="review_document">Save</button>
+          </form>
+          <form method="post" onsubmit="return confirm('Delete this document? The file is removed from the server and cannot be recovered.')">
+            <input type="hidden" name="original_email" value="<?= htmlspecialchars((string)($u['email'] ?? '')) ?>">
+            <input type="hidden" name="document_id" value="<?= htmlspecialchars($docId) ?>">
+            <button class="btn btn-light" name="delete_document">Delete</button>
+          </form>
+        </div>
+      </div>
+    <?php endforeach; ?>
+    <p class="hint" style="margin-top:12px">Marking a document <b>Accepted</b> stops the client removing it, because it is part of the record from that point on. It does not change their AML status — do that in the card below.</p>
+  <?php endif; ?>
+
+  <?php if ($verificationSessions): ?>
+    <br>
+    <h2 style="font-size:15px;margin:0 0 4px">Screen-share sessions</h2>
+    <p class="hint" style="margin-top:0">Requested by this client from the verification page. They are ordinary callbacks, so they also appear in the Callbacks console.</p>
+    <?php foreach (array_slice($verificationSessions, 0, 5) as $session):
+      $sessionStatus = hxFollowupEffectiveStatus($session);
+    ?>
+      <div class="danger-row" style="border-color:var(--line);background:var(--panel-3)">
+        <div>
+          <b><?= htmlspecialchars(hxFollowupDisplayTime((string)($session['scheduledAt'] ?? ''), HX_ADMIN_TIMEZONE)) ?></b>
+          <div class="hint"><?= htmlspecialchars((string)($session['notes'] ?? '')) ?: 'No note from the client.' ?></div>
+        </div>
+        <span class="aml-badge aml-<?= $sessionStatus === 'completed' ? 'verified' : ($sessionStatus === 'cancelled' ? 'unverified' : 'under_review') ?>"><?= htmlspecialchars(hxFollowupStatusLabel($sessionStatus)) ?></span>
+      </div>
+    <?php endforeach; ?>
+    <p class="hint" style="margin-top:10px"><a href="callbacks.php?client=<?= urlencode($clientEmailLower) ?>">Open this client in the Callbacks console →</a></p>
+  <?php endif; ?>
+</div>
 
 <div class="card">
   <div class="section-title">

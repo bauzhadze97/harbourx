@@ -67,15 +67,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$error) {
 <meta name="robots" content="noindex, nofollow">
 <meta name="color-scheme" content="dark">
 <title>HarbourX · Set up password</title>
-<script src="theme.js?v=20260919-1931"></script>
+<script src="theme.js?v=20260919-1948"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap"></noscript>
-<link rel="stylesheet" href="hx-motion.css?v=20260919-1931">
-<link rel="stylesheet" href="auth.css?v=20260919-1931">
-<script src="hx-motion.js?v=20260919-1931" defer></script>
+<link rel="stylesheet" href="hx-motion.css?v=20260919-1948">
+<link rel="stylesheet" href="auth.css?v=20260919-1948">
+<script src="hx-motion.js?v=20260919-1948" defer></script>
 </head>
 <body>
 <div class="card">

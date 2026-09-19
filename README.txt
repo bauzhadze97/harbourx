@@ -93,6 +93,16 @@ The rest of this section is the same thing done by hand.
    /support.html. Tickets are stored in data/tickets.json, which like
    data/users.json is untracked and lives on the server only.
 
+   Identity documents uploaded from /verification.html are written to
+   uploads/documents/ under random filenames. That directory is untracked and
+   carries its own .htaccess deny rule, and nothing is ever served from it
+   directly: verification.php checks the session and then reads the file. As
+   with data/, Apache honours the .htaccess and nginx does not — on nginx the
+   same block has to be written into the server config:
+
+       location ^~ /uploads/ { deny all; }
+       location ^~ /data/    { deny all; }
+
    Everything is written straight back to data/users.json, so a local run edits
    whichever file you put there. Keep a copy before experimenting.
 
@@ -132,6 +142,7 @@ The same suite CI runs (see .github/workflows/ci.yml):
      php tests/payment-schedule-test.php  payment due-date and storage checks
      php tests/followup-test.php   callback timezone and notification checks
      node tests/statements-page-test.js  the statements page and its download
+     node tests/verification-test.js  document upload, who may read it, sessions
 
 The browser tests sign in as the synthetic account, so they seed
 data/users.json with tests/fixtures/users.json and put back whatever was there
@@ -146,6 +157,35 @@ It writes tests/screenshots/ as it goes. Set CHROMIUM_EXECUTABLE=<path> to point
 it at a Chromium you already have instead of downloading one.
 
 What changed in this version:
+- Added a Verification page, and put it in the sidebar where a client would
+  look for it. Identity verification existed — aml.html, a long form — but
+  nothing in the navigation pointed at it, and there was no way to send a
+  document at all. The new page (verification.html) offers two routes side by
+  side rather than one after the other: upload a PDF on the left, or book a
+  live screen-share session with the team on the right. Either is enough on its
+  own, and the page does not imply an order. It links across to the detail form,
+  which the sidebar's Verification item now also highlights — that item used to
+  be labelled "Security" and pointed at itself.
+
+  Documents are handled carefully, because a passport scan is the most
+  sensitive thing here. A file has to be a PDF by its extension, by what the
+  browser says it is, and by its first five bytes; it is stored under a random
+  name we choose in uploads/, which the web server is told to refuse; and the
+  only route to one is verification.php, which hands a file to the client who
+  uploaded it or to a signed-in administrator and to nobody else. The client's
+  own filename is kept for the reviewer to read but never touches the
+  filesystem.
+
+  Session requests are written into data/client_callbacks.json — the same file
+  the Callbacks console already works from — so they appear in the admin's
+  existing list and notification centre rather than in a second place to check.
+  The client's admin page gained a card listing their documents, with a
+  download link and accept / reject / delete, and any sessions they have
+  booked.
+
+  tests/verification-test.js covers it, and most of what it covers is what the
+  endpoint refuses: a file that only claims to be a PDF, a signed-out request,
+  one client reaching for another's document, and a crafted file id.
 - Stamped every local stylesheet and script with a version, so a deploy shows
   up on a normal refresh. A browser that already had home.css was serving its
   own copy of it, which meant a deploy could land correctly and still look like

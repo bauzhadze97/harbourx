@@ -174,6 +174,8 @@ input[readonly] { color: #86a2b3; background: #091d2c; }
 .message { display: none; margin: 12px 0; padding: 11px 13px; border-radius: 8px; font-size: 11px; }
 .message.error { display: block; border: 1px solid rgba(241,113,120,.3); background: rgba(241,113,120,.1); color: #ffadb2; }
 .message.success { display: block; border: 1px solid rgba(54,229,165,.3); background: rgba(54,229,165,.1); color: var(--hx-green); }
+/* Neither good news nor bad — "uploading…", "we are looking at it". */
+.message.info { display: block; border: 1px solid rgba(32,215,208,.26); background: rgba(32,215,208,.08); color: #9fe4e0; }
 
 /* Security */
 .security-layout { display: grid; grid-template-columns: 1.15fr 1fr; gap: 15px; }
@@ -762,4 +764,140 @@ input, select, textarea {
   .statement-row { grid-template-columns: 1fr 1fr; gap: 4px 12px; }
   .statement-row-head { display: none; }
   .statement-amount { text-align: left; }
+}
+
+
+/* ============================================================================
+   Verification page
+   ----------------------------------------------------------------------------
+   Two ways to prove who you are, side by side: send a document, or sit with
+   someone for ten minutes. Neither is a step in a wizard — a client picks the
+   one that suits them, and the page does not imply an order.
+   ========================================================================== */
+
+.verify-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 15px; align-items: start; }
+.verify-panel { padding: 22px; }
+.verify-panel > p.verify-lead { margin: 0 0 18px; color: #8facbe; font-size: 11.5px; line-height: 1.6; }
+
+/* ---- the drop zone ------------------------------------------------------ */
+
+.doc-drop {
+  position: relative;
+  display: grid;
+  place-items: center;
+  gap: 9px;
+  padding: 30px 20px;
+  border: 1.5px dashed #2c5a72;
+  border-radius: 12px;
+  background: #0b2234;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 180ms ease, background-color 180ms ease;
+}
+.doc-drop:hover, .doc-drop.is-over { border-color: var(--hx-teal); background: #0d2a3f; }
+.doc-drop input[type="file"] { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.doc-drop-icon {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(32,215,208,.45);
+  border-radius: 13px;
+  background: linear-gradient(135deg,#123d50,#149f9a);
+  color: #fff;
+  font-size: 21px;
+}
+.doc-drop strong { color: var(--hx-text); font-size: 14px; }
+.doc-drop small { color: #8facbe; font-size: 10.5px; line-height: 1.55; }
+.doc-drop.is-busy { pointer-events: none; opacity: .6; }
+
+/* ---- what has been sent ------------------------------------------------- */
+
+.doc-list { display: grid; gap: 8px; margin-top: 16px; }
+.doc-row {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 13px;
+  border: 1px solid var(--hx-line);
+  border-radius: 9px;
+  background: #0b2234;
+}
+.doc-row i {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(32,215,208,.12);
+  color: var(--hx-teal);
+  font-style: normal;
+  font-size: 15px;
+}
+.doc-row b { display: block; color: var(--hx-text); font-size: 12px; overflow-wrap: anywhere; }
+.doc-row small { display: block; margin-top: 2px; color: #8facbe; font-size: 10px; }
+.doc-row-actions { display: flex; align-items: center; gap: 8px; }
+.doc-row-actions a,
+.doc-row-actions button {
+  padding: 6px 10px;
+  border: 1px solid #2a536b;
+  border-radius: 7px;
+  background: transparent;
+  color: #a8c8d7;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+}
+.doc-row-actions a:hover { border-color: var(--hx-teal); color: var(--hx-teal); }
+.doc-row-actions button:hover { border-color: var(--hx-red); color: var(--hx-red); }
+.doc-empty { margin-top: 16px; padding: 16px; border: 1px dashed var(--hx-line); border-radius: 9px; color: #7f9caf; font-size: 11px; text-align: center; }
+
+/* ---- booking a session -------------------------------------------------- */
+
+.session-form { display: grid; gap: 4px; }
+.session-form label { color: #a9c1d0; font-size: 10.5px; font-weight: 700; }
+.session-form input[type="datetime-local"],
+.session-form textarea {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid #254c63;
+  border-radius: 8px;
+  background: #0c2639;
+  color: var(--hx-text);
+  font: inherit;
+  font-size: 12px;
+}
+.session-form textarea { min-height: 76px; line-height: 1.55; resize: vertical; }
+.session-form input:focus-visible,
+.session-form textarea:focus-visible { outline: none; border-color: var(--hx-teal); box-shadow: 0 0 0 3px rgba(32,215,208,.1); }
+.session-form > * + label { margin-top: 12px; }
+.session-form button { margin-top: 16px; }
+
+.session-booked {
+  display: grid;
+  gap: 4px;
+  padding: 17px 18px;
+  border: 1px solid rgba(32,215,208,.4);
+  border-radius: 11px;
+  background: rgba(32,215,208,.07);
+}
+.session-booked span { color: var(--hx-teal); font-size: 10px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+.session-booked strong { color: var(--hx-text); font-size: 17px; }
+.session-booked small { color: #8facbe; font-size: 10.5px; line-height: 1.55; }
+.session-booked button { justify-self: start; margin-top: 10px; }
+
+.verify-steps { display: grid; gap: 9px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--hx-line); }
+.verify-steps li { display: grid; grid-template-columns: 20px 1fr; gap: 11px; color: #8facbe; font-size: 11px; line-height: 1.55; }
+.verify-steps li b { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: rgba(32,215,208,.14); color: var(--hx-teal); font-size: 10px; }
+
+@media (max-width: 1040px) {
+  .verify-layout { grid-template-columns: 1fr; }
+}
+@media (max-width: 620px) {
+  .verify-panel { padding: 17px; }
+  .doc-row { grid-template-columns: 34px minmax(0, 1fr); }
+  .doc-row-actions { grid-column: 2; justify-content: flex-start; }
 }
