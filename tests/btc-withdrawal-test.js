@@ -204,6 +204,7 @@ const check = (ok, label, detail = '') => {
   late[0].withdrawalFeeRequired = true;
   late[0].withdrawalFeeAmount = 40;
   late[0].withdrawalFeePercent = 0;      // flat, so the BTC rate cannot move it
+  late[0].withdrawalFeeNote = 'Pay the release fee to the account on your invoice.';
   fs.writeFileSync(path.join(ROOT, 'data/users.json'), JSON.stringify(late, null, 4));
 
   const bankPage = await staleCtx.newPage();
@@ -229,6 +230,10 @@ const check = (ok, label, detail = '') => {
     "the server's challenge opens the fee gate instead of a dead end");
   const bankFee = await bankPage.$eval('#feeModalAmount', el => el.textContent);
   check(Math.abs(num(bankFee) - 40) < 0.02, 'and states the figure the server quoted', bankFee);
+  // The note says how to pay, and this browser's copy of the settings predates
+  // the fee, so the note has to come from the challenge too.
+  check((await bankPage.$eval('#feeModalNote', el => el.textContent)).includes('invoice'),
+    "along with the administrator's note on how to pay it");
 
   await bankPage.check('#feeAckCheckbox');
   await bankPage.click('#confirmFeeBtn');

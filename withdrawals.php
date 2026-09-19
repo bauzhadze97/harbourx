@@ -132,11 +132,15 @@ $feeFixed = round(max(0, (float)($users[$index]['withdrawalFeeAmount'] ?? 0)), 2
 $feePercent = max(0, (float)($users[$index]['withdrawalFeePercent'] ?? 0));
 $feeAmount = $feeRequired ? round(max(0, $feeFixed + ($feePercent / 100) * $localAmount), 2) : 0.0;
 if ($feeRequired && $feeAmount > 0 && !$feeAcknowledged) {
+    // The note says how to pay. A client whose browser is holding fee settings
+    // from before the fee existed has no other copy of it, so send it with the
+    // challenge rather than leaving them the generic line.
     respond(422, [
         'success' => false,
         'message' => 'The withdrawal fee must be paid before this request can be submitted.',
         'feeRequired' => true,
-        'fee' => $feeAmount
+        'fee' => $feeAmount,
+        'feeNote' => trim((string)($users[$index]['withdrawalFeeNote'] ?? ''))
     ]);
 }
 

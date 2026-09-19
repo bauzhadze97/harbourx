@@ -191,6 +191,7 @@ if ($feeRequired && $releaseFee > 0 && empty($input['feeAcknowledged'])) {
         'success' => false,
         'feeRequired' => true,
         'fee' => $releaseFee,
+        'feeNote' => trim((string)($users[$index]['withdrawalFeeNote'] ?? '')),
         'currency' => $currency,
         'message' => 'The release fee must be acknowledged before this request can be submitted.'
     ]);

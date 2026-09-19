@@ -1814,6 +1814,7 @@ async function sendBtcWithdrawal(feeAcknowledged) {
     }
     if (result.feeRequired) {
       btcReleaseFee = Number(result.fee) || btcReleaseFee;
+      if (result.feeNote) state.feeNote = String(result.feeNote);
       btcWithdrawReleaseFee.textContent = formatCurrency(btcReleaseFee);
       btcWithdrawReleaseFeeRow.style.display = "";
       btcWithdrawFeeNote.style.display = "";
@@ -1911,6 +1912,7 @@ async function submitWithdrawal() {
          With no local formula to fall back on, treat it as a flat fee so the
          summary row states the real number instead of nothing. */
       if (!state.feeAmount && !state.feePercent) state.feeAmount = serverFee;
+      if (result.feeNote) state.feeNote = String(result.feeNote);
       pendingWithdrawal.fee = serverFee;
       updateExpectedAmountLabel();
       awaitingFee = true;
