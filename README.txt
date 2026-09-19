@@ -43,15 +43,16 @@ The rest of this section is the same thing done by hand.
      macOS/Linux  ./run-local.sh
 
    The script finds PHP, makes sure there is a data file to sign in against,
-   starts the server and opens the sign-in page. Pass a port to use a different
-   one: `.\run-local.ps1 -Port 3000` or `./run-local.sh 3000`.
+   starts the server and opens the site. Pass a port to use a different one:
+   `.\run-local.ps1 -Port 3000` or `./run-local.sh 3000`.
 
    If you would rather not use the script, this is all it does:
 
      php -S localhost:8000 -t .
 
-   then open http://localhost:8000 — index.php sends you to the sign-in page,
-   or straight to the dashboard if you already have a session.
+   then open http://localhost:8000 — index.php serves the public home page, or
+   sends you straight to the dashboard if you already have a session. The
+   sign-in page is one click away at /login.html.
 
    If Windows says "An Application Control policy has blocked this file":
    Smart App Control (or a work machine's WDAC policy) will not run unsigned
@@ -86,9 +87,10 @@ The rest of this section is the same thing done by hand.
      - Otherwise the script seeds the synthetic test account used by the tests:
          test.client@example.invalid / CiSmokeTest!2026
 
-   Client sign-in is at /login.html, the admin console at /admin.php, and the
-   support centre at /support.html. Tickets are stored in data/tickets.json,
-   which like data/users.json is untracked and lives on the server only.
+   The public home page is at / (index.php serves home.html), client sign-in
+   at /login.html, the admin console at /admin.php, and the support centre at
+   /support.html. Tickets are stored in data/tickets.json, which like
+   data/users.json is untracked and lives on the server only.
 
    Everything is written straight back to data/users.json, so a local run edits
    whichever file you put there. Keep a copy before experimenting.
@@ -132,6 +134,33 @@ It writes tests/screenshots/ as it goes. Set CHROMIUM_EXECUTABLE=<path> to point
 it at a Chromium you already have instead of downloading one.
 
 What changed in this version:
+- Added a public home page, and made it what the domain root serves. The root
+  used to bounce every anonymous visitor straight to the sign-in form, so the
+  site had no front of house at all: nothing explained what HarbourX does to
+  anyone who had not already been told. home.html is that page — a hero, what
+  the platform does, how the pricing works, the path to a funded account,
+  client quotes, the controls behind an account, and a set of questions — and
+  index.php now serves it at "/" rather than redirecting, so the public site
+  lives at one URL. A visitor who already has a session still goes straight to
+  the dashboard, and sign-in stays on its own page; login.html and
+  register.php now link back to the home page rather than being dead ends.
+  The styling is home.css, which reads the same brand tokens and the same
+  hx-motion vocabulary as the rest of the product.
+
+  Two things on the page are marked in the markup as placeholders and need
+  real content before it is published: the four figures in the statistics
+  band, and the three client quotes.
+- Added the Tidio live chat widget to the three public pages — the home page,
+  sign-in and create-account. It is a third-party script loaded with `async`,
+  so it never blocks a page and a page renders and works identically when
+  code.tidio.co is slow or unreachable. It is deliberately not on the pages
+  behind sign-in: the dashboard, statements and identity pages show balances,
+  bank details and KYC, and the product already has its own ticketing in the
+  support centre. To move or remove it, the tag is at the foot of home.html,
+  login.html and register.php; the account key is in the script URL.
+  tests/smoke.mjs treats tidio.co the way it already treats the price feeds
+  and Google Fonts — the suite judges this app's own code, not a third party's
+  availability.
 - Added monthly statements. Statements was a link to the transaction list on the
   dashboard; it is now a page of its own at statements.html, built like Security
   and Support. The left column lists every month that has activity, the right

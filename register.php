@@ -119,6 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <button class="btn" type="submit">Create account and continue</button>
     </form>
     <a class="link" href="login.html">Already have an account?</a>
+    <a class="link" href="./">&larr; Back to harbourx.org</a>
     <script>
       const registerCountry = document.getElementById('registerCountry');
       const registerCurrency = document.getElementById('registerCurrency');
@@ -129,5 +130,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </script>
   <?php endif; ?>
 </div>
+
+<!-- Tidio live chat. Third-party and loaded async, so it never blocks the
+     page: if code.tidio.co is slow or unreachable, everything here still
+     renders and works exactly as it does without it. The widget floats
+     bottom-right; the theme toggle sits top-right, so the two do not meet. -->
+<script src="//code.tidio.co/1rfzzsxqktvftfto6ml44xvorkoducnj.js" async></script>
 </body>
 </html>

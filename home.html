@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<!--
+  HarbourX public home page
+  ---------------------------------------------------------------------------
+  The page the domain root serves to a visitor who is not signed in. It is the
+  only public page in the project: everything else is either the sign-in flow
+  or behind it.
+
+  index.php serves this file at "/" for an anonymous visitor and sends a
+  signed-in one straight to the dashboard, so the marketing site and the client
+  workspace share one front door.
+
+  Two things in here are placeholders on purpose, and are marked where they
+  appear: the headline figures in the statistics band, and the client quotes.
+  Both need real, attributable numbers and words before the site goes live.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+<title>HarbourX · Digital asset custody, conversion and local settlement</title>
+<meta name="description" content="HarbourX is a private client platform for holding Bitcoin, converting to your local currency and settling straight to your own bank — with custody, compliance and reporting built in.">
+<meta name="theme-color" content="#061523">
+
+<!-- Open Graph, so a shared link carries the brand rather than a bare URL. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="HarbourX">
+<meta property="og:title" content="HarbourX · Digital asset custody, conversion and local settlement">
+<meta property="og:description" content="Hold, convert and cash out digital assets with the right structure — custody, compliance and local bank settlement in one private workspace.">
+<meta property="og:url" content="https://harbourx.org/">
+<meta name="twitter:card" content="summary_large_image">
+
+<link rel="canonical" href="https://harbourx.org/">
+
+<script src="theme.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap"></noscript>
+<link rel="stylesheet" href="hx-motion.css">
+<link rel="stylesheet" href="home.css">
+<script src="hx-motion.js" defer></script>
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-head" id="siteHead">
+  <div class="wrap site-head__inner">
+    <a class="brand" href="./" aria-label="HarbourX home">
+      <span class="brand__mark">
+        <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+          <path d="M7 20.5 16 11l9 9.5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M11 25.5 16 20.5l5 5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/>
+        </svg>
+      </span>
+      <span>
+        <b>HarbourX</b>
+        <small>harbourx.org</small>
+      </span>
+    </a>
+
+    <nav class="site-nav" aria-label="Main">
+      <ul>
+        <li><a href="#solutions">Solutions</a></li>
+        <li><a href="#approach">Our approach</a></li>
+        <li><a href="#process">How it works</a></li>
+        <li><a href="#clients">Clients</a></li>
+        <li><a href="#faq">FAQ</a></li>
+      </ul>
+    </nav>
+
+    <div class="head-actions">
+      <button type="button" class="theme-btn" data-theme-toggle aria-label="Switch theme">
+        <svg class="t-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="t-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8 6 18M18 6l1.8-1.8"/></svg>
+      </button>
+      <a class="btn btn--ghost" href="login.html">Sign in</a>
+      <a class="btn btn--primary" href="register.php" data-ripple>Open an account</a>
+      <button type="button" class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false" aria-controls="navDrawer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- The phone menu. Inert until the toggle opens it. -->
+<div class="nav-drawer" id="navDrawer">
+  <div class="nav-drawer__scrim" data-nav-close></div>
+  <div class="nav-drawer__panel" role="dialog" aria-modal="true" aria-label="Menu">
+    <div class="nav-drawer__top">
+      <span class="brand">
+        <span class="brand__mark">
+          <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <path d="M7 20.5 16 11l9 9.5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M11 25.5 16 20.5l5 5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/>
+          </svg>
+        </span>
+        <span><b>HarbourX</b><small>harbourx.org</small></span>
+      </span>
+      <button type="button" class="theme-btn" data-theme-toggle aria-label="Switch theme">
+        <svg class="t-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="t-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8 6 18M18 6l1.8-1.8"/></svg>
+      </button>
+    </div>
+
+    <ul>
+      <li><a href="#solutions" data-nav-close>Solutions</a></li>
+      <li><a href="#approach" data-nav-close>Our approach</a></li>
+      <li><a href="#process" data-nav-close>How it works</a></li>
+      <li><a href="#clients" data-nav-close>Clients</a></li>
+      <li><a href="#faq" data-nav-close>FAQ</a></li>
+      <li><a href="support.html" data-nav-close>Support</a></li>
+    </ul>
+
+    <a class="btn btn--primary" href="register.php">Open an account</a>
+    <a class="btn btn--ghost" href="login.html">Sign in</a>
+  </div>
+</div>
+
+<main id="main">
+
+  <!-- ============================================================= hero -->
+  <section class="hero on-dark">
+    <div class="wrap">
+      <div class="hero__grid">
+
+        <div class="hero__copy">
+          <span class="eyebrow">Private client platform</span>
+          <h1>Digital assets, held with the <em>right structure</em>.</h1>
+          <p class="lead">HarbourX is a private workspace for holding Bitcoin and stablecoins, converting at a rate you can see, and settling straight to your own bank account. Custody, compliance and reporting come as one service — not three.</p>
+
+          <div class="btn-row">
+            <a class="btn btn--primary" href="register.php" data-ripple>
+              Open an account
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </a>
+            <a class="btn btn--ghost" href="login.html">Sign in to your portfolio</a>
+          </div>
+
+          <ul class="hero__assurance">
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              AML and KYC verified accounts
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10.5" width="16" height="10.5" rx="2.4"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/></svg>
+              Two-factor on every sign-in
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M4 10h16M12 3 3 8h18l-9-5zM7 10v11M17 10v11M12 10v11"/></svg>
+              Settlement to your own bank
+            </li>
+          </ul>
+        </div>
+
+        <!-- The portfolio visual. Illustrative figures, drawn in markup so
+             there is no image asset to ship or go missing. -->
+        <div class="hero__visual" data-reveal="scale">
+          <div class="port-card hx-sheen">
+            <div class="port-card__top">
+              <div>
+                <span class="port-card__label">Portfolio value</span>
+                <div class="port-card__total" data-count-to="286617.6" data-count-prefix="$" data-count-decimals="2">$286,617.60</div>
+              </div>
+              <span class="port-card__delta">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 15l7-7 7 7"/></svg>
+                4.8%
+              </span>
+            </div>
+
+            <div class="alloc">
+              <div class="alloc__bar" role="presentation">
+                <span></span><span></span><span></span>
+              </div>
+              <ul class="alloc__legend">
+                <li><i></i>Bitcoin 58%</li>
+                <li><i></i>Ethereum 27%</li>
+                <li><i></i>USDC 15%</li>
+              </ul>
+            </div>
+
+            <div class="port-card__rows">
+              <div class="port-card__row">
+                <div>
+                  <small>BTC / USD · live</small>
+                  <strong id="heroBtcPrice">$95,000</strong>
+                </div>
+                <em>market</em>
+              </div>
+              <div class="port-card__row">
+                <div>
+                  <small>Last settlement</small>
+                  <strong>$18,400.00</strong>
+                </div>
+                <em>cleared</em>
+              </div>
+            </div>
+          </div>
+
+          <div class="hero__chip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+            <div>
+              <small>Identity</small>
+              <strong>Verified · Tier 2</strong>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ proof -->
+  <!--
+    PLACEHOLDER FIGURES. These four numbers are illustrative. Replace them
+    with figures HarbourX can stand behind before this page is published —
+    data-count-to drives the animation, and the text inside the element is
+    what a visitor without scripting sees.
+  -->
+  <section class="proof" aria-label="HarbourX at a glance">
+    <div class="wrap">
+      <div class="proof__inner hx-stagger">
+        <div class="proof__cell">
+          <strong data-count-to="1.4" data-count-prefix="$" data-count-suffix="B" data-count-decimals="1">$1.4B</strong>
+          <span>Settled to client bank accounts</span>
+        </div>
+        <div class="proof__cell">
+          <strong data-count-to="36000" data-count-suffix="+" data-count-decimals="0">36,000+</strong>
+          <span>Accounts opened since 2019</span>
+        </div>
+        <div class="proof__cell">
+          <strong data-count-to="32" data-count-suffix="" data-count-decimals="0">32</strong>
+          <span>Local currencies supported</span>
+        </div>
+        <div class="proof__cell">
+          <strong data-count-to="99.98" data-count-suffix="%" data-count-decimals="2">99.98%</strong>
+          <span>Platform uptime, trailing 12 months</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================== solutions -->
+  <section class="section" id="solutions">
+    <div class="wrap">
+      <div class="sec-head" data-reveal>
+        <span class="eyebrow">Solutions</span>
+        <h2>Three jobs, one account</h2>
+        <p>Most people arrive with the same problem: the asset is in one place, the bank is in another, and nothing in between is accountable for it. HarbourX closes that gap.</p>
+      </div>
+
+      <div class="sol-grid hx-stagger" data-reveal>
+
+        <article class="sol">
+          <span class="sol__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 11.5v3"/><circle cx="12" cy="9" r="1.2"/></svg>
+          </span>
+          <h3>Custody and wallets</h3>
+          <p>Hold Bitcoin, Ethereum and USDC in an account that is yours alone, with every movement recorded and every withdrawal checked before it leaves.</p>
+          <ul class="sol__list">
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Segregated client balances</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Address validation on every payout</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Two-factor and session controls</li>
+          </ul>
+          <a class="link-more" href="login.html">
+            See it in the portfolio
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+        </article>
+
+        <article class="sol">
+          <span class="sol__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg>
+          </span>
+          <h3>Conversion at a visible rate</h3>
+          <p>Price your holding against 32 local currencies and convert when the number suits you. The rate, the fee and the amount that lands are all shown before you confirm.</p>
+          <ul class="sol__list">
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Live market pricing</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>One fee, quoted up front</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>No spread hidden in the rate</li>
+          </ul>
+          <a class="link-more" href="#approach">
+            How the pricing works
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+        </article>
+
+        <article class="sol">
+          <span class="sol__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M4 10h16M12 3 3 8h18l-9-5zM7 10v11M17 10v11M12 10v11"/></svg>
+          </span>
+          <h3>Settlement to your bank</h3>
+          <p>Withdraw to a payout account in your own name at your own bank. Connect it once, verify it once, and every later settlement follows the same cleared path.</p>
+          <ul class="sol__list">
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified payout accounts only</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Statements you can hand to an accountant</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Every transfer tracked end to end</li>
+          </ul>
+          <a class="link-more" href="#process">
+            The path to your first payout
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================= approach -->
+  <section class="section section--alt" id="approach">
+    <div class="wrap">
+
+      <div class="split">
+        <div class="split__copy" data-reveal="left">
+          <span class="eyebrow">Our approach</span>
+          <h2>One fee, and you see it before you agree to it</h2>
+          <p>The cost of moving between an asset and a currency is usually buried in the rate, where it cannot be compared. We quote it as a line of its own instead, so the only question left is whether the number suits you.</p>
+          <ul class="ticks">
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+              <span>The market rate we price against is the one you can look up yourself.</span>
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+              <span>No custody fee for holding, and no charge for an account that sits still.</span>
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+              <span>Nothing is paid to a third party for sending you here, so no advice is bought.</span>
+            </li>
+          </ul>
+          <a class="link-more" href="register.php">
+            Open an account
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+        </div>
+
+        <!-- Illustrative quote, shown the way the convert dialog shows it. -->
+        <div class="figure" data-reveal="right">
+          <div class="figure__head">
+            <strong>Convert 0.25 BTC to USD</strong>
+            <span>Example</span>
+          </div>
+          <ul class="ledger">
+            <li><span>Market rate</span><strong>$95,000.00 / BTC</strong></li>
+            <li><span>Amount converted</span><strong>0.25000000 BTC</strong></li>
+            <li><span>Gross value</span><strong>$23,750.00</strong></li>
+            <li><span>HarbourX fee <b>0.6%</b></span><strong>−$142.50</strong></li>
+            <li><span>Network and bank costs</span><span class="tag">Included</span></li>
+            <li class="is-total"><b>Lands in your account</b><strong>$23,607.50</strong></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="split split--flip">
+        <div class="split__copy" data-reveal="right">
+          <span class="eyebrow">Compliance</span>
+          <h2>Verification that clears you, rather than stalls you</h2>
+          <p>Identity checks exist so your money can move, not so it can be held up. We ask for what the rules require, once, and tell you exactly where the file stands until it is done.</p>
+          <ul class="ticks">
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+              <span>You can see the status of your own verification at any time.</span>
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+              <span>A payout account is checked once and then trusted for every later transfer.</span>
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+              <span>Statements are produced for you, not on request, and cover every movement.</span>
+            </li>
+          </ul>
+          <a class="link-more" href="support.html">
+            Talk to the compliance team
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+        </div>
+
+        <div class="figure" data-reveal="left">
+          <div class="figure__head">
+            <strong>Account readiness</strong>
+            <span>Example</span>
+          </div>
+          <ul class="checks">
+            <li>
+              <span class="checks__dot">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+              </span>
+              <div>
+                <b>Identity documents</b>
+                <small>Passport and proof of address</small>
+              </div>
+              <em>Verified</em>
+            </li>
+            <li>
+              <span class="checks__dot">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+              </span>
+              <div>
+                <b>Two-factor authentication</b>
+                <small>Authenticator app, with backup codes</small>
+              </div>
+              <em>Enabled</em>
+            </li>
+            <li>
+              <span class="checks__dot">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+              </span>
+              <div>
+                <b>Payout account</b>
+                <small>Held in your own name</small>
+              </div>
+              <em>Connected</em>
+            </li>
+            <li>
+              <span class="checks__dot">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7v5l3 2"/><circle cx="12" cy="12" r="9"/></svg>
+              </span>
+              <div>
+                <b>Withdrawal limit review</b>
+                <small>Raised once trading history is established</small>
+              </div>
+              <em>Scheduled</em>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ========================================================== process -->
+  <section class="section" id="process">
+    <div class="wrap">
+      <div class="sec-head sec-head--center" data-reveal>
+        <span class="eyebrow">How it works</span>
+        <h2>Four steps from signing up to money in your bank</h2>
+        <p>Most accounts are ready to convert the same week. The only part that depends on someone else is the identity review.</p>
+      </div>
+
+      <div class="steps hx-stagger" data-reveal>
+        <article class="step">
+          <span class="step__num" aria-hidden="true"></span>
+          <h3>Open your account</h3>
+          <p>An email address and a password is all it takes to get in. Two-factor authentication is set up on the same visit.</p>
+          <small>A few minutes</small>
+        </article>
+        <article class="step">
+          <span class="step__num" aria-hidden="true"></span>
+          <h3>Verify your identity</h3>
+          <p>Upload identity and address documents once. You can watch the review move from submitted to verified from your dashboard.</p>
+          <small>Usually 1–2 days</small>
+        </article>
+        <article class="step">
+          <span class="step__num" aria-hidden="true"></span>
+          <h3>Fund your wallet</h3>
+          <p>Send Bitcoin, Ethereum or USDC to the deposit address in your account. It appears in your portfolio once the network confirms it.</p>
+          <small>Network speed</small>
+        </article>
+        <article class="step">
+          <span class="step__num" aria-hidden="true"></span>
+          <h3>Convert and settle</h3>
+          <p>Convert at the quoted rate, then withdraw to your connected bank account. The statement is written as it happens.</p>
+          <small>Same day</small>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================== clients -->
+  <section class="section section--alt" id="clients">
+    <div class="wrap">
+      <div class="sec-head sec-head--center" data-reveal>
+        <span class="eyebrow">Clients</span>
+        <h2>What clients say</h2>
+        <p>The part of the job people mention is rarely the technology. It is knowing what a transfer will cost and when it will arrive.</p>
+      </div>
+
+      <!--
+        PLACEHOLDER QUOTES. The three testimonials below are written to show
+        the layout; they are not real client words and the initials are not
+        real people. Replace all three — quote, name and description — with
+        words a client has actually given you permission to publish before
+        this page goes live.
+      -->
+      <div class="voices hx-stagger" data-reveal>
+
+        <figure class="voice">
+          <div class="voice__stars" aria-label="Five out of five">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2.6 2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 17.7 6.1 20.8l1.2-6.6L2.5 9.6l6.6-.9z"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2.6 2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 17.7 6.1 20.8l1.2-6.6L2.5 9.6l6.6-.9z"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2.6 2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 17.7 6.1 20.8l1.2-6.6L2.5 9.6l6.6-.9z"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2.6 2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 17.7 6.1 20.8l1.2-6.6L2.5 9.6l6.6-.9z"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2.6 2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 17.7 6.1 20.8l1.2-6.6L2.5 9.6l6.6-.9z"/></svg>
+          </div>
+          <blockquote>“I had held the same coins for four years and never once cashed any of it out, because every route looked like it ended in a frozen account. The first settlement here landed in two days and the statement matched to the cent.”</blockquote>
+          <figcaption>
+            <span class="voice__avatar" aria-hidden="true">AR</span>
+            <div>
+              <b>A. R.</b>
+              <small>Client since 2021</small>
+            </div>
+          </figcaption>
+        </figure>
+
+        <figure class="voice">
+          <div class="voice__stars" aria-label="Five out of five">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2.6 2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 17.7 6.1 20.8l1.2-6.6L2.5 9.6l6.6-.9z"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2.6 2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 17.7 6.1 20.8l1.2-6.6L2.5 9.6l6.6-.9z"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2.6 2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 17.7 6.1 20.8l1.2-6.6L2.5 9.6l6.6-.9z"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2.6 2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 17.7 6.1 20.8l1.2-6.6L2.5 9.6l6.6-.9z"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2.6 2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 17.7 6.1 20.8l1.2-6.6L2.5 9.6l6.6-.9z"/></svg>
+          </div>
+          <blockquote>“What sold me was the quote screen. It tells you the fee as a line, not as a worse rate, so I could compare it against my bank in about ten seconds.”</blockquote>
+          <figcaption>
+            <span class="voice__avatar" aria-hidden="true">MK</span>
+            <div>
+              <b>M. K.</b>
+              <small>Small business owner</small>
+            </div>
+          </figcaption>
+        </figure>
+
+        <figure class="voice">
+          <div class="voice__stars" aria-label="Five out of five">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2.6 2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 17.7 6.1 20.8l1.2-6.6L2.5 9.6l6.6-.9z"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2.6 2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 17.7 6.1 20.8l1.2-6.6L2.5 9.6l6.6-.9z"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2.6 2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 17.7 6.1 20.8l1.2-6.6L2.5 9.6l6.6-.9z"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2.6 2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 17.7 6.1 20.8l1.2-6.6L2.5 9.6l6.6-.9z"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2.6 2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 17.7 6.1 20.8l1.2-6.6L2.5 9.6l6.6-.9z"/></svg>
+          </div>
+          <blockquote>“My accountant asked for a full year of movements and I had the statement as a PDF before the end of the call. That has never happened with anything else I hold.”</blockquote>
+          <figcaption>
+            <span class="voice__avatar" aria-hidden="true">JT</span>
+            <div>
+              <b>J. T.</b>
+              <small>Long-term holder</small>
+            </div>
+          </figcaption>
+        </figure>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================================================== recognition -->
+  <section class="section section--tight">
+    <div class="wrap">
+      <!--
+        These four cards describe controls the platform actually implements,
+        rather than awards. If HarbourX has certifications or press coverage
+        to show, this is the strip to put them in.
+      -->
+      <div class="recognition" data-reveal>
+        <div>
+          <span class="eyebrow">Built in, not bolted on</span>
+          <h2>The controls behind the account</h2>
+          <p>None of this is an upgrade or an enterprise tier. Every account on the platform is held to the same four controls from the day it is opened.</p>
+        </div>
+        <div class="badges">
+          <div class="badge">
+            <strong>AML / KYC</strong>
+            <small>Verified accounts</small>
+          </div>
+          <div class="badge">
+            <strong>TOTP 2FA</strong>
+            <small>RFC 6238, backup codes</small>
+          </div>
+          <div class="badge">
+            <strong>Segregated</strong>
+            <small>Client balances</small>
+          </div>
+          <div class="badge">
+            <strong>Encrypted</strong>
+            <small>In transit, end to end</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================== faq -->
+  <section class="section section--alt" id="faq">
+    <div class="wrap">
+      <div class="faq-grid">
+        <div data-reveal="left">
+          <span class="eyebrow">Questions</span>
+          <h2>Before you open an account</h2>
+          <p style="margin-top:18px">If the answer you need is not here, the support centre reaches a person rather than a form queue.</p>
+          <div class="btn-row" style="margin-top:26px">
+            <a class="btn btn--ghost" href="support.html">Contact support</a>
+          </div>
+        </div>
+
+        <div class="faq-list" data-reveal="right">
+          <details class="faq">
+            <summary>What does it cost to hold an account?</summary>
+            <div class="faq__body">
+              <p>Nothing. There is no account fee and no custody charge for holding a balance. The only fee is on a conversion, and it is quoted as a line of its own before you confirm — the example on this page shows exactly how it appears.</p>
+            </div>
+          </details>
+
+          <details class="faq">
+            <summary>Which assets and currencies are supported?</summary>
+            <div class="faq__body">
+              <p>Bitcoin, Ethereum and USDC on the asset side. Your portfolio can be priced and settled in 32 local currencies, and a payout account can be connected in each of them.</p>
+            </div>
+          </details>
+
+          <details class="faq">
+            <summary>How long does identity verification take?</summary>
+            <div class="faq__body">
+              <p>Usually one to two business days from the point your documents are uploaded. The status is shown in your dashboard the whole time, so you are never left guessing, and you can keep using the account for deposits while it runs.</p>
+            </div>
+          </details>
+
+          <details class="faq">
+            <summary>Can I withdraw to an account that is not in my name?</summary>
+            <div class="faq__body">
+              <p>No. A payout account has to be held in the same name as the HarbourX account. It is the single rule that keeps settlement clean, and it is what lets every later transfer to that account go through without a fresh review.</p>
+            </div>
+          </details>
+
+          <details class="faq">
+            <summary>Is two-factor authentication required?</summary>
+            <div class="faq__body">
+              <p>It is set up when you open the account and we strongly recommend leaving it on. HarbourX uses standard authenticator apps, and you are given backup codes at enrolment for the day your phone is not with you.</p>
+            </div>
+          </details>
+
+          <details class="faq">
+            <summary>Is HarbourX giving me investment advice?</summary>
+            <div class="faq__body">
+              <p>No. HarbourX holds, converts and settles the assets you already own. Nothing on this site is a recommendation to buy or sell anything, and digital assets can lose value quickly — the risk of holding them stays with you.</p>
+            </div>
+          </details>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================== cta -->
+  <section class="section section--tight">
+    <div class="wrap">
+      <div class="cta on-dark" data-reveal>
+        <span class="eyebrow">Get started</span>
+        <h2>Open your HarbourX account today</h2>
+        <p>An email address gets you in. Two-factor, verification and a payout account can all be set up from your dashboard on the same visit.</p>
+        <div class="btn-row">
+          <a class="btn btn--primary" href="register.php" data-ripple>
+            Open an account
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+          <a class="btn btn--ghost" href="login.html">I already have one</a>
+        </div>
+        <p class="cta__note">No account fee · No custody charge · Withdraw to your own bank</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- =========================================================== footer -->
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <span class="brand">
+          <span class="brand__mark">
+            <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+              <path d="M7 20.5 16 11l9 9.5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M11 25.5 16 20.5l5 5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/>
+            </svg>
+          </span>
+          <span><b>HarbourX</b><small>harbourx.org</small></span>
+        </span>
+        <p class="foot-about">A private client platform for holding digital assets, converting them to your local currency and settling to your own bank.</p>
+      </div>
+
+      <div class="foot-col">
+        <h4>Platform</h4>
+        <ul>
+          <li><a href="#solutions">Solutions</a></li>
+          <li><a href="#approach">Our approach</a></li>
+          <li><a href="#process">How it works</a></li>
+          <li><a href="#faq">Questions</a></li>
+        </ul>
+      </div>
+
+      <div class="foot-col">
+        <h4>Your account</h4>
+        <ul>
+          <li><a href="register.php">Open an account</a></li>
+          <li><a href="login.html">Sign in</a></li>
+          <li><a href="statements.html">Statements</a></li>
+          <li><a href="change_password.php">Security</a></li>
+        </ul>
+      </div>
+
+      <div class="foot-col">
+        <h4>Support</h4>
+        <ul>
+          <li><a href="support.html">Support centre</a></li>
+          <li><a href="aml.html">Identity verification</a></li>
+          <li><a href="mailto:support@harbourx.org">support@harbourx.org</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="foot-legal">
+      <p><b>Risk notice.</b> Digital assets are volatile and their value can fall as well as rise. HarbourX holds, converts and settles assets you already own; nothing on this page is financial, tax or investment advice, and no return is promised or implied. Consider your own circumstances, and take independent advice where you need it, before acting.</p>
+      <div class="foot-legal__row">
+        <p>© <span id="year">2026</span> HarbourX. All rights reserved.</p>
+        <!-- Terms and Privacy have no page of their own yet, so they point at
+             the support centre rather than at an anchor on this page. Swap
+             both hrefs the moment the real policy pages exist. -->
+        <ul>
+          <li><a href="support.html">Terms</a></li>
+          <li><a href="support.html">Privacy</a></li>
+          <li><a href="support.html">Complaints</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ============================================================================
+   home.html behaviour
+   ----------------------------------------------------------------------------
+   Three small things, none of which the page depends on: the header's solid
+   state once it leaves the hero, the phone menu, and a live price in the hero
+   card. Everything renders and reads correctly with this file blocked.
+   ========================================================================== */
+(function () {
+  "use strict";
+
+  var yr = document.getElementById("year");
+  if (yr) yr.textContent = new Date().getFullYear();
+
+  /* ---------------------------------------------- solid header on scroll */
+  var head = document.getElementById("siteHead");
+  var ticking = false;
+
+  function syncHead() {
+    ticking = false;
+    /* 40px is far enough that a nudge does not flip it, and short enough that
+       the bar is opaque before the hero's headline scrolls under it. */
+    head.classList.toggle("is-stuck", window.scrollY > 40);
+  }
+  function onScroll() {
+    if (ticking) return;
+    ticking = true;
+    window.requestAnimationFrame(syncHead);
+  }
+  if (head) {
+    syncHead();
+    window.addEventListener("scroll", onScroll, { passive: true });
+  }
+
+  /* ------------------------------------------------------- the phone menu */
+  var drawer = document.getElementById("navDrawer");
+  var toggle = document.getElementById("navToggle");
+
+  function setMenu(open) {
+    if (!drawer || !toggle) return;
+    drawer.classList.toggle("is-open", open);
+    document.body.classList.toggle("nav-open", open);
+    toggle.setAttribute("aria-expanded", String(open));
+    if (open) {
+      var first = drawer.querySelector("a, button");
+      if (first) first.focus();
+    } else {
+      toggle.focus();
+    }
+  }
+
+  if (toggle && drawer) {
+    toggle.addEventListener("click", function () {
+      setMenu(!drawer.classList.contains("is-open"));
+    });
+
+    /* The scrim and every link inside close it — a link that only scrolls the
+       page would otherwise leave the menu sitting over the destination. */
+    drawer.addEventListener("click", function (event) {
+      if (event.target.closest("[data-nav-close]")) setMenu(false);
+    });
+
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape" && drawer.classList.contains("is-open")) setMenu(false);
+    });
+
+    /* Reaching the desktop breakpoint hides the toggle, so the menu must not
+       be left open behind it. */
+    if (window.matchMedia) {
+      var wide = window.matchMedia("(min-width: 1081px)");
+      var onWide = function (e) { if (e.matches) setMenu(false); };
+      if (wide.addEventListener) wide.addEventListener("change", onWide);
+      else if (wide.addListener) wide.addListener(onWide);
+    }
+  }
+
+  /* ------------------------------------------- live BTC price, best effort
+     The same two feeds and the same fallback the sign-in page uses: if both
+     are unreachable the figure already in the markup stays put, so the card
+     never shows an empty row. */
+  (function price() {
+    var el = document.getElementById("heroBtcPrice");
+    if (!el) return;
+
+    var feeds = [
+      { url: "https://api.coinbase.com/v2/prices/BTC-USD/spot", read: function (d) { return Number(d && d.data && d.data.amount); } },
+      { url: "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd", read: function (d) { return Number(d && d.bitcoin && d.bitcoin.usd); } }
+    ];
+
+    function show(value) {
+      el.textContent = "$" + value.toLocaleString(undefined, { maximumFractionDigits: 0 });
+    }
+
+    function tryFeed(i) {
+      if (i >= feeds.length) return;
+      fetch(feeds[i].url, { cache: "no-store" })
+        .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+        .then(function (d) {
+          var v = feeds[i].read(d);
+          if (v > 0) show(v);
+          else tryFeed(i + 1);
+        })
+        .catch(function () { tryFeed(i + 1); });
+    }
+    tryFeed(0);
+  })();
+})();
+</script>
+
+
+<!-- Tidio live chat. Third-party and loaded async, so it never blocks the
+     page: if code.tidio.co is slow or unreachable, everything here still
+     renders and works exactly as it does without it. The widget floats
+     bottom-right; the theme toggle sits top-right, so the two do not meet. -->
+<script src="//code.tidio.co/1rfzzsxqktvftfto6ml44xvorkoducnj.js" async></script>
+</body>
+</html>

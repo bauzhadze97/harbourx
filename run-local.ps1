@@ -3,7 +3,7 @@
   Runs the HarbourX portal on this computer.
 
 .DESCRIPTION
-  Starts PHP's built-in web server in this folder and opens the sign-in page.
+  Starts PHP's built-in web server in this folder and opens the site.
   Nothing is installed and nothing leaves the machine — the app reads and writes
   data\users.json in place, exactly as it does on the real host.
 
@@ -180,7 +180,8 @@ if (-not (Test-Path -LiteralPath 'data\users.json')) {
 # --- 3. Serve ---------------------------------------------------------------
 $url = "http://localhost:$Port/"
 Write-Step "Serving on $url"
-Write-Host "        client   $url" -ForegroundColor DarkGray
+Write-Host "        home     $url" -ForegroundColor DarkGray
+Write-Host "        sign in  http://localhost:$Port/login.html" -ForegroundColor DarkGray
 Write-Host "        admin    http://localhost:$Port/admin.php" -ForegroundColor DarkGray
 Write-Host ''
 Write-Host '  Press Ctrl+C to stop.' -ForegroundColor DarkGray

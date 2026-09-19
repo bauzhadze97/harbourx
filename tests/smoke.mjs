@@ -39,18 +39,24 @@ const check = (ok, label, detail = '') => {
   console.log(`${ok ? '  ok  ' : '  FAIL'} ${label}${detail ? ` — ${detail}` : ''}`);
 };
 
-/* Third-party endpoints the app is designed to survive without: the price feeds
-   and Google Fonts. How they fail depends on where the test runs — unreachable
-   in a sandbox, CORS-rejected from a GitHub runner, rate-limited elsewhere — so
-   the test judges the app's own code and ignores errors naming these hosts. That
-   exclusion is only safe because `feeds down still shows a price` below asserts
-   the fallback actually works. */
+/* Third-party endpoints the app is designed to survive without: the price feeds,
+   Google Fonts and the Tidio chat widget. How they fail depends on where the
+   test runs — unreachable in a sandbox, CORS-rejected from a GitHub runner,
+   rate-limited elsewhere — so the test judges the app's own code and ignores
+   errors naming these hosts. That exclusion is only safe because `feeds down
+   still shows a price` below asserts the price fallback actually works, and
+   because the chat widget is loaded async and owns no page content: a page that
+   renders correctly here renders correctly whether or not Tidio answers.
+   Matching is by substring, so the bare domains cover every subdomain the
+   widget reaches for. */
 const EXTERNAL_HOSTS = [
   'api.coingecko.com',
   'api.coinbase.com',
   'api.binance.com',
   'fonts.googleapis.com',
-  'fonts.gstatic.com'
+  'fonts.gstatic.com',
+  'tidio.co',
+  'tidiochat.com'
 ];
 
 const isExternal = text =>
@@ -89,6 +95,27 @@ async function seed(page, user) {
   }, user);
 }
 
+/* Walk the page from top to bottom and back, a screen at a time. The reveal
+   observer only fires for what has been in the viewport, so on a page taller
+   than a couple of screens — the public home page especially — auditing
+   without this would only ever judge the first screenful. */
+async function scrollThrough(page) {
+  await page.evaluate(async () => {
+    const step = Math.round(window.innerHeight * 0.8);
+    const end = document.documentElement.scrollHeight;
+    const wait = () => new Promise(r => setTimeout(r, 120));
+    // behavior:'instant' matters: the public home page sets
+    // `scroll-behavior: smooth` for its in-page links, and a smooth scroll
+    // retargeted every 120ms never actually arrives anywhere.
+    for (let y = 0; y < end; y += step) {
+      window.scrollTo({ top: y, behavior: 'instant' });
+      await wait();
+    }
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    await wait();
+  });
+}
+
 const audit = page => page.evaluate(() => ({
   overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
   hiddenReveals: [...document.querySelectorAll('[data-reveal]')]
@@ -98,6 +125,7 @@ const audit = page => page.evaluate(() => ({
 }));
 
 const PAGES = [
+  { url: 'home.html', shot: '0-home', auth: false },
   { url: 'dashboard.html', shot: '1-dashboard', auth: true },
   { url: 'login.html', shot: '2-sign-in', auth: false },
   { url: 'aml.html', shot: '3-identity', auth: true },
@@ -133,6 +161,7 @@ try {
 
       await page.goto(`${BASE}/${url}`, { waitUntil: 'domcontentloaded', timeout: 30000 });
       await page.waitForTimeout(2500);
+      await scrollThrough(page);
       await page.screenshot({ path: `${SHOTS}${shot}.png`, fullPage: true });
 
       const a = await audit(page);
@@ -151,12 +180,17 @@ try {
   {
     const context = await browser.newContext();
 
-    // Anonymous: "/" must land on the sign-in page. Before index.php existed it
-    // 404'd on PHP's server and listed the whole directory on Apache.
+    // Anonymous: "/" is the public home page, served in place rather than
+    // redirected to, so the marketing site has one URL and not two. Before
+    // index.php existed the root 404'd on PHP's server and listed the whole
+    // directory on Apache.
     const anon = await context.request.get(`${BASE}/`, { maxRedirects: 0 });
-    check(anon.status() === 302, 'anonymous / redirects', `status ${anon.status()}`);
-    check((anon.headers()['location'] || '').includes('login.html'),
-      'anonymous / points at the sign-in page', anon.headers()['location']);
+    check(anon.status() === 200, 'anonymous / serves a page', `status ${anon.status()}`);
+    const anonBody = await anon.text();
+    check(anonBody.includes('id="siteHead"'),
+      'anonymous / is the public home page');
+    check(anonBody.includes('href="login.html"'),
+      'the home page offers a way in to sign-in');
 
     // Signed in: straight to the dashboard.
     await signIn(context);

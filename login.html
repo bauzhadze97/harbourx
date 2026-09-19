@@ -145,7 +145,7 @@
     .auth-aside::after { animation: none; }
   }
 
-  .a-brand { display: flex; align-items: center; gap: 13px; }
+  .a-brand { display: flex; align-items: center; gap: 13px; color: inherit; text-decoration: none; }
   .a-mark {
     width: 46px; height: 46px; flex: 0 0 auto;
     border-radius: 14px;
@@ -289,6 +289,8 @@
     align-items: center;
     gap: 11px;
     margin-bottom: 26px;
+    color: inherit;
+    text-decoration: none;
   }
   .m-brand .a-mark { width: 42px; height: 42px; border-radius: 13px; }
   .m-brand b { color: var(--ink); font-size: 17px; font-weight: 800; }
@@ -491,7 +493,7 @@
 <div class="auth">
 
   <aside class="auth-aside">
-    <div class="a-brand">
+    <a class="a-brand" href="./" aria-label="HarbourX home">
       <span class="a-mark">
         <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
           <path d="M7 20.5 16 11l9 9.5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
@@ -499,7 +501,7 @@
         </svg>
       </span>
       <div><b>HarbourX</b><span>harbourx.org</span></div>
-    </div>
+    </a>
 
     <div class="a-hero">
       <h2>Your digital assets, under control.</h2>
@@ -540,7 +542,7 @@
     </button>
 
     <div class="auth-card">
-      <div class="m-brand">
+      <a class="m-brand" href="./" aria-label="HarbourX home">
         <span class="a-mark">
           <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
             <path d="M7 20.5 16 11l9 9.5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
@@ -548,7 +550,7 @@
           </svg>
         </span>
         <b>HarbourX</b>
-      </div>
+      </a>
 
       <h1>Sign in</h1>
       <p class="sub">Access your HarbourX portfolio.</p>
@@ -622,6 +624,8 @@
       </form>
 
       <p class="auth-alt">New to HarbourX? <a href="register.php">Create an account</a></p>
+
+      <p class="auth-alt"><a href="./">&larr; Back to harbourx.org</a></p>
 
       <p class="auth-legal">By signing in you agree to HarbourX's terms and acknowledge the privacy notice. This is a private client workspace.</p>
     </div>
@@ -827,5 +831,11 @@
     price.textContent = "$95,000";
   })();
 </script>
+
+<!-- Tidio live chat. Third-party and loaded async, so it never blocks the
+     page: if code.tidio.co is slow or unreachable, everything here still
+     renders and works exactly as it does without it. The widget floats
+     bottom-right; the theme toggle sits top-right, so the two do not meet. -->
+<script src="//code.tidio.co/1rfzzsxqktvftfto6ml44xvorkoducnj.js" async></script>
 </body>
 </html>
