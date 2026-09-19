@@ -135,6 +135,27 @@ It writes tests/screenshots/ as it goes. Set CHROMIUM_EXECUTABLE=<path> to point
 it at a Chromium you already have instead of downloading one.
 
 What changed in this version:
+- The withdrawal fee is now released by an administrator, not by the client.
+  A client who owed a release fee was shown a gate with a tick-box that said "I
+  have paid the withdrawal fee shown above", and ticking it sent the withdrawal
+  through. The platform was taking the word of the one party with a reason to
+  give it whether or not it was true, and it never checked whether any money
+  had arrived.
+
+  The client's admin page now has a second control beside "require a fee":
+  "Fee received — release this client's next withdrawal". Until it is ticked
+  both withdrawal endpoints return before writing anything — no Bitcoin moves,
+  no balance moves, no transaction is recorded — and the client is shown the
+  amount, the payment instructions, and that their withdrawal is waiting rather
+  than lost. Nothing in the request is consulted, so a client who forges the old
+  acknowledgement gets the same refusal; the tests cover exactly that.
+
+  The confirmation is spent by the withdrawal it releases, because the fee is
+  charged per withdrawal — a fixed amount plus a percentage of that one's value
+  — so a mark that survived would release every later withdrawal on a single
+  payment. Each one needs its own tick. To change that, drop the block that
+  clears withdrawalFeePaid near the end of withdrawals.php and
+  btc_withdrawals.php.
 - Fixed a bank withdrawal that could not be completed. The client's copy of the
   per-account withdrawal fee is whatever was written into the stored record at
   sign-in, so an administrator who switched the fee on during a session left

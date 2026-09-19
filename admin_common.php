@@ -117,13 +117,35 @@ function publicClientUser($user) {
     return $user;
 }
 
+/**
+ * The fee settings for one client.
+ *
+ * `required` says a fee is owed. `paid` says an administrator has seen the
+ * money arrive — it is the only thing that releases a withdrawal, and only an
+ * administrator can set it. The client used to release their own withdrawal by
+ * ticking a box that said they had paid, which asked the platform to take the
+ * word of the one party with a reason to say it whether or not it was true.
+ */
 function withdrawalFeeConfig($user) {
     return [
         'required' => !empty($user['withdrawalFeeRequired']),
         'amount'   => round(max(0, (float)($user['withdrawalFeeAmount'] ?? 0)), 2),
         'percent'  => round(max(0, (float)($user['withdrawalFeePercent'] ?? 0)), 4),
         'note'     => trim((string)($user['withdrawalFeeNote'] ?? '')),
+        'paid'     => !empty($user['withdrawalFeePaid']),
+        'paidAt'   => trim((string)($user['withdrawalFeePaidAt'] ?? '')),
     ];
+}
+
+/**
+ * Whether a withdrawal may be released right now. A fee that is required and
+ * not yet marked received holds everything: the Bitcoin does not move, the
+ * balance does not move, and nothing is recorded.
+ */
+function withdrawalFeeBlocks($user, $localAmount) {
+    $config = withdrawalFeeConfig($user);
+    if (!$config['required'] || $config['paid']) return false;
+    return computeWithdrawalFee($user, $localAmount) > 0;
 }
 
 function computeWithdrawalFee($user, $localAmount) {

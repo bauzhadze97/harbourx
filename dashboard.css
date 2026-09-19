@@ -587,25 +587,6 @@ button {
   color: var(--ink);
 }
 
-.fee-ack {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  margin-top: 16px;
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1.45;
-  cursor: pointer;
-}
-
-.fee-ack input {
-  width: 20px;
-  height: 20px;
-  margin-top: 1px;
-  flex: 0 0 auto;
-  accent-color: var(--blue);
-}
-
 .seg {
   display: flex;
   gap: 4px;
@@ -1307,6 +1288,10 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 .wallet-address { border-color: #244a61; background: #071a29; color: var(--hx-text); }
 .secondary-btn { border-color: #245369; background: transparent; color: var(--hx-teal); }
 .primary-btn { background: var(--hx-teal); color: #042029; }
+/* The fee notice's second action goes to the support centre, so it is a link
+   rather than a button and needs the underline off and the centring a button
+   gets for free. */
+a.primary-btn { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
 .summary-box, .info-box, .review-note { border-color: var(--hx-line); background: #081b2a; }
 
 .flow-modal-card { max-width: 720px; border-radius: 18px; background: linear-gradient(145deg,#0b2335,#081b2a); }

@@ -294,6 +294,9 @@
       </div>
       <div class="modal-body">
         <p class="hint" id="feeModalLead">A release fee must be paid before this bank withdrawal can be submitted for processing. Your withdrawal amount is not reduced by the fee.</p>
+        <!-- There is deliberately no "I have paid" control here. The fee is
+             released by HarbourX confirming the money arrived, not by the client
+             saying so, and both withdrawal endpoints enforce that server-side. -->
 
         <div class="info-box">
           <p class="info-title">Fee due now</p>
@@ -301,16 +304,17 @@
           <p class="info-note" id="feeModalNote">Contact HarbourX support to arrange payment of the withdrawal fee.</p>
         </div>
 
-        <label class="fee-ack">
-          <input type="checkbox" id="feeAckCheckbox" />
-          <span>I have paid the withdrawal fee shown above.</span>
-        </label>
+        <p class="hint" id="feeModalRelease" style="margin:14px 0 0">
+          Your withdrawal stays here until HarbourX confirms the fee has arrived. Nothing
+          has been sent and nothing has left your balance. You will be able to submit it
+          as soon as the payment is confirmed.
+        </p>
 
         <div class="bank-form-message" id="feeModalMessage"></div>
       </div>
       <div class="modal-foot">
-        <button class="secondary-btn" id="cancelFeeBtn" type="button">Cancel</button>
-        <button class="primary-btn" data-ripple id="confirmFeeBtn" type="button">Continue</button>
+        <button class="secondary-btn" id="cancelFeeBtn" type="button">Close</button>
+        <a class="primary-btn" data-ripple id="feeSupportLink" href="support.html">Contact support</a>
       </div>
     </div>
   </div>

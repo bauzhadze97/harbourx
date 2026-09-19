@@ -56,6 +56,10 @@ const state = {
   btcLocalRate: fallbackPrice,
   mainBalance: Number(currentUser.mainBalance || 0),
   feeRequired: !!currentUser.withdrawalFeeRequired,
+  /* Set by an administrator when the money arrives. This copy is only good
+     enough to decide what to show; the server checks its own before it records
+     anything, so a stale copy here costs a round trip and nothing else. */
+  feePaid: !!currentUser.withdrawalFeePaid,
   feeAmount: Math.max(0, Number(currentUser.withdrawalFeeAmount || 0)),
   feePercent: Math.max(0, Number(currentUser.withdrawalFeePercent || 0)),
   feeNote: String(currentUser.withdrawalFeeNote || ""),
@@ -146,14 +150,12 @@ const feeModal = document.getElementById("feeModal");
 const feeModalTitle = document.getElementById("feeModalTitle");
 const closeFeeModalBtn = document.getElementById("closeFeeModalBtn");
 const cancelFeeBtn = document.getElementById("cancelFeeBtn");
-const confirmFeeBtn = document.getElementById("confirmFeeBtn");
 const feeModalLead = document.getElementById("feeModalLead");
-const FEE_LEAD_BANK = "A release fee must be paid before this bank withdrawal can be submitted for processing. Your withdrawal amount is not reduced by the fee.";
-const FEE_LEAD_BTC = "A release fee must be paid before this Bitcoin send can be submitted for processing. It is paid separately and does not come out of the Bitcoin you send.";
+const FEE_LEAD_BANK = "A release fee is outstanding on this account. Once it is paid and HarbourX has confirmed it, this bank withdrawal can be submitted. Your withdrawal amount is not reduced by the fee.";
+const FEE_LEAD_BTC = "A release fee is outstanding on this account. Once it is paid and HarbourX has confirmed it, this Bitcoin send can be submitted. It is paid separately and does not come out of the Bitcoin you send.";
 const feeModalAmount = document.getElementById("feeModalAmount");
 const feeModalNote = document.getElementById("feeModalNote");
 const feeModalMessage = document.getElementById("feeModalMessage");
-const feeAckCheckbox = document.getElementById("feeAckCheckbox");
 
 let pendingWithdrawal = null;
 
@@ -1349,16 +1351,15 @@ function showFeeMessage(text) {
   feeModalMessage.style.display = text ? "block" : "none";
 }
 
-/* The gate now fronts two flows, so it is told what to close behind it and
-   what to run once the fee is acknowledged. Defaults are the bank flow. */
-let pendingFeeSubmit = null;
-
+/* The fee notice. It is a full stop, not a step: the withdrawal is released by
+   HarbourX confirming the money arrived, which only an administrator can do and
+   which both withdrawal endpoints check for themselves. There is nothing here
+   for the client to click through, so this tells them the amount, where to send
+   it, and that their withdrawal is waiting rather than lost. */
 function openFeeModal(withdrawal, options) {
   const opts = options || {};
-  pendingWithdrawal = withdrawal;
-  pendingFeeSubmit = opts.onContinue || null;
+  pendingWithdrawal = null;
   (opts.closeOrigin || closeModal)();
-  feeAckCheckbox.checked = false;
   showFeeMessage("");
   feeModalAmount.textContent = formatCurrency(withdrawal.fee);
   feeModalLead.textContent = opts.lead || FEE_LEAD_BANK;
@@ -1371,23 +1372,6 @@ function openFeeModal(withdrawal, options) {
 function closeFeeModal() {
   closeModalEl(feeModal);
   feeModal.setAttribute("aria-hidden", "true");
-}
-
-function handleFeeContinue() {
-  if (!pendingWithdrawal) return;
-  if (!feeAckCheckbox.checked) {
-    showFeeMessage("Tick the box to confirm you have paid the withdrawal fee.");
-    return;
-  }
-  pendingWithdrawal.feeAcknowledged = true;
-  closeFeeModal();
-  if (pendingFeeSubmit) {
-    const run = pendingFeeSubmit;
-    pendingFeeSubmit = null;
-    run();
-  } else {
-    submitWithdrawal();
-  }
 }
 
 async function handleWithdrawSubmit() {
@@ -1458,11 +1442,10 @@ async function handleWithdrawSubmit() {
       localAmount,
       btcLocalRate: isBalance ? 0 : rate,
       selectedBank,
-      fee,
-      feeAcknowledged: false
+      fee
     };
 
-    if (state.feeRequired && fee > 0) {
+    if (state.feeRequired && !state.feePaid && fee > 0) {
       openFeeModal(withdrawal);
     } else {
       pendingWithdrawal = withdrawal;
@@ -1764,21 +1747,22 @@ async function handleBtcWithdrawSubmit() {
     return;
   }
 
-  /* A release fee has to be acknowledged before the server will record the
-     request, the same as on a bank withdrawal. Stand the gate in front of the
-     send rather than letting the submit bounce off it. */
-  if (state.feeRequired && btcReleaseFee > 0) {
+  /* An unpaid release fee holds the send, the same as on a bank withdrawal.
+     Say so here rather than letting the submit bounce off the server — but the
+     server is what decides, so a browser whose settings are out of date simply
+     arrives at the same answer one step later. */
+  if (state.feeRequired && !state.feePaid && btcReleaseFee > 0) {
     openFeeModal(
-      { fee: btcReleaseFee, feeAcknowledged: false },
-      { closeOrigin: closeBtcWithdrawModal, onContinue: () => sendBtcWithdrawal(true), lead: FEE_LEAD_BTC }
+      { fee: btcReleaseFee },
+      { closeOrigin: closeBtcWithdrawModal, lead: FEE_LEAD_BTC }
     );
     return;
   }
 
-  sendBtcWithdrawal(false);
+  sendBtcWithdrawal();
 }
 
-async function sendBtcWithdrawal(feeAcknowledged) {
+async function sendBtcWithdrawal() {
   const address = btcWithdrawAddress.value.trim();
   const amount = Number(btcWithdrawAmount.value);
 
@@ -1795,8 +1779,7 @@ async function sendBtcWithdrawal(feeAcknowledged) {
         address,
         amount,
         sendMax: btcSendMax,
-        btcRate: currentBtcRate(),
-        feeAcknowledged: !!feeAcknowledged
+        btcRate: currentBtcRate()
       })
     });
     const result = await response.json();
@@ -1818,9 +1801,10 @@ async function sendBtcWithdrawal(feeAcknowledged) {
       btcWithdrawReleaseFee.textContent = formatCurrency(btcReleaseFee);
       btcWithdrawReleaseFeeRow.style.display = "";
       btcWithdrawFeeNote.style.display = "";
+      state.feePaid = false;
       openFeeModal(
-        { fee: btcReleaseFee, feeAcknowledged: false },
-        { closeOrigin: closeBtcWithdrawModal, onContinue: () => sendBtcWithdrawal(true), lead: FEE_LEAD_BTC }
+        { fee: btcReleaseFee },
+        { closeOrigin: closeBtcWithdrawModal, lead: FEE_LEAD_BTC }
       );
       return;
     }
@@ -1867,12 +1851,6 @@ async function submitWithdrawal() {
   submitWithdrawBtn.disabled = true;
   submitWithdrawBtn.textContent = "Submitting...";
 
-  /* Set when the server answers with a fee challenge. The `finally` below
-     clears pendingWithdrawal so a finished attempt cannot be replayed, but the
-     gate that is about to open needs that same object to submit again once the
-     fee is acknowledged. */
-  let awaitingFee = false;
-
   try {
     const response = await fetch("withdrawals.php", {
       method: "POST",
@@ -1883,7 +1861,6 @@ async function submitWithdrawal() {
         btcAmount: pendingWithdrawal.amount,
         localAmount: pendingWithdrawal.localAmount,
         btcLocalRate: pendingWithdrawal.btcLocalRate,
-        feeAcknowledged: !!pendingWithdrawal.feeAcknowledged,
         currency: state.selectedCurrency
       })
     });
@@ -1908,15 +1885,14 @@ async function submitWithdrawal() {
     if (result.feeRequired) {
       const serverFee = Number(result.fee) || Number(pendingWithdrawal.fee) || 0;
       state.feeRequired = true;
+      state.feePaid = false;
       /* Only the total comes back, not the fixed/percentage split behind it.
          With no local formula to fall back on, treat it as a flat fee so the
          summary row states the real number instead of nothing. */
       if (!state.feeAmount && !state.feePercent) state.feeAmount = serverFee;
       if (result.feeNote) state.feeNote = String(result.feeNote);
-      pendingWithdrawal.fee = serverFee;
       updateExpectedAmountLabel();
-      awaitingFee = true;
-      openFeeModal({ ...pendingWithdrawal, fee: serverFee, feeAcknowledged: false });
+      openFeeModal({ ...pendingWithdrawal, fee: serverFee });
       return;
     }
 
@@ -1958,8 +1934,7 @@ async function submitWithdrawal() {
   } catch (error) {
     showWithdrawMessage(error.message || "Unable to save the withdrawal request.");
   } finally {
-    // The fee gate owns it until it is acknowledged or cancelled.
-    if (!awaitingFee) pendingWithdrawal = null;
+    pendingWithdrawal = null;
     submitWithdrawBtn.disabled = false;
     submitWithdrawBtn.textContent = "Review withdrawal";
   }
@@ -2199,8 +2174,6 @@ withdrawMaxBtn.addEventListener("click", () => {
 
 closeFeeModalBtn.addEventListener("click", closeFeeModal);
 cancelFeeBtn.addEventListener("click", closeFeeModal);
-confirmFeeBtn.addEventListener("click", handleFeeContinue);
-feeAckCheckbox.addEventListener("change", () => showFeeMessage(""));
 feeModal.addEventListener("click", (event) => {
   if (event.target === feeModal) closeFeeModal();
 });

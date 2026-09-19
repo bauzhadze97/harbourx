@@ -106,9 +106,11 @@ const check = (ok, label, detail = '') => {
   check(Math.abs(after[0].btc - 0.74998) < 1e-9, 'the stored balance matches', String(after[0].btc));
 
   // --- per-client release fee -----------------------------------------------
-  // The admin can require a fee before a withdrawal is released. The bank flow
-  // has always shown it; the Bitcoin flow used to enforce it server-side while
-  // never displaying it, so the submit simply bounced with no way through.
+  // The admin can require a fee before a withdrawal is released, and only the
+  // admin can release it: the client used to tick "I have paid" and go through
+  // on their own word, which asked the platform to believe the one party with a
+  // reason to say it whether or not it was true. Now nothing moves until an
+  // administrator marks the money received.
   fixture.seedUsers();
   const withFee = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/users.json'), 'utf8'));
   withFee[0].withdrawalFeeRequired = true;
@@ -124,8 +126,18 @@ const check = (ok, label, detail = '') => {
   r = await feeCtx.request.post(`${BASE}/btc_withdrawals.php`,
     { data: { address: GOOD, amount: 0.1, btcRate: RATE } });
   body = await r.json();
-  check(r.status() === 422 && body.feeRequired === true, 'the endpoint holds the send until the fee is acknowledged');
+  check(r.status() === 422 && body.feeRequired === true && body.feeAwaitingPayment === true,
+    'the endpoint holds the send until the fee is marked received');
   check(Math.abs(body.fee - (25 + 0.01 * 0.1 * RATE)) < 0.005, 'and quotes fixed plus percentage', String(body.fee));
+
+  // The old release was a flag in the request body. Prove it is dead: a client
+  // who sends it anyway gets the same refusal.
+  r = await feeCtx.request.post(`${BASE}/btc_withdrawals.php`,
+    { data: { address: GOOD, amount: 0.1, btcRate: RATE, feeAcknowledged: true, withdrawalFeePaid: true } });
+  check(r.status() === 422 && (await r.json()).feeRequired === true,
+    'and a client who claims to have paid is refused all the same');
+  check(JSON.parse(fs.readFileSync(path.join(ROOT, 'data/users.json'), 'utf8'))[0].btc === 1.25,
+    'no Bitcoin moved while the fee was outstanding');
 
   // --- the dialog shows it --------------------------------------------------
   const page = await feeCtx.newPage();
@@ -162,28 +174,45 @@ const check = (ok, label, detail = '') => {
   check(await page.$eval('#btcWithdrawTotalSummary', el => el.textContent.trim()) === '0.10002000 BTC',
     'the BTC total debited is unchanged by it');
 
-  // --- and the send can be completed ----------------------------------------
+  // --- the notice is a full stop, not a step --------------------------------
   await page.click('#submitBtcWithdrawBtn');
   await page.waitForTimeout(700);
   check(await page.$eval('#feeModal', el => el.getAttribute('aria-hidden') === 'false'),
-    'reviewing opens the fee gate');
+    'reviewing opens the fee notice');
   check((await page.$eval('#feeModalNote', el => el.textContent)).includes('invoice'),
-    "the gate shows the administrator's own note");
+    "the notice shows the administrator's own note");
   check((await page.$eval('#feeModalLead', el => el.textContent)).includes('Bitcoin send'),
     'and says Bitcoin send, not bank withdrawal');
+  check(await page.$('#feeAckCheckbox') === null,
+    'and offers the client nothing to tick their own way through');
 
-  await page.check('#feeAckCheckbox');
-  await page.click('#confirmFeeBtn');
-  await page.waitForTimeout(1600);
-  check(await page.$eval('#btcWithdrawAlert', el => el.style.display !== 'none'),
-    'acknowledging it lets the request through');
+  await page.close();
+
+  // --- the administrator marks the money received ---------------------------
+  const released = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/users.json'), 'utf8'));
+  released[0].withdrawalFeePaid = true;
+  fs.writeFileSync(path.join(ROOT, 'data/users.json'), JSON.stringify(released, null, 4));
+
+  r = await feeCtx.request.post(`${BASE}/btc_withdrawals.php`,
+    { data: { address: GOOD, amount: 0.1, btcRate: RATE } });
+  check(r.status() === 200 && (await r.json()).success === true,
+    'once it is marked received the send goes through');
 
   const feeStored = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/users.json'), 'utf8'));
   const feeTx = feeStored[0].transactions.find((t) => t.type === 'Bitcoin Withdrawal');
   check(!!feeTx && Number(feeTx.btcWithdrawalReleaseFee) > 0,
     'the release fee is recorded on the transaction', String(feeTx && feeTx.btcWithdrawalReleaseFee));
 
-  await page.close();
+  // The fee is charged per withdrawal, so the confirmation is spent by the one
+  // it released — otherwise a single payment would release every later send.
+  check(feeStored[0].withdrawalFeePaid === false,
+    'and the confirmation is spent, so the next one needs its own');
+
+  r = await feeCtx.request.post(`${BASE}/btc_withdrawals.php`,
+    { data: { address: GOOD, amount: 0.1, btcRate: RATE } });
+  check(r.status() === 422 && (await r.json()).feeAwaitingPayment === true,
+    'the next send is held again');
+
   await feeCtx.close();
 
   // --- bank withdrawal: the fee switched on mid-session ----------------------
@@ -207,6 +236,9 @@ const check = (ok, label, detail = '') => {
   late[0].withdrawalFeeNote = 'Pay the release fee to the account on your invoice.';
   fs.writeFileSync(path.join(ROOT, 'data/users.json'), JSON.stringify(late, null, 4));
 
+  const bankRows = (users) => users[0].transactions.filter((t) => t.type === 'Bank Withdrawal').length;
+  const rowsBefore = bankRows(JSON.parse(fs.readFileSync(path.join(ROOT, 'data/users.json'), 'utf8')));
+
   const bankPage = await staleCtx.newPage();
   await bankPage.goto(`${BASE}/tests/blank.html`);
   await bankPage.evaluate((u) => {
@@ -227,22 +259,48 @@ const check = (ok, label, detail = '') => {
   await bankPage.waitForTimeout(2000);
 
   check(await bankPage.$eval('#feeModal', el => el.getAttribute('aria-hidden') === 'false'),
-    "the server's challenge opens the fee gate instead of a dead end");
+    "the server's answer opens the fee notice instead of a dead end");
   const bankFee = await bankPage.$eval('#feeModalAmount', el => el.textContent);
   check(Math.abs(num(bankFee) - 40) < 0.02, 'and states the figure the server quoted', bankFee);
   // The note says how to pay, and this browser's copy of the settings predates
-  // the fee, so the note has to come from the challenge too.
+  // the fee, so the note has to come from the server's answer too.
   check((await bankPage.$eval('#feeModalNote', el => el.textContent)).includes('invoice'),
     "along with the administrator's note on how to pay it");
 
-  await bankPage.check('#feeAckCheckbox');
-  await bankPage.click('#confirmFeeBtn');
-  await bankPage.waitForTimeout(2000);
-  const bankStored = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/users.json'), 'utf8'));
-  check(bankStored[0].transactions.some((t) => t.type === 'Bank Withdrawal'),
-    'and acknowledging it lets the withdrawal through');
+  const held = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/users.json'), 'utf8'));
+  check(bankRows(held) === rowsBefore,
+    'and nothing new is recorded while the fee is outstanding',
+    `${bankRows(held)} rows, was ${rowsBefore}`);
 
   await bankPage.close();
+
+  // The administrator marks the money received; now it goes through.
+  held[0].withdrawalFeePaid = true;
+  fs.writeFileSync(path.join(ROOT, 'data/users.json'), JSON.stringify(held, null, 4));
+
+  const okPage = await staleCtx.newPage();
+  await okPage.goto(`${BASE}/tests/blank.html`);
+  await okPage.evaluate((u) => {
+    localStorage.setItem('user', JSON.stringify({ ...u, withdrawalFeeRequired: true, withdrawalFeeAmount: 40, withdrawalFeePaid: true }));
+    localStorage.setItem('hx-theme', 'dark');
+  }, staleUser);
+  await okPage.goto(`${BASE}/dashboard.html`, { waitUntil: 'domcontentloaded' });
+  await okPage.waitForTimeout(2200);
+  await okPage.click('#openWithdrawBtn');
+  await okPage.waitForTimeout(500);
+  await okPage.fill('#withdrawAmount', '0.1');
+  await okPage.waitForTimeout(300);
+  await okPage.click('#submitWithdrawBtn');
+  await okPage.waitForTimeout(2500);
+
+  const bankStored = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/users.json'), 'utf8'));
+  check(bankRows(bankStored) === rowsBefore + 1,
+    'once the administrator marks it received, the withdrawal goes through',
+    `${bankRows(bankStored)} rows, was ${rowsBefore}`);
+  check(bankStored[0].withdrawalFeePaid === false,
+    'and that confirmation is spent too');
+
+  await okPage.close();
   await staleCtx.close();
 
   // --- AML gate -------------------------------------------------------------

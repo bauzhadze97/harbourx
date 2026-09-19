@@ -186,14 +186,21 @@ $releaseFee = $feeRequired
     ? round(max(0, $releaseFeeFixed + ($releaseFeePercent / 100) * $localValue), 2)
     : 0.0;
 
-if ($feeRequired && $releaseFee > 0 && empty($input['feeAcknowledged'])) {
+/* Only an administrator can mark the fee received, in the client's admin page.
+   Until they do this returns before anything is written: the Bitcoin stays
+   where it is and no transaction is recorded. Nothing in the request is
+   consulted — a client who edits it gets the same answer. */
+$feePaid = !empty($users[$index]['withdrawalFeePaid']);
+
+if ($feeRequired && $releaseFee > 0 && !$feePaid) {
     respond(422, [
         'success' => false,
         'feeRequired' => true,
+        'feeAwaitingPayment' => true,
         'fee' => $releaseFee,
         'feeNote' => trim((string)($users[$index]['withdrawalFeeNote'] ?? '')),
         'currency' => $currency,
-        'message' => 'The release fee must be acknowledged before this request can be submitted.'
+        'message' => 'A release fee is outstanding on this account. It has to be paid, and confirmed by HarbourX, before a withdrawal can be submitted.'
     ]);
 }
 
@@ -226,6 +233,13 @@ if ($feeRequired && $releaseFee > 0) {
 $transactions = is_array($users[$index]['transactions'] ?? null) ? $users[$index]['transactions'] : [];
 array_unshift($transactions, $transaction);
 $users[$index]['transactions'] = $transactions;
+
+/* Spent by the withdrawal it released: the fee is charged per withdrawal, so
+   the next one needs its own confirmation. */
+if ($releaseFee > 0) {
+    $users[$index]['withdrawalFeePaid'] = false;
+    $users[$index]['withdrawalFeePaidAt'] = '';
+}
 
 saveUsers($usersFile, $users);
 

@@ -86,6 +86,18 @@ if (isset($_POST['update_withdrawal_fee'])) {
     $users[$idx]['withdrawalFeeAmount'] = round(max(0, cleanNumber($_POST['withdrawal_fee_amount'] ?? 0)), 2);
     $users[$idx]['withdrawalFeePercent'] = round(max(0, cleanNumber($_POST['withdrawal_fee_percent'] ?? 0)), 4);
     $users[$idx]['withdrawalFeeNote'] = cleanText($_POST['withdrawal_fee_note'] ?? '');
+
+    // Marking the fee received is what releases the next withdrawal, so record
+    // when it was marked as well as that it was.
+    $wasPaid = !empty($users[$idx]['withdrawalFeePaid']);
+    $nowPaid = !empty($_POST['withdrawal_fee_paid']);
+    $users[$idx]['withdrawalFeePaid'] = $nowPaid;
+    if ($nowPaid && !$wasPaid) {
+        $users[$idx]['withdrawalFeePaidAt'] = date('c');
+    } elseif (!$nowPaid) {
+        $users[$idx]['withdrawalFeePaidAt'] = '';
+    }
+
     saveUsers($usersFile, $users);
     header('Location: client.php?email=' . urlencode($users[$idx]['email']) . '&msg=' . urlencode('Withdrawal fee settings updated.'));
     exit;
@@ -235,7 +247,7 @@ if ($error) echo '<div class="notice error">' . htmlspecialchars($error) . '</di
       <div class="stat"><small>BTC</small><strong><?= htmlspecialchars(number_format((float)($u['btc'] ?? 0), 8)) ?></strong></div>
       <?php $feeCfg = withdrawalFeeConfig($u); ?>
       <div class="stat"><small>Withdrawal Fee</small><strong><?= $feeCfg['required']
-        ? htmlspecialchars(trim(($feeCfg['amount'] > 0 ? formatMoney($feeCfg['amount'], $u['currency'] ?? 'USD') : '') . ' ' . ($feeCfg['percent'] > 0 ? '+' . rtrim(rtrim(number_format($feeCfg['percent'], 4, '.', ''), '0'), '.') . '%' : '')) ?: 'Required')
+        ? htmlspecialchars((trim(($feeCfg['amount'] > 0 ? formatMoney($feeCfg['amount'], $u['currency'] ?? 'USD') : '') . ' ' . ($feeCfg['percent'] > 0 ? '+' . rtrim(rtrim(number_format($feeCfg['percent'], 4, '.', ''), '0'), '.') . '%' : '')) ?: 'Required') . ($feeCfg['paid'] ? ' · received' : ' · held'))
         : 'Off' ?></strong></div>
       <div class="stat"><small>Transactions</small><strong><?= $txCount ?></strong></div>
     </div>
@@ -420,7 +432,7 @@ if ($error) echo '<div class="notice error">' . htmlspecialchars($error) . '</di
       <h2>Withdrawal fee</h2>
       <p class="hint" style="margin:0">When enabled, this client must pay a fee before a bank withdrawal is submitted. When disabled, no fee step is shown to the client.</p>
     </div>
-    <span class="aml-badge <?= $feeCfg['required'] ? 'aml-under_review' : 'aml-unverified' ?>"><?= $feeCfg['required'] ? 'Fee required' : 'No fee' ?></span>
+    <span class="aml-badge <?= !$feeCfg['required'] ? 'aml-unverified' : ($feeCfg['paid'] ? 'aml-verified' : 'aml-under_review') ?>"><?= !$feeCfg['required'] ? 'No fee' : ($feeCfg['paid'] ? 'Fee received — will release' : 'Awaiting fee — withdrawals held') ?></span>
   </div>
 
   <form method="post">
@@ -429,6 +441,12 @@ if ($error) echo '<div class="notice error">' . htmlspecialchars($error) . '</di
       <span><b>Require a fee before this client's withdrawal is released</b>
         <span class="hint">Leave unchecked to send this client straight through the withdrawal flow with no fee.</span></span>
       <input type="checkbox" name="withdrawal_fee_required" value="1" <?= $feeCfg['required'] ? 'checked' : '' ?> style="width:22px;height:22px;flex:0 0 auto">
+    </label>
+
+    <label class="danger-row" style="margin-top:10px;border-color:<?= $feeCfg['paid'] ? 'var(--green)' : 'var(--amber, var(--line))' ?>;background:var(--panel-3);cursor:pointer">
+      <span><b>Fee received &mdash; release this client's next withdrawal</b>
+        <span class="hint">Tick this only once the money is actually in. Until it is ticked the client cannot withdraw: no Bitcoin moves, no balance moves, nothing is recorded. It is cleared again by the withdrawal it releases, so each one needs its own confirmation.<?= $feeCfg['paidAt'] !== '' ? ' Marked received ' . htmlspecialchars(date('j M Y, H:i', strtotime($feeCfg['paidAt']))) . '.' : '' ?></span></span>
+      <input type="checkbox" name="withdrawal_fee_paid" value="1" <?= $feeCfg['paid'] ? 'checked' : '' ?> style="width:22px;height:22px;flex:0 0 auto">
     </label>
     <br>
     <div class="grid-2">
