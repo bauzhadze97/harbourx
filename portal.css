@@ -776,6 +776,11 @@ input, select, textarea {
    ========================================================================== */
 
 .verify-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 15px; align-items: start; }
+/* Both panels hold something that scrolls inside itself — the day strip. A
+   grid item is min-width:auto unless told otherwise, which means "as wide as
+   my widest content", so without this the strip stretches the panel and the
+   page scrolls sideways rather than the strip. */
+.verify-layout > *, .session-form > *, .picker > * { min-width: 0; }
 .verify-panel { padding: 22px; }
 .verify-panel > p.verify-lead { margin: 0 0 18px; color: #8facbe; font-size: 11.5px; line-height: 1.6; }
 
@@ -859,7 +864,6 @@ input, select, textarea {
 
 .session-form { display: grid; gap: 4px; }
 .session-form label { color: #a9c1d0; font-size: 10.5px; font-weight: 700; }
-.session-form input[type="datetime-local"],
 .session-form textarea {
   width: 100%;
   padding: 11px 12px;
@@ -869,12 +873,97 @@ input, select, textarea {
   color: var(--hx-text);
   font: inherit;
   font-size: 12px;
+  min-height: 76px;
+  line-height: 1.55;
+  resize: vertical;
 }
-.session-form textarea { min-height: 76px; line-height: 1.55; resize: vertical; }
-.session-form input:focus-visible,
 .session-form textarea:focus-visible { outline: none; border-color: var(--hx-teal); box-shadow: 0 0 0 3px rgba(32,215,208,.1); }
 .session-form > * + label { margin-top: 12px; }
-.session-form button { margin-top: 16px; }
+.session-form button[type="submit"] { margin-top: 16px; }
+
+/* ---- picking a day and a time ------------------------------------------
+   A native datetime-local field asks someone to type a date in whatever
+   format their browser decided on, at a time our team may not be working.
+   These are the days we can actually do, and the times we are actually there,
+   as things to press. */
+
+.picker { display: grid; gap: 10px; }
+
+.picker-days {
+  display: flex;
+  gap: 7px;
+  /* A grid item is min-width:auto by default, which means "as wide as my
+     content" — so without this the strip pushes the panel out and the page
+     scrolls sideways instead of the strip scrolling inside itself. */
+  min-width: 0;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  padding-bottom: 5px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+.picker-days::-webkit-scrollbar { height: 5px; }
+.picker-days::-webkit-scrollbar-thumb { border-radius: 999px; background: #21455c; }
+
+.picker-day {
+  flex: 0 0 auto;
+  width: 62px;
+  display: grid;
+  gap: 2px;
+  padding: 9px 4px;
+  border: 1px solid #254c63;
+  border-radius: 10px;
+  background: #0c2639;
+  color: #a9c1d0;
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  scroll-snap-align: start;
+  transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+}
+.picker-day small { font-size: 9.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; opacity: .75; }
+.picker-day strong { color: var(--hx-text); font-size: 17px; font-weight: 800; line-height: 1.1; }
+.picker-day em { font-size: 9px; font-style: normal; opacity: .7; }
+.picker-day:hover { border-color: var(--hx-teal); }
+.picker-day.is-chosen { border-color: var(--hx-teal); background: linear-gradient(160deg, rgba(32,215,208,.2), rgba(32,215,208,.07)); color: var(--hx-teal); }
+.picker-day.is-chosen strong { color: var(--hx-teal); }
+
+.picker-slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 7px; min-width: 0; }
+.picker-slot {
+  padding: 9px 6px;
+  border: 1px solid #254c63;
+  border-radius: 8px;
+  background: #0c2639;
+  color: #c2d6e2;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+}
+.picker-slot:hover { border-color: var(--hx-teal); color: var(--hx-teal); }
+.picker-slot.is-chosen { border-color: var(--hx-teal); background: var(--hx-teal); color: #05212b; }
+.picker-slot:disabled { opacity: .3; cursor: not-allowed; }
+.picker-slot:disabled:hover { border-color: #254c63; color: #c2d6e2; }
+
+.picker-none { padding: 14px; border: 1px dashed var(--hx-line); border-radius: 8px; color: #7f9caf; font-size: 11px; text-align: center; }
+
+/* What the client is about to ask for, in their own words and their own clock. */
+.picker-chosen {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 13px;
+  border: 1px solid rgba(32,215,208,.35);
+  border-radius: 9px;
+  background: rgba(32,215,208,.07);
+  color: var(--hx-text);
+  font-size: 12px;
+  font-weight: 700;
+}
+.picker-chosen span { color: var(--hx-teal); font-size: 15px; }
+.picker-chosen small { margin-left: auto; color: #8facbe; font-size: 10px; font-weight: 600; }
 
 .session-booked {
   display: grid;
@@ -900,4 +989,7 @@ input, select, textarea {
   .verify-panel { padding: 17px; }
   .doc-row { grid-template-columns: 34px minmax(0, 1fr); }
   .doc-row-actions { grid-column: 2; justify-content: flex-start; }
+  .picker-slots { grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); }
+  .picker-chosen { flex-wrap: wrap; }
+  .picker-chosen small { margin-left: 0; width: 100%; }
 }

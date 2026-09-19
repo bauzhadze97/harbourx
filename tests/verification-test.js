@@ -117,6 +117,42 @@ fs.writeFileSync(FAKE_PDF, '<?php echo "not a pdf"; ?>\n');
       check(r.status() === 404, `a crafted file id is refused (${probe.slice(0, 18)})`, `status ${r.status()}`);
     }
 
+    // ---------------------------------------------- the day and time picker
+    // The picker builds the days and times in the browser and sends back the
+    // local wall-clock string the endpoint parses. If the two ever disagree on
+    // the format, a booking silently lands at the wrong time or not at all.
+    const pickerPage = await ctx.newPage();
+    await pickerPage.goto(`${BASE}/tests/blank.html`);
+    await pickerPage.evaluate(u => localStorage.setItem('user', JSON.stringify(u)), user);
+    await pickerPage.goto(`${BASE}/verification.html`, { waitUntil: 'domcontentloaded' });
+    await pickerPage.waitForTimeout(1800);
+
+    const dayCount = await pickerPage.$$eval('.picker-day', d => d.length);
+    check(dayCount > 5, 'the picker offers a strip of days', `${dayCount} days`);
+    check(await pickerPage.$eval('#bookSessionBtn', b => b.disabled),
+      'and will not submit until a time is chosen');
+    check(await pickerPage.$('input[type="datetime-local"]') === null,
+      'the field people had to type a date into is gone');
+
+    await pickerPage.$$eval('.picker-day', d => d[1].click());
+    await pickerPage.waitForTimeout(300);
+    const slots = await pickerPage.$$('.picker-slot');
+    check(slots.length > 0, 'a day shows times to press', `${slots.length} slots`);
+    await slots[2].click();
+    await pickerPage.waitForTimeout(300);
+    check(!(await pickerPage.$eval('#bookSessionBtn', b => b.disabled)),
+      'choosing one enables the request');
+
+    await pickerPage.click('#bookSessionBtn');
+    await pickerPage.waitForTimeout(2000);
+    check(!(await pickerPage.$eval('#sessionBooked', el => el.hidden)),
+      'and the booking goes through from the page itself');
+
+    // Tidy up so the checks below start from no session.
+    const bookedId = (await (await ctx.request.get(`${BASE}/verification.php`)).json()).session.id;
+    await ctx.request.post(`${BASE}/verification.php`, { multipart: { action: 'cancel', id: bookedId } });
+    await pickerPage.close();
+
     // --------------------------------------------------------- the session
     const at = new Date(Date.now() + 26 * 3600 * 1000);
     const localValue = new Date(at.getTime() - at.getTimezoneOffset() * 60000).toISOString().slice(0, 16);

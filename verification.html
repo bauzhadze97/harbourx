@@ -22,15 +22,15 @@
   <title>HarbourX · Verification</title>
   <meta name="description" content="Upload an identity document or book a live verification session with HarbourX.">
   <meta name="color-scheme" content="dark">
-  <script src="theme.js?v=20260919-1948"></script>
+  <script src="theme.js?v=20260919-2018"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap"></noscript>
-  <link rel="stylesheet" href="hx-motion.css?v=20260919-1948">
-  <link rel="stylesheet" href="portal.css?v=20260919-1948">
-  <script src="hx-motion.js?v=20260919-1948" defer></script>
+  <link rel="stylesheet" href="hx-motion.css?v=20260919-2018">
+  <link rel="stylesheet" href="portal.css?v=20260919-2018">
+  <script src="hx-motion.js?v=20260919-2018" defer></script>
 </head>
 <body>
   <div class="portal-shell">
@@ -75,7 +75,7 @@
         <div class="verify-layout">
 
           <!-- ============================================ left: the document -->
-          <section class="portal-card verify-panel" data-reveal="left">
+          <section class="portal-card verify-panel" data-reveal>
             <div class="security-title">
               <span class="security-icon" aria-hidden="true">▤</span>
               <div>
@@ -107,7 +107,7 @@
           </section>
 
           <!-- ======================================= right: the live session -->
-          <section class="portal-card verify-panel" data-reveal="right">
+          <section class="portal-card verify-panel" data-reveal>
             <div class="security-title">
               <span class="security-icon" aria-hidden="true">▷</span>
               <div>
@@ -132,17 +132,26 @@
             </div>
 
             <form class="session-form" id="sessionForm">
-              <label for="sessionAt">Date and time that suits you</label>
-              <input type="datetime-local" id="sessionAt" required>
+              <label id="pickerLabel">Pick a day</label>
+              <div class="picker">
+                <div class="picker-days" id="pickerDays" role="group" aria-labelledby="pickerLabel"></div>
+                <div class="picker-slots" id="pickerSlots" role="group" aria-label="Available times"></div>
+                <div class="picker-none" id="pickerNone" hidden>Nothing left today. Try tomorrow.</div>
+                <div class="picker-chosen" id="pickerChosen" hidden>
+                  <span aria-hidden="true">✓</span>
+                  <span id="pickerChosenText"></span>
+                  <small id="pickerZone"></small>
+                </div>
+              </div>
 
               <label for="sessionMessage">Anything we should know first? (optional)</label>
               <textarea id="sessionMessage" maxlength="400" placeholder="For example: I no longer have the address document you asked for."></textarea>
 
-              <button class="portal-back" type="submit" id="bookSessionBtn">Request this session</button>
+              <button class="portal-back" type="submit" id="bookSessionBtn" disabled>Pick a time first</button>
             </form>
 
             <ul class="verify-steps">
-              <li><b>1</b><span>Pick a time at least half an hour from now, in your own timezone.</span></li>
+              <li><b>1</b><span>Times are weekdays, 9am to 6pm, shown on your own clock.</span></li>
               <li><b>2</b><span>We email you a joining link before it starts.</span></li>
               <li><b>3</b><span>Have your ID with you. We will never ask for your password or your two-factor codes.</span></li>
             </ul>
@@ -305,6 +314,13 @@
     } else {
       sessionBooked.hidden = true;
       sessionForm.hidden = false;
+      /* Coming back to the form — after cancelling, or on a tab left open over
+         lunch — rebuilds the days, so it never offers a slot that has passed
+         while it was hidden. */
+      if (typeof buildDays === "function") {
+        chosen = null;
+        buildDays();
+      }
     }
   }
 
@@ -381,18 +397,17 @@
 
   sessionForm.addEventListener("submit", function (event) {
     event.preventDefault();
-    var at = document.getElementById("sessionAt").value;
-    if (!at) {
-      say("Pick a date and time first.", "error");
+    if (!chosen) {
+      say("Pick a day and a time first.", "error");
       return;
     }
     bookBtn.disabled = true;
     send({
       action: "book",
-      at: at,
+      at: localValue(chosen),
       /* The server needs to know which clock the client read that time off.
          Without it a booking made in Tbilisi lands four hours out. */
-      timezone: (window.Intl && Intl.DateTimeFormat().resolvedOptions().timeZone) || "UTC",
+      timezone: TIMEZONE,
       note: document.getElementById("sessionMessage").value
     }).then(function () { bookBtn.disabled = false; });
   });
@@ -403,12 +418,145 @@
     send({ action: "cancel", id: booked.id });
   });
 
-  /* The earliest time the server will take, so the picker does not offer one
-     it is about to refuse. */
-  var soonest = new Date(Date.now() + 45 * 60 * 1000);
-  soonest.setSeconds(0, 0);
-  document.getElementById("sessionAt").min =
-    new Date(soonest.getTime() - soonest.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  /* ============================================================ the picker
+     A native datetime-local field asks someone to type a date in whatever
+     format their browser decided on, at a time nobody may be here to take it.
+     This offers the days we work and the times we are in, as things to press.
+
+     To change when sessions can be booked, these four numbers are the whole
+     of it. The server only insists the time is at least half an hour away and
+     within 90 days; everything narrower is here. */
+  var DAYS_AHEAD = 21;     // how far out the strip runs
+  var OPEN_HOUR = 9;       // first slot
+  var CLOSE_HOUR = 18;     // last slot starts before this
+  var SLOT_MINUTES = 30;
+  var WEEKENDS = false;    // true to offer Saturday and Sunday as well
+
+  var TIMEZONE = (window.Intl && Intl.DateTimeFormat().resolvedOptions().timeZone) || "UTC";
+  var EARLIEST = 45 * 60 * 1000;   // the server refuses anything inside 30
+
+  var pickerDays = document.getElementById("pickerDays");
+  var pickerSlots = document.getElementById("pickerSlots");
+  var pickerNone = document.getElementById("pickerNone");
+  var pickerChosen = document.getElementById("pickerChosen");
+  var pickerChosenText = document.getElementById("pickerChosenText");
+  var chosen = null;
+  var shownDay = null;
+
+  /** The format the endpoint parses: local wall-clock, no timezone suffix. */
+  function localValue(date) {
+    var pad = function (n) { return (n < 10 ? "0" : "") + n; };
+    return date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate())
+      + "T" + pad(date.getHours()) + ":" + pad(date.getMinutes());
+  }
+
+  function sameDay(a, b) {
+    return a && b && a.getFullYear() === b.getFullYear()
+      && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  }
+
+  /** Every slot on `day` that is still far enough away to be accepted. */
+  function slotsFor(day) {
+    var slots = [];
+    var floor = Date.now() + EARLIEST;
+    for (var hour = OPEN_HOUR; hour < CLOSE_HOUR; hour++) {
+      for (var minute = 0; minute < 60; minute += SLOT_MINUTES) {
+        var at = new Date(day.getFullYear(), day.getMonth(), day.getDate(), hour, minute, 0, 0);
+        if (at.getTime() >= floor) slots.push(at);
+      }
+    }
+    return slots;
+  }
+
+  function renderSlots() {
+    pickerSlots.textContent = "";
+    var slots = shownDay ? slotsFor(shownDay) : [];
+    pickerNone.hidden = slots.length > 0;
+
+    slots.forEach(function (at) {
+      var button = document.createElement("button");
+      button.type = "button";
+      button.className = "picker-slot" + (chosen && chosen.getTime() === at.getTime() ? " is-chosen" : "");
+      button.textContent = at.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+      button.setAttribute("aria-pressed", String(!!chosen && chosen.getTime() === at.getTime()));
+      button.addEventListener("click", function () {
+        chosen = at;
+        renderSlots();
+        renderChosen();
+      });
+      pickerSlots.appendChild(button);
+    });
+  }
+
+  function renderChosen() {
+    if (!chosen) {
+      pickerChosen.hidden = true;
+      bookBtn.disabled = true;
+      bookBtn.textContent = "Pick a time first";
+      return;
+    }
+    pickerChosen.hidden = false;
+    pickerChosenText.textContent = chosen.toLocaleString(undefined,
+      { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+    document.getElementById("pickerZone").textContent = TIMEZONE.replace(/_/g, " ");
+    bookBtn.disabled = false;
+    bookBtn.textContent = "Request this session";
+  }
+
+  function buildDays() {
+    pickerDays.textContent = "";
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    var first = null;
+
+    for (var offset = 0; offset < DAYS_AHEAD; offset++) {
+      var day = new Date(today.getFullYear(), today.getMonth(), today.getDate() + offset);
+      var weekend = day.getDay() === 0 || day.getDay() === 6;
+      if (!WEEKENDS && weekend) continue;
+      if (slotsFor(day).length === 0) continue;   // today, once the last slot has gone
+
+      (function (day) {
+        var button = document.createElement("button");
+        button.type = "button";
+        button.className = "picker-day";
+        button.dataset.day = localValue(day).slice(0, 10);
+
+        var name = document.createElement("small");
+        name.textContent = sameDay(day, new Date())
+          ? "Today"
+          : day.toLocaleDateString(undefined, { weekday: "short" });
+        var number = document.createElement("strong");
+        number.textContent = String(day.getDate());
+        var month = document.createElement("em");
+        month.textContent = day.toLocaleDateString(undefined, { month: "short" });
+
+        button.appendChild(name);
+        button.appendChild(number);
+        button.appendChild(month);
+        button.addEventListener("click", function () { selectDay(day); });
+        pickerDays.appendChild(button);
+        if (!first) first = day;
+      })(day);
+    }
+
+    if (first) selectDay(first);
+  }
+
+  function selectDay(day) {
+    shownDay = day;
+    // Choosing a different day drops a time chosen on the old one.
+    if (chosen && !sameDay(chosen, day)) chosen = null;
+    var key = localValue(day).slice(0, 10);
+    Array.prototype.forEach.call(pickerDays.children, function (el) {
+      var on = el.dataset.day === key;
+      el.classList.toggle("is-chosen", on);
+      el.setAttribute("aria-pressed", String(on));
+    });
+    renderSlots();
+    renderChosen();
+  }
+
+  buildDays();
 
   /* ------------------------------------------------------------ first load */
 

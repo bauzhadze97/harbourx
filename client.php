@@ -379,7 +379,7 @@ if ($error) echo '<div class="notice error">' . htmlspecialchars($error) . '</di
     </div>
   </div>
 </div>
-<script src="qrcode.min.js?v=20260919-1948"></script>
+<script src="qrcode.min.js?v=20260919-2018"></script>
 <script>
   (function () {
     var input = document.getElementById('btcWalletInput');
