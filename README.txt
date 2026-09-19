@@ -105,6 +105,17 @@ The rest of this section is the same thing done by hand.
    notification centre; optional desktop notifications work while an admin
    page is open in a browser that has granted notification permission.
 
+Releasing
+---------
+Before you commit a change that people should see:
+
+     ./bump-version.sh
+
+It rewrites the ?v= stamp on every stylesheet and script reference in the
+project, so the deploy that follows reaches everyone on an ordinary refresh.
+Commit that alongside your change. Skipping it does not break anything — it
+just means somebody will reload three times and think the deploy failed.
+
 Running the checks locally
 --------------------------
 The same suite CI runs (see .github/workflows/ci.yml):
@@ -135,6 +146,21 @@ It writes tests/screenshots/ as it goes. Set CHROMIUM_EXECUTABLE=<path> to point
 it at a Chromium you already have instead of downloading one.
 
 What changed in this version:
+- Stamped every local stylesheet and script with a version, so a deploy shows
+  up on a normal refresh. A browser that already had home.css was serving its
+  own copy of it, which meant a deploy could land correctly and still look like
+  it had failed — reload, reload again, open a private window, see the new
+  page, conclude something is broken. The .htaccess asks browsers not to cache
+  these files and most of the time they listen; "most of the time" is the
+  problem.
+
+  home.css?v=20260919-1931 is simply a different address from the one the
+  browser has, so nothing between here and the reader can hand over a stale
+  copy. ./bump-version.sh sets the stamp across every page in one go — run it
+  before committing a release, and the deploy after it needs no explaining to
+  anyone. Third-party URLs (Google Fonts, the chat widget) are left alone;
+  they are not ours to version. tests/smoke.mjs fails if a page picks up a
+  local asset without a stamp.
 - The withdrawal fee is now released by an administrator, not by the client.
   A client who owed a release fee was shown a gate with a tick-box that said "I
   have paid the withdrawal fee shown above", and ticking it sent the withdrawal

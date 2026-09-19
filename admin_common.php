@@ -190,15 +190,15 @@ function pageHeader($title = 'Admin Panel') {
         . '<meta name="robots" content="noindex,nofollow">'
         . '<meta name="color-scheme" content="light dark">'
         . '<title>HarbourX Admin · ' . htmlspecialchars($title) . '</title>'
-        . '<script src="theme.js"></script>'
+        . '<script src="theme.js?v=20260919-1931"></script>'
         . '<link rel="preconnect" href="https://fonts.googleapis.com">'
         . '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
         . '<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap">'
         . '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap" media="print" onload="this.media=&quot;all&quot;">'
         . '<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap"></noscript>'
-        . '<link rel="stylesheet" href="hx-motion.css">'
+        . '<link rel="stylesheet" href="hx-motion.css?v=20260919-1931">'
         . '<link rel="stylesheet" href="admin-style.css?v=' . rawurlencode($styleVersion) . '">'
-        . '<script src="hx-motion.js" defer></script></head><body>';
+        . '<script src="hx-motion.js?v=20260919-1931" defer></script></head><body>';
 }
 
 function themeToggleIcons() {

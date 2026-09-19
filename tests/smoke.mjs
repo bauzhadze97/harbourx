@@ -131,7 +131,17 @@ const audit = page => page.evaluate(() => ({
   hiddenReveals: [...document.querySelectorAll('[data-reveal]')]
     .filter(el => el.offsetParent !== null && getComputedStyle(el).opacity !== '1').length,
   hxJs: document.documentElement.classList.contains('hx-js'),
-  hxMotion: typeof window.hxMotion
+  hxMotion: typeof window.hxMotion,
+
+  /* Our own stylesheets and scripts carry a ?v= stamp, so a browser holding
+     yesterday's copy of one is asking for an address it has never fetched and
+     gets the new file. bump-version.sh sets them; this catches the asset that
+     gets added later without one, which is invisible until someone is told to
+     open a private window to see their own deploy. Third-party URLs are not
+     ours to stamp and are skipped. */
+  unversioned: [...document.querySelectorAll('link[rel="stylesheet"], script[src]')]
+    .map(el => el.getAttribute('href') || el.getAttribute('src') || '')
+    .filter(url => url && !/^(https?:)?\/\//.test(url) && !url.includes('?v='))
 }));
 
 const PAGES = [
@@ -183,6 +193,8 @@ try {
       check(a.hiddenReveals === 0, `${url} — reveal content visible`, `${a.hiddenReveals} stuck hidden`);
       check(a.hxJs, `${url} — html.hx-js set before paint`);
       check(a.hxMotion === 'object', `${url} — window.hxMotion available`);
+      check(a.unversioned.length === 0, `${url} — every local asset is version-stamped`,
+        a.unversioned.join(', '));
       await page.close();
     }
     await context.close();

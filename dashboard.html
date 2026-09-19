@@ -19,7 +19,7 @@
        comes from cache — unlike this document, which is sent no-store. It used to
        be inlined here as a hand-kept duplicate of theme.js; the copy has been
        dropped so there is only one version of the theme logic to maintain. -->
-  <script src="theme.js"></script>
+  <script src="theme.js?v=20260919-1931"></script>
 
   <!-- Plus Jakarta Sans as one variable font rather than a set of static weights: a
        single file covers every weight the stylesheets ask for. Loaded off the critical
@@ -41,10 +41,10 @@
        one. Both scripts are deferred, so they execute after parsing in source
        order — hx-motion first, so window.hxMotion exists before the dashboard
        reaches for it. -->
-  <link rel="stylesheet" href="hx-motion.css" />
-  <link rel="stylesheet" href="dashboard.css" />
-  <script src="hx-motion.js" defer></script>
-  <script src="dashboard.js" defer></script>
+  <link rel="stylesheet" href="hx-motion.css?v=20260919-1931" />
+  <link rel="stylesheet" href="dashboard.css?v=20260919-1931" />
+  <script src="hx-motion.js?v=20260919-1931" defer></script>
+  <script src="dashboard.js?v=20260919-1931" defer></script>
 </head>
 <body>
   <div class="hx-shell">
