@@ -12,6 +12,8 @@ User-agent: *
 # The client workspace. Signed-in pages, and the endpoints behind them.
 Disallow: /dashboard.html
 Disallow: /statements.html
+Disallow: /portfolio.html
+Disallow: /transactions.html
 Disallow: /support.html
 Disallow: /aml.html
 Disallow: /verification.html

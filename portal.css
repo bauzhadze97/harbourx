@@ -993,3 +993,131 @@ input, select, textarea {
   .picker-chosen { flex-wrap: wrap; }
   .picker-chosen small { margin-left: 0; width: 100%; }
 }
+
+/* ============================================================================
+   Portfolio and Transactions
+   ----------------------------------------------------------------------------
+   Both were anchors on the dashboard — #portfolio and #transactions scrolled
+   you down a page that was already doing three other jobs. As pages of their
+   own they get the room to answer the question each is actually asked: what do
+   I hold, and what has happened.
+   ========================================================================== */
+
+/* ---- the strip of figures both pages open with ------------------------- */
+
+.figures { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 15px; }
+.figure-card { padding: 16px 18px; }
+.figure-card small { display: block; color: #8facbe; font-size: 9.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+.figure-card strong { display: block; margin-top: 6px; color: var(--hx-text); font-size: clamp(18px, 2vw, 23px); font-weight: 800; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.figure-card span { display: block; margin-top: 4px; font-size: 10.5px; color: #8facbe; }
+.figure-card span.up { color: var(--hx-green); }
+.figure-card span.down { color: var(--hx-red); }
+
+/* ---- portfolio --------------------------------------------------------- */
+
+.pf-layout { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 15px; align-items: start; }
+.pf-panel { padding: 22px; }
+.pf-panel > h2 { margin: 0 0 4px; color: var(--hx-text); font-size: 16px; }
+.pf-panel > p.pf-lead { margin: 0 0 18px; color: #8facbe; font-size: 11.5px; line-height: 1.6; }
+
+.holding { display: grid; grid-template-columns: 42px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--hx-line); }
+.holding:last-child { border-bottom: 0; padding-bottom: 0; }
+.holding:first-of-type { padding-top: 0; }
+.holding-mark { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; color: #fff; font-size: 18px; font-weight: 800; }
+.holding-mark.is-btc { background: #f7931a; }
+.holding-mark.is-cash { background: linear-gradient(135deg, #17657e, #25beb8); }
+.holding b { display: block; color: var(--hx-text); font-size: 13px; }
+.holding small { display: block; margin-top: 3px; color: #8facbe; font-size: 10.5px; font-variant-numeric: tabular-nums; }
+.holding-value { text-align: right; }
+.holding-value strong { display: block; color: var(--hx-text); font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.holding-value em { display: block; margin-top: 3px; color: var(--hx-teal); font-size: 10.5px; font-style: normal; font-weight: 700; }
+
+.alloc-bar { display: flex; height: 10px; margin: 4px 0 14px; border-radius: 999px; overflow: hidden; background: #0e2a3e; }
+.alloc-bar i { height: 100%; transition: width 420ms cubic-bezier(.22,1,.36,1); }
+.alloc-bar i.is-btc { background: linear-gradient(90deg, #f7931a, #ffb95e); }
+.alloc-bar i.is-cash { background: linear-gradient(90deg, #17657e, #25beb8); }
+.alloc-legend { display: grid; gap: 9px; }
+.alloc-legend li { display: grid; grid-template-columns: 9px 1fr auto; gap: 11px; align-items: center; color: #b1c8d7; font-size: 11.5px; }
+.alloc-legend i { width: 9px; height: 9px; border-radius: 50%; }
+.alloc-legend b { color: var(--hx-text); font-variant-numeric: tabular-nums; }
+
+.price-note { display: flex; align-items: center; gap: 8px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--hx-line); color: #7f9caf; font-size: 10.5px; }
+.price-note i { width: 7px; height: 7px; border-radius: 50%; background: var(--hx-green); flex: none; }
+.price-note.is-stale i { background: var(--hx-amber); }
+
+/* ---- transactions ------------------------------------------------------ */
+
+/* Search, four filters and the buttons: six things, six columns, one row. The
+   search gets the extra room because it is the one people type into. */
+.tx-toolbar { display: grid; grid-template-columns: minmax(150px, 1.7fr) repeat(4, minmax(105px, 1fr)) auto; gap: 10px; align-items: end; padding: 16px 18px; margin-bottom: 13px; }
+.tx-field { display: grid; gap: 5px; min-width: 0; }
+.tx-field label { color: #a9c1d0; font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.tx-field input, .tx-field select {
+  width: 100%;
+  height: 40px;
+  padding: 0 11px;
+  border: 1px solid #254c63;
+  border-radius: 8px;
+  background: #0c2639;
+  color: var(--hx-text);
+  font: inherit;
+  font-size: 12px;
+}
+.tx-field input:focus-visible, .tx-field select:focus-visible { outline: none; border-color: var(--hx-teal); box-shadow: 0 0 0 3px rgba(32,215,208,.1); }
+.tx-actions { display: flex; gap: 8px; }
+.tx-actions button { height: 40px; padding: 0 14px; border: 1px solid #2a536b; border-radius: 8px; background: transparent; color: #a8c8d7; font: inherit; font-size: 11px; font-weight: 800; cursor: pointer; white-space: nowrap; }
+.tx-actions button:hover { border-color: var(--hx-teal); color: var(--hx-teal); }
+.tx-actions button.is-primary { border-color: var(--hx-teal); background: var(--hx-teal); color: #05212b; }
+
+.tx-table { overflow-x: auto; }
+.tx-head, .tx-row { display: grid; grid-template-columns: 104px 150px minmax(0, 1fr) 170px 104px; gap: 14px; align-items: center; }
+.tx-head { padding: 12px 18px; border-bottom: 1px solid var(--hx-line); color: #8facbe; font-size: 9.5px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+.tx-head button { padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; text-align: left; }
+.tx-head button:hover { color: var(--hx-teal); }
+.tx-head button[aria-sort="ascending"]::after { content: " ↑"; color: var(--hx-teal); }
+.tx-head button[aria-sort="descending"]::after { content: " ↓"; color: var(--hx-teal); }
+.tx-head .is-amount, .tx-row .tx-amount { text-align: right; }
+
+.tx-row { padding: 14px 18px; border-bottom: 1px solid var(--hx-line-soft); font-size: 12px; }
+.tx-row:last-child { border-bottom: 0; }
+.tx-row:hover { background: rgba(32,215,208,.035); }
+.tx-date { color: #8facbe; font-size: 11px; font-variant-numeric: tabular-nums; }
+.tx-type { color: var(--hx-text); font-weight: 700; }
+.tx-detail { color: #8facbe; overflow-wrap: anywhere; }
+.tx-amount { color: var(--hx-text); font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.tx-amount.is-in { color: var(--hx-green); }
+.tx-amount.is-out { color: #e4eef4; }
+
+.tx-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 18px; border-top: 1px solid var(--hx-line); color: #8facbe; font-size: 11px; }
+.tx-pager { display: flex; gap: 8px; }
+.tx-pager button { min-width: 36px; height: 34px; padding: 0 12px; border: 1px solid #2a536b; border-radius: 7px; background: transparent; color: #a8c8d7; font: inherit; font-size: 11px; font-weight: 800; cursor: pointer; }
+.tx-pager button:disabled { opacity: .35; cursor: not-allowed; }
+.tx-pager button:not(:disabled):hover { border-color: var(--hx-teal); color: var(--hx-teal); }
+
+.tx-empty { padding: 44px 20px; color: #7f9caf; font-size: 12px; text-align: center; }
+
+@media (max-width: 1040px) {
+  .figures { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pf-layout { grid-template-columns: minmax(0, 1fr); }
+  .tx-toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tx-toolbar .tx-field:first-child { grid-column: 1 / -1; }
+  .tx-actions { grid-column: 1 / -1; }
+  .tx-head, .tx-row { grid-template-columns: 96px 130px minmax(0, 1fr) 150px 92px; }
+}
+@media (max-width: 720px) {
+  .tx-head { display: none; }
+  .tx-row { grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding: 15px 16px; }
+  .tx-row .tx-date { grid-column: 1; order: 1; }
+  .tx-row .tx-type { grid-column: 1; order: 2; font-size: 13px; }
+  .tx-row .tx-detail { grid-column: 1 / -1; order: 4; }
+  .tx-row .tx-amount { grid-column: 2; grid-row: 1 / span 2; order: 3; align-self: center; text-align: right; }
+  .tx-row .tx-status { grid-column: 1 / -1; order: 5; justify-self: start; margin-top: 4px; }
+}
+@media (max-width: 620px) {
+  .figures { gap: 9px; }
+  .figure-card { padding: 13px 14px; }
+  .pf-panel { padding: 17px; }
+  .tx-toolbar { grid-template-columns: minmax(0, 1fr); padding: 15px 16px; }
+  .tx-actions button { flex: 1; }
+  .tx-foot { flex-direction: column; align-items: flex-start; gap: 10px; }
+}

@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<!--
+    Transactions.
+
+  The full history, as a page of its own. It used to be an anchor on the
+  dashboard — #transactions scrolled you down a page already doing three other
+  jobs, and showed the most recent handful with nothing to filter them by.
+
+  Everything here works off the record the dashboard stored, so there is no
+  second source to disagree with it.
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- A client's own workspace. Kept out of search results here as well as in
+       robots.txt: robots.txt asks a crawler not to fetch the page, this tells one
+       that reached it anyway — through a shared link, say — not to index it. -->
+  <meta name="robots" content="noindex, nofollow">
+  <title>HarbourX · Transactions</title>
+  <meta name="description" content="Your full HarbourX transaction history, with filters, sorting and CSV export.">
+  <meta name="color-scheme" content="dark">
+  <script src="theme.js?v=20260920-0549"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap"></noscript>
+  <link rel="stylesheet" href="hx-motion.css?v=20260920-0549">
+  <link rel="stylesheet" href="portal.css?v=20260920-0549">
+  <script src="hx-motion.js?v=20260920-0549" defer></script>
+  <script src="portal-data.js?v=20260920-0549"></script>
+</head>
+<body>
+  <div class="portal-shell">
+    <aside class="portal-sidebar" id="portalSidebar">
+      <a class="portal-brand" href="dashboard.html"><svg viewBox="0 0 42 42" aria-hidden="true"><path d="M6 29 21 9l15 20"/><path d="m13 33 8-11 8 11"/></svg><strong>HarbourX</strong></a>
+      <nav class="portal-nav" aria-label="Primary navigation">
+        <a href="dashboard.html"><i>⌂</i>Overview</a><a href="portfolio.html"><i>◔</i>Portfolio</a><a class="active" href="transactions.html"><i>☷</i>Transactions</a><a href="dashboard.html"><i>↓</i>Deposit</a><a href="dashboard.html"><i>↑</i>Withdraw</a><a href="statements.html"><i>▤</i>Statements</a><a href="verification.html"><i>✓</i>Verification</a><a href="change_password.php"><i>◇</i>Security</a><a href="support.html"><i>?</i>Support</a>
+      </nav>
+    </aside>
+
+    <div class="portal-workspace">
+      <header class="portal-topbar">
+        <button class="portal-menu" id="portalMenu" type="button" aria-label="Open navigation">☰</button>
+        <label class="portal-search"><span>⌕</span><input type="search" id="txTopSearch" placeholder="Search your transactions…"></label>
+        <div class="portal-user"><span class="portal-avatar" id="userInitials">HX</span><div><strong id="userName">HarbourX client</strong><small>Transactions</small></div></div>
+      </header>
+
+      <main class="portal-main">
+        <div class="portal-breadcrumb"><a href="dashboard.html">Dashboard</a> &nbsp;›&nbsp; Transactions</div>
+        <div class="portal-heading">
+          <div>
+            <h1>Transactions</h1>
+            <p>Everything that has moved through your account. Filter it, sort it, or take the lot as a spreadsheet.</p>
+          </div>
+          <a class="portal-back" href="statements.html">Monthly statements →</a>
+        </div>
+
+        <div class="figures" id="figures" data-reveal>
+          <div class="portal-card figure-card"><small>Showing</small><strong id="figCount">0</strong><span id="figCountNote">of 0 movements</span></div>
+          <div class="portal-card figure-card"><small>Bitcoin in</small><strong id="figBtcIn">0.00000000</strong><span>BTC received</span></div>
+          <div class="portal-card figure-card"><small>Bitcoin out</small><strong id="figBtcOut">0.00000000</strong><span>BTC sent or converted</span></div>
+          <div class="portal-card figure-card"><small>Cash out</small><strong id="figCashOut">0.00</strong><span id="figCashOutNote">withdrawn and fees</span></div>
+        </div>
+
+        <section class="portal-card tx-toolbar" data-reveal>
+          <div class="tx-field">
+            <label for="txSearch">Search</label>
+            <input type="search" id="txSearch" placeholder="Type, detail, amount…" autocomplete="off">
+          </div>
+          <div class="tx-field">
+            <label for="txType">Type</label>
+            <select id="txType"><option value="">All types</option></select>
+          </div>
+          <div class="tx-field">
+            <label for="txStatus">Status</label>
+            <select id="txStatus"><option value="">Any status</option></select>
+          </div>
+          <div class="tx-field">
+            <label for="txFrom">From</label>
+            <input type="date" id="txFrom">
+          </div>
+          <div class="tx-field">
+            <label for="txTo">To</label>
+            <input type="date" id="txTo">
+          </div>
+          <div class="tx-actions">
+            <button type="button" id="txClear">Clear</button>
+            <button type="button" id="txExport" class="is-primary">Export CSV</button>
+          </div>
+        </section>
+
+        <section class="portal-card" data-reveal>
+          <div class="tx-table">
+            <div class="tx-head" role="row">
+              <button type="button" data-sort="date" aria-sort="descending">Date</button>
+              <button type="button" data-sort="type" aria-sort="none">Type</button>
+              <span>Details</span>
+              <button type="button" data-sort="amount" aria-sort="none" class="is-amount">Amount</button>
+              <span>Status</span>
+            </div>
+            <div id="txRows"></div>
+          </div>
+          <div class="tx-empty" id="txEmpty" hidden>Nothing matches those filters.</div>
+          <div class="tx-foot">
+            <span id="txRange">—</span>
+            <div class="tx-pager">
+              <button type="button" id="txPrev" disabled>← Newer</button>
+              <button type="button" id="txNext" disabled>Older →</button>
+            </div>
+          </div>
+        </section>
+
+        <footer class="portal-footer">
+          <span>© <span id="year">2026</span> HarbourX</span>
+          <nav>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="statements.html">Statements</a>
+            <a href="support.html">Support</a>
+          </nav>
+        </footer>
+      </main>
+    </div>
+  </div>
+
+<script>
+/* ============================================================================
+   transactions.html
+   ----------------------------------------------------------------------------
+   The whole history, from the record the dashboard already stored. Filtering,
+   sorting and paging all happen here in one pass over that array — there is no
+   endpoint to ask, and at the size a client's history reaches there never needs
+   to be one.
+   ========================================================================== */
+(function () {
+  "use strict";
+
+  var user = hxPortal.requireUser();
+  if (!user) return;
+  hxPortal.shell("Transactions");
+
+  var CURRENCY = String(user.currency || "USD").toUpperCase();
+  var PER_PAGE = 25;
+
+  var all = (Array.isArray(user.transactions) ? user.transactions : []).map(function (tx, position) {
+    var parsed = hxPortal.parse(tx);
+    return {
+      raw: tx,
+      /* The original order is the tie-breaker: two rows on the same date keep
+         the order they were written in rather than shuffling between sorts. */
+      position: position,
+      date: String(tx.date || ""),
+      time: Date.parse(tx.date) || 0,
+      type: String(tx.type || "Movement"),
+      details: String(tx.details || ""),
+      status: String(tx.status || ""),
+      amount: parsed.display,
+      direction: parsed.direction,
+      asset: parsed.asset,
+      value: parsed.value,
+      local: parsed.local,
+      /* One string to search, built once rather than on every keystroke. */
+      haystack: [tx.date, tx.type, tx.details, tx.amount, tx.status].join(" ").toLowerCase()
+    };
+  });
+
+  var state = { search: "", type: "", status: "", from: "", to: "", sort: "date", dir: "desc", page: 0 };
+
+  var els = {
+    rows: document.getElementById("txRows"),
+    empty: document.getElementById("txEmpty"),
+    range: document.getElementById("txRange"),
+    prev: document.getElementById("txPrev"),
+    next: document.getElementById("txNext"),
+    search: document.getElementById("txSearch"),
+    type: document.getElementById("txType"),
+    status: document.getElementById("txStatus"),
+    from: document.getElementById("txFrom"),
+    to: document.getElementById("txTo")
+  };
+
+  /* The filter dropdowns are built from what this account actually has, so a
+     client never picks a type that returns nothing. */
+  function fillOptions(select, values) {
+    values.sort().forEach(function (value) {
+      var option = document.createElement("option");
+      option.value = value;
+      option.textContent = value;
+      select.appendChild(option);
+    });
+  }
+  fillOptions(els.type, all.reduce(function (list, tx) {
+    if (tx.type && list.indexOf(tx.type) < 0) list.push(tx.type);
+    return list;
+  }, []));
+  fillOptions(els.status, all.reduce(function (list, tx) {
+    if (tx.status && list.indexOf(tx.status) < 0) list.push(tx.status);
+    return list;
+  }, []));
+
+  function matches(tx) {
+    if (state.search && tx.haystack.indexOf(state.search) < 0) return false;
+    if (state.type && tx.type !== state.type) return false;
+    if (state.status && tx.status !== state.status) return false;
+    // Dates are ISO here, so comparing them as strings is comparing them as dates.
+    if (state.from && tx.date < state.from) return false;
+    if (state.to && tx.date > state.to) return false;
+    return true;
+  }
+
+  function sorted(list) {
+    var sign = state.dir === "asc" ? 1 : -1;
+    return list.slice().sort(function (a, b) {
+      var difference = 0;
+      if (state.sort === "date") difference = a.time - b.time;
+      else if (state.sort === "type") difference = a.type.localeCompare(b.type);
+      else if (state.sort === "amount") {
+        /* Bitcoin and cash are not comparable as numbers, so amount sorts on
+           what the row is worth in the account currency — a BTC figure priced
+           at the live rate, a cash figure as it stands. */
+        difference = worth(a) - worth(b);
+      }
+      return difference !== 0 ? difference * sign : (b.position - a.position) * sign;
+    });
+  }
+
+  var btcRate = 0;
+  function worth(tx) {
+    if (tx.local > 0) return tx.local;
+    if (tx.asset === "BTC") return tx.value * (btcRate || 0);
+    return tx.value;
+  }
+
+  function statusClass(status) {
+    var key = status.toLowerCase();
+    if (key.indexOf("complet") >= 0 || key.indexOf("cleared") >= 0 || key.indexOf("verified") >= 0) return "status-verified";
+    if (key.indexOf("pending") >= 0 || key.indexOf("review") >= 0 || key.indexOf("progress") >= 0) return "status-under_review";
+    if (key.indexOf("fail") >= 0 || key.indexOf("reject") >= 0 || key.indexOf("cancel") >= 0) return "status-unverified";
+    return "status-under_review";
+  }
+
+  function readableDate(value) {
+    var date = new Date(value);
+    return isNaN(date.getTime())
+      ? value
+      : date.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+  }
+
+  function visible() { return sorted(all.filter(matches)); }
+
+  function render() {
+    var list = visible();
+    var pages = Math.max(1, Math.ceil(list.length / PER_PAGE));
+    if (state.page >= pages) state.page = pages - 1;
+    var start = state.page * PER_PAGE;
+    var page = list.slice(start, start + PER_PAGE);
+
+    els.rows.textContent = "";
+    els.empty.hidden = list.length > 0;
+
+    page.forEach(function (tx) {
+      var row = document.createElement("div");
+      row.className = "tx-row";
+      row.setAttribute("role", "row");
+
+      row.appendChild(cell("tx-date", readableDate(tx.date)));
+      row.appendChild(cell("tx-type", tx.type));
+      row.appendChild(cell("tx-detail", tx.details || "—"));
+
+      var amount = cell("tx-amount " + (tx.direction === "in" ? "is-in" : "is-out"), tx.amount);
+      row.appendChild(amount);
+
+      var status = document.createElement("span");
+      status.className = "tx-status status " + statusClass(tx.status);
+      status.textContent = tx.status || "—";
+      row.appendChild(status);
+
+      els.rows.appendChild(row);
+    });
+
+    els.range.textContent = list.length
+      ? "Showing " + (start + 1) + "–" + Math.min(start + PER_PAGE, list.length) + " of " + list.length
+      : "Nothing to show";
+    els.prev.disabled = state.page === 0;
+    els.next.disabled = state.page >= pages - 1;
+
+    renderFigures(list);
+  }
+
+  function cell(className, text) {
+    var el = document.createElement("span");
+    el.className = className;
+    el.textContent = text;
+    return el;
+  }
+
+  /* The figures describe what is on screen, not the whole account — filter to
+     March and they answer for March. */
+  function renderFigures(list) {
+    var btcIn = 0, btcOut = 0, cashOut = 0;
+    list.forEach(function (tx) {
+      if (tx.asset === "BTC") {
+        if (tx.direction === "in") btcIn += tx.value; else btcOut += tx.value;
+      }
+      if (tx.direction === "out" && tx.local > 0 && tx.asset !== "BTC") cashOut += tx.local;
+    });
+
+    document.getElementById("figCount").textContent = String(list.length);
+    document.getElementById("figCountNote").textContent =
+      list.length === all.length ? "movements in total" : "of " + all.length + " movements";
+    document.getElementById("figBtcIn").textContent = hxPortal.number(btcIn, 8);
+    document.getElementById("figBtcOut").textContent = hxPortal.number(btcOut, 8);
+    document.getElementById("figCashOut").textContent = hxPortal.money(cashOut, CURRENCY);
+  }
+
+  /* ----------------------------------------------------------- the controls */
+
+  function debounce(fn, wait) {
+    var timer = 0;
+    return function () {
+      clearTimeout(timer);
+      timer = setTimeout(fn, wait);
+    };
+  }
+
+  var onSearch = debounce(function () {
+    state.search = els.search.value.trim().toLowerCase();
+    state.page = 0;
+    render();
+  }, 160);
+  els.search.addEventListener("input", onSearch);
+
+  /* The topbar search is the one people reach for first, so it drives the same
+     filter rather than sitting there doing nothing. */
+  var topSearch = document.getElementById("txTopSearch");
+  if (topSearch) {
+    topSearch.addEventListener("input", debounce(function () {
+      els.search.value = topSearch.value;
+      state.search = topSearch.value.trim().toLowerCase();
+      state.page = 0;
+      render();
+    }, 160));
+  }
+
+  ["type", "status", "from", "to"].forEach(function (key) {
+    els[key].addEventListener("change", function () {
+      state[key] = els[key].value;
+      state.page = 0;
+      render();
+    });
+  });
+
+  document.getElementById("txClear").addEventListener("click", function () {
+    state = { search: "", type: "", status: "", from: "", to: "", sort: state.sort, dir: state.dir, page: 0 };
+    els.search.value = "";
+    if (topSearch) topSearch.value = "";
+    els.type.value = "";
+    els.status.value = "";
+    els.from.value = "";
+    els.to.value = "";
+    render();
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll("[data-sort]"), function (button) {
+    button.addEventListener("click", function () {
+      var key = button.dataset.sort;
+      if (state.sort === key) {
+        state.dir = state.dir === "asc" ? "desc" : "asc";
+      } else {
+        state.sort = key;
+        state.dir = key === "type" ? "asc" : "desc";
+      }
+      Array.prototype.forEach.call(document.querySelectorAll("[data-sort]"), function (other) {
+        other.setAttribute("aria-sort",
+          other === button ? (state.dir === "asc" ? "ascending" : "descending") : "none");
+      });
+      state.page = 0;
+      render();
+    });
+  });
+
+  els.prev.addEventListener("click", function () { if (state.page > 0) { state.page--; render(); window.scrollTo({ top: 0, behavior: "smooth" }); } });
+  els.next.addEventListener("click", function () { state.page++; render(); window.scrollTo({ top: 0, behavior: "smooth" }); });
+
+  /* --------------------------------------------------------------- export
+     What is exported is what is filtered — the rows on screen, every page of
+     them, not only the page being looked at. */
+  document.getElementById("txExport").addEventListener("click", function () {
+    var rows = [["Date", "Type", "Details", "Amount", "Status"]];
+    visible().forEach(function (tx) {
+      rows.push([tx.date, tx.type, tx.details, tx.amount, tx.status]);
+    });
+
+    var csv = rows.map(function (row) {
+      return row.map(function (field) {
+        var text = String(field == null ? "" : field);
+        /* A leading =, +, - or @ is a formula to a spreadsheet, and a cell that
+           came from a transaction detail has no business being executed. */
+        if (/^[=+\-@]/.test(text)) text = "'" + text;
+        return '"' + text.replace(/"/g, '""') + '"';
+      }).join(",");
+    }).join("\r\n");
+
+    var blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement("a");
+    link.href = url;
+    link.download = "harbourx-transactions-" + new Date().toISOString().slice(0, 10) + ".csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  });
+
+  render();
+
+  /* Sorting by amount needs a rate to compare Bitcoin against cash. The page is
+     useful before it arrives, so it renders first and re-sorts if it was already
+     sorted that way. */
+  hxPortal.btcPrice(CURRENCY).then(function (result) {
+    btcRate = result.price;
+    if (state.sort === "amount") render();
+  });
+})();
+</script>
+
+</body>
+</html>

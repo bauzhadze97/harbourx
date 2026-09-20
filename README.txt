@@ -143,6 +143,7 @@ The same suite CI runs (see .github/workflows/ci.yml):
      php tests/followup-test.php   callback timezone and notification checks
      node tests/statements-page-test.js  the statements page and its download
      node tests/verification-test.js  document upload, who may read it, sessions
+     node tests/portal-pages-test.js  portfolio sums, transaction filters, export
 
 The browser tests sign in as the synthetic account, so they seed
 data/users.json with tests/fixtures/users.json and put back whatever was there
@@ -157,6 +158,30 @@ It writes tests/screenshots/ as it goes. Set CHROMIUM_EXECUTABLE=<path> to point
 it at a Chromium you already have instead of downloading one.
 
 What changed in this version:
+- Gave Portfolio and Transactions pages of their own. Both were anchors: the
+  sidebar's Portfolio and Transactions items were #portfolio and #transactions
+  on the dashboard, so choosing one scrolled you down a page already doing
+  three other jobs, to a donut and the most recent handful of rows with nothing
+  to filter them by.
+
+  portfolio.html breaks the account into its holdings — Bitcoin and the cash
+  balance — priced at the live rate, with each one's share of the total, an
+  allocation bar, and a summary of what built it: Bitcoin received, Bitcoin
+  sent or converted, the amount converted, the amount withdrawn. When the price
+  feeds cannot be reached it says so and prices from the last rate the browser
+  saw, rather than showing a total it cannot stand behind.
+
+  transactions.html is the whole history: search, filters for type and status,
+  a date range, sortable columns, 25 to a page, and an export that takes what
+  is on screen rather than everything. A detail beginning =, +, - or @ is
+  quoted out on the way into the CSV — a transaction detail has no business
+  executing as a formula when someone opens the file.
+
+  Both read the record the dashboard already stores and the same price feeds,
+  so they cannot disagree with it about a balance. The arithmetic they share —
+  the currency symbols, the price fetch with its fallback, and turning
+  "-0.50000000 BTC -> A$48,250.50" back into the numbers behind it — lives in
+  portal-data.js rather than being written twice.
 - Added a Verification page, and put it in the sidebar where a client would
   look for it. Identity verification existed — aml.html, a long form — but
   nothing in the navigation pointed at it, and there was no way to send a

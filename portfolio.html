@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<!--
+    Portfolio.
+
+  What the account holds, priced now, as a page of its own. It used to be an
+  anchor on the dashboard — #portfolio scrolled you to a donut and a couple of
+  figures on a page already doing three other jobs.
+
+  The numbers come from the record the dashboard stored and the same price
+  feeds it uses, so the two cannot disagree about a balance.
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- A client's own workspace. Kept out of search results here as well as in
+       robots.txt: robots.txt asks a crawler not to fetch the page, this tells one
+       that reached it anyway — through a shared link, say — not to index it. -->
+  <meta name="robots" content="noindex, nofollow">
+  <title>HarbourX · Portfolio</title>
+  <meta name="description" content="What your HarbourX account holds, priced at today’s rate, and how it got there.">
+  <meta name="color-scheme" content="dark">
+  <script src="theme.js?v=20260920-0549"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap"></noscript>
+  <link rel="stylesheet" href="hx-motion.css?v=20260920-0549">
+  <link rel="stylesheet" href="portal.css?v=20260920-0549">
+  <script src="hx-motion.js?v=20260920-0549" defer></script>
+  <script src="portal-data.js?v=20260920-0549"></script>
+</head>
+<body>
+  <div class="portal-shell">
+    <aside class="portal-sidebar" id="portalSidebar">
+      <a class="portal-brand" href="dashboard.html"><svg viewBox="0 0 42 42" aria-hidden="true"><path d="M6 29 21 9l15 20"/><path d="m13 33 8-11 8 11"/></svg><strong>HarbourX</strong></a>
+      <nav class="portal-nav" aria-label="Primary navigation">
+        <a href="dashboard.html"><i>⌂</i>Overview</a><a class="active" href="portfolio.html"><i>◔</i>Portfolio</a><a href="transactions.html"><i>☷</i>Transactions</a><a href="dashboard.html"><i>↓</i>Deposit</a><a href="dashboard.html"><i>↑</i>Withdraw</a><a href="statements.html"><i>▤</i>Statements</a><a href="verification.html"><i>✓</i>Verification</a><a href="change_password.php"><i>◇</i>Security</a><a href="support.html"><i>?</i>Support</a>
+      </nav>
+    </aside>
+
+    <div class="portal-workspace">
+      <header class="portal-topbar">
+        <button class="portal-menu" id="portalMenu" type="button" aria-label="Open navigation">☰</button>
+        <label class="portal-search"><span>⌕</span><input type="search" id="pfTopSearch" placeholder="Search your holdings…"></label>
+        <div class="portal-user"><span class="portal-avatar" id="userInitials">HX</span><div><strong id="userName">HarbourX client</strong><small>Portfolio</small></div></div>
+      </header>
+
+      <main class="portal-main">
+        <div class="portal-breadcrumb"><a href="dashboard.html">Dashboard</a> &nbsp;›&nbsp; Portfolio</div>
+        <div class="portal-heading">
+          <div>
+            <h1>Portfolio</h1>
+            <p>What you hold, what it is worth on today's rate, and how it got there.</p>
+          </div>
+          <a class="portal-back" href="transactions.html">All transactions →</a>
+        </div>
+
+        <div class="figures" data-reveal>
+          <div class="portal-card figure-card"><small>Total value</small><strong id="pfTotal">—</strong><span id="pfTotalNote">across every holding</span></div>
+          <div class="portal-card figure-card"><small>Bitcoin</small><strong id="pfBtc">0.00000000</strong><span id="pfBtcNote">BTC</span></div>
+          <div class="portal-card figure-card"><small>Cash balance</small><strong id="pfCash">—</strong><span id="pfCashNote">ready to withdraw</span></div>
+          <div class="portal-card figure-card"><small>Bitcoin price</small><strong id="pfRate">—</strong><span id="pfRateNote">per BTC</span></div>
+        </div>
+
+        <div class="pf-layout">
+
+          <section class="portal-card pf-panel" data-reveal>
+            <h2>Your holdings</h2>
+            <p class="pf-lead">Every asset on the account, priced in <span id="pfCurrencyName">your account currency</span>.</p>
+
+            <div id="pfHoldings"></div>
+
+            <div class="price-note" id="pfPriceNote">
+              <i aria-hidden="true"></i>
+              <span id="pfPriceNoteText">Priced at the live market rate.</span>
+            </div>
+          </section>
+
+          <section class="portal-card pf-panel" data-reveal>
+            <h2>Allocation</h2>
+            <p class="pf-lead">How the total splits between what you hold.</p>
+
+            <div class="alloc-bar" id="pfAllocBar" role="presentation"></div>
+            <ul class="alloc-legend" id="pfAllocLegend"></ul>
+
+            <h2 style="margin-top:26px">How it got here</h2>
+            <p class="pf-lead">Totalled from every movement on the account.</p>
+            <ul class="alloc-legend" id="pfHistory"></ul>
+
+            <p class="pf-lead" style="margin:18px 0 0">
+              <a class="portal-back" href="transactions.html" style="display:inline-flex">See every movement →</a>
+            </p>
+          </section>
+
+        </div>
+
+        <footer class="portal-footer">
+          <span>© <span id="year">2026</span> HarbourX</span>
+          <nav>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="statements.html">Statements</a>
+            <a href="support.html">Support</a>
+          </nav>
+        </footer>
+      </main>
+    </div>
+  </div>
+
+<script>
+/* ============================================================================
+   portfolio.html
+   ----------------------------------------------------------------------------
+   What the account holds, priced now. It reads the stored record the dashboard
+   writes and the same feeds the dashboard uses, so the two never disagree about
+   a balance; the difference is that this page has room to break the total into
+   its parts and say where each one came from.
+   ========================================================================== */
+(function () {
+  "use strict";
+
+  var user = hxPortal.requireUser();
+  if (!user) return;
+  hxPortal.shell("Portfolio");
+
+  var CURRENCY = String(user.currency || "USD").toUpperCase();
+  var btc = Math.max(0, Number(user.btc) || 0);
+  var cash = Math.max(0, Number(user.mainBalance) || 0);
+  var transactions = Array.isArray(user.transactions) ? user.transactions : [];
+
+  document.getElementById("pfCurrencyName").textContent = CURRENCY;
+  document.getElementById("pfBtc").textContent = hxPortal.number(btc, 8);
+  document.getElementById("pfCash").textContent = hxPortal.money(cash, CURRENCY);
+
+  function render(rate, live) {
+    var btcValue = btc * rate;
+    var total = btcValue + cash;
+
+    document.getElementById("pfTotal").textContent = hxPortal.money(total, CURRENCY);
+    document.getElementById("pfBtcNote").textContent = rate > 0 ? hxPortal.money(btcValue, CURRENCY) : "BTC";
+    document.getElementById("pfRate").textContent = rate > 0 ? hxPortal.money(rate, CURRENCY) : "—";
+
+    var note = document.getElementById("pfPriceNote");
+    note.classList.toggle("is-stale", !live);
+    document.getElementById("pfPriceNoteText").textContent = live
+      ? "Priced at the live market rate, fetched just now."
+      : "The price feeds could not be reached, so this uses the last rate this browser saw. Your balances are unaffected.";
+
+    renderHoldings(btcValue, total);
+    renderAllocation(btcValue, total);
+  }
+
+  function renderHoldings(btcValue, total) {
+    var holdings = [
+      { mark: "₿", cls: "is-btc", name: "Bitcoin", sub: hxPortal.number(btc, 8) + " BTC", value: btcValue },
+      { mark: CURRENCY.slice(0, 1), cls: "is-cash", name: "Cash balance", sub: CURRENCY + " held with HarbourX", value: cash }
+    ];
+
+    var host = document.getElementById("pfHoldings");
+    host.textContent = "";
+
+    holdings.forEach(function (holding) {
+      var row = document.createElement("div");
+      row.className = "holding";
+
+      var mark = document.createElement("span");
+      mark.className = "holding-mark " + holding.cls;
+      mark.setAttribute("aria-hidden", "true");
+      mark.textContent = holding.mark;
+
+      var middle = document.createElement("div");
+      var name = document.createElement("b");
+      name.textContent = holding.name;
+      var sub = document.createElement("small");
+      sub.textContent = holding.sub;
+      middle.appendChild(name);
+      middle.appendChild(sub);
+
+      var right = document.createElement("div");
+      right.className = "holding-value";
+      var value = document.createElement("strong");
+      value.textContent = hxPortal.money(holding.value, CURRENCY);
+      var share = document.createElement("em");
+      share.textContent = total > 0 ? hxPortal.number((holding.value / total) * 100, 1) + "% of portfolio" : "—";
+      right.appendChild(value);
+      right.appendChild(share);
+
+      row.appendChild(mark);
+      row.appendChild(middle);
+      row.appendChild(right);
+      host.appendChild(row);
+    });
+  }
+
+  function renderAllocation(btcValue, total) {
+    var parts = [
+      { cls: "is-btc", colour: "#f7931a", label: "Bitcoin", value: btcValue },
+      { cls: "is-cash", colour: "#25beb8", label: "Cash balance", value: cash }
+    ];
+
+    var bar = document.getElementById("pfAllocBar");
+    var legend = document.getElementById("pfAllocLegend");
+    bar.textContent = "";
+    legend.textContent = "";
+
+    parts.forEach(function (part) {
+      var share = total > 0 ? (part.value / total) * 100 : 0;
+
+      var segment = document.createElement("i");
+      segment.className = part.cls;
+      segment.style.width = share + "%";
+      bar.appendChild(segment);
+
+      var item = document.createElement("li");
+      var dot = document.createElement("i");
+      dot.style.background = part.colour;
+      var label = document.createElement("span");
+      label.textContent = part.label;
+      var amount = document.createElement("b");
+      amount.textContent = hxPortal.number(share, 1) + "% · " + hxPortal.money(part.value, CURRENCY);
+      item.appendChild(dot);
+      item.appendChild(label);
+      item.appendChild(amount);
+      legend.appendChild(item);
+    });
+  }
+
+  /* Totals over the whole history, so the page can say where the holding came
+     from rather than only what it is now. */
+  function renderHistory() {
+    var received = 0, sent = 0, converted = 0, withdrawn = 0;
+
+    transactions.forEach(function (tx) {
+      var parsed = hxPortal.parse(tx);
+      var type = String(tx.type || "").toLowerCase();
+
+      if (parsed.asset === "BTC") {
+        if (parsed.direction === "in") received += parsed.value;
+        else sent += parsed.value;
+      }
+      if (type.indexOf("conversion") >= 0 || type.indexOf("swap") >= 0) converted += parsed.local;
+      if (type.indexOf("withdrawal") >= 0 && parsed.direction === "out" && parsed.asset !== "BTC") withdrawn += parsed.local;
+    });
+
+    var lines = [
+      { label: "Bitcoin received", value: hxPortal.number(received, 8) + " BTC" },
+      { label: "Bitcoin sent or converted", value: hxPortal.number(sent, 8) + " BTC" },
+      { label: "Converted to " + CURRENCY, value: hxPortal.money(converted, CURRENCY) },
+      { label: "Withdrawn to your bank", value: hxPortal.money(withdrawn, CURRENCY) },
+      { label: "Movements recorded", value: String(transactions.length) }
+    ];
+
+    var host = document.getElementById("pfHistory");
+    host.textContent = "";
+    lines.forEach(function (line) {
+      var item = document.createElement("li");
+      var dot = document.createElement("i");
+      dot.style.background = "#2a536b";
+      var label = document.createElement("span");
+      label.textContent = line.label;
+      var value = document.createElement("b");
+      value.textContent = line.value;
+      item.appendChild(dot);
+      item.appendChild(label);
+      item.appendChild(value);
+      host.appendChild(item);
+    });
+  }
+
+  /* Draw immediately with whatever rate is already known, so the page is never
+     blank while a feed is being waited on, then redraw when one answers. */
+  hxPortal.btcPrice(CURRENCY).then(function (result) {
+    render(result.price, result.live);
+  });
+  renderHistory();
+})();
+</script>
+
+</body>
+</html>

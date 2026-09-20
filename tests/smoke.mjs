@@ -155,6 +155,8 @@ const PAGES = [
   { url: 'support.html', shot: '7-support', auth: true },
   { url: 'statements.html', shot: '8-statements', auth: true },
   { url: 'verification.html', shot: '16-verification', auth: true },
+  { url: 'portfolio.html', shot: '17-portfolio', auth: true },
+  { url: 'transactions.html', shot: '18-transactions', auth: true },
   { url: 'terms.html', shot: '13-terms', auth: false },
   { url: 'privacy.html', shot: '14-privacy', auth: false },
   { url: 'complaints.html', shot: '15-complaints', auth: false }

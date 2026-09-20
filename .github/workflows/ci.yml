@@ -40,7 +40,7 @@ jobs:
       - name: JavaScript syntax
         run: |
           status=0
-          for file in theme.js hx-motion.js site.js dashboard.js; do
+          for file in theme.js hx-motion.js site.js portal-data.js dashboard.js; do
             node --check "$file" || status=1
           done
           node --check tests/smoke.mjs || status=1
@@ -128,6 +128,9 @@ jobs:
 
       - name: Verification (document upload, access control, sessions)
         run: node tests/verification-test.js
+
+      - name: Portfolio and transactions (sums, filters, export)
+        run: node tests/portal-pages-test.js
 
       - name: Publish screenshots
         if: always()
