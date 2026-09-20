@@ -158,6 +158,26 @@ It writes tests/screenshots/ as it goes. Set CHROMIUM_EXECUTABLE=<path> to point
 it at a Chromium you already have instead of downloading one.
 
 What changed in this version:
+- Gave two-factor authentication a page of its own. It already worked — the
+  TOTP library, the enrolment endpoint, the second step at sign-in and the
+  backup codes were all in place and tested — but the only way to reach it was
+  a card on the security page, between a password form and a list of sessions.
+  The single most useful thing a client can do for their own account was
+  offered in passing.
+
+  authenticator.html walks through it instead: what an authenticator app is and
+  which ones work, a square to scan with the key printed underneath for anyone
+  reading this on the same phone, the code to confirm, and then the backup
+  codes to copy or download with the reason they matter. Once it is on, the
+  page manages it: how many codes are left, issuing a new set, turning it off.
+  Beside it is what it is actually for, including the line worth repeating —
+  nobody at HarbourX can read a backup code back to you, because only hashes
+  are stored.
+
+  twofactor.php is unchanged. The page shows what that endpoint says and sends
+  back what was typed; it never decides whether a code is right. The existing
+  test now drives the page as well as the endpoint, and asserts that none of
+  the ten codes it was shown appears anywhere in the stored record.
 - Gave Portfolio and Transactions pages of their own. Both were anchors: the
   sidebar's Portfolio and Transactions items were #portfolio and #transactions
   on the dashboard, so choosing one scrolled you down a page already doing

@@ -92,18 +92,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap"></noscript>
-<script src="theme.js?v=20260920-0549"></script>
-<link rel="stylesheet" href="hx-motion.css?v=20260920-0549">
-<link rel="stylesheet" href="portal.css?v=20260920-0549">
-<script src="hx-motion.js?v=20260920-0549" defer></script>
-<script src="qrcode.min.js?v=20260920-0549" defer></script>
+<script src="theme.js?v=20260920-0601"></script>
+<link rel="stylesheet" href="hx-motion.css?v=20260920-0601">
+<link rel="stylesheet" href="portal.css?v=20260920-0601">
+<script src="hx-motion.js?v=20260920-0601" defer></script>
+<script src="qrcode.min.js?v=20260920-0601" defer></script>
 </head>
 <body>
 <div class="portal-shell">
   <aside class="portal-sidebar" id="portalSidebar">
     <a class="portal-brand" href="dashboard.html"><svg viewBox="0 0 42 42" aria-hidden="true"><path d="M6 29 21 9l15 20"/><path d="m13 33 8-11 8 11"/></svg><strong>HarbourX</strong></a>
     <nav class="portal-nav" aria-label="Primary navigation">
-      <a href="dashboard.html"><i>⌂</i>Overview</a><a href="portfolio.html"><i>◔</i>Portfolio</a><a href="transactions.html"><i>☷</i>Transactions</a><a href="dashboard.html" data-dashboard-action="deposit"><i>↓</i>Deposit</a><a href="dashboard.html" data-dashboard-action="withdraw"><i>↑</i>Withdraw</a><a href="statements.html"><i>▤</i>Statements</a><a href="verification.html"><i>✓</i>Verification</a><a class="active" href="change_password.php"><i>◇</i>Security</a><a href="support.html"><i>?</i>Support</a>
+      <a href="dashboard.html"><i>⌂</i>Overview</a><a href="portfolio.html"><i>◔</i>Portfolio</a><a href="transactions.html"><i>☷</i>Transactions</a><a href="dashboard.html" data-dashboard-action="deposit"><i>↓</i>Deposit</a><a href="dashboard.html" data-dashboard-action="withdraw"><i>↑</i>Withdraw</a><a href="statements.html"><i>▤</i>Statements</a><a href="verification.html"><i>✓</i>Verification</a><a href="authenticator.html"><i>⚿</i>Authenticator</a><a class="active" href="change_password.php"><i>◇</i>Security</a><a href="support.html"><i>?</i>Support</a>
     </nav>
   </aside>
 

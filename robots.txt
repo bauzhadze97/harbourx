@@ -20,6 +20,8 @@ Disallow: /verification.html
 Disallow: /verification.php
 Disallow: /uploads/
 Disallow: /change_password.php
+Disallow: /authenticator.html
+Disallow: /twofactor.php
 Disallow: /setup_password.php
 Disallow: /twofactor.php
 Disallow: /logout.php

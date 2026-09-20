@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<!--
+    Authenticator.
+
+  Two-factor authentication, as a page rather than a card. It was one panel on
+  the security page between a password form and a list of sessions — the single
+  most useful thing a client can do for their own account, offered in passing.
+
+  Every decision still belongs to twofactor.php. This page shows what that
+  endpoint says and sends back what was typed; it never decides whether a code
+  is right.
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- A client's own workspace. Kept out of search results here as well as in
+       robots.txt: robots.txt asks a crawler not to fetch the page, this tells one
+       that reached it anyway — through a shared link, say — not to index it. -->
+  <meta name="robots" content="noindex, nofollow">
+  <title>HarbourX · Authenticator</title>
+  <meta name="description" content="Turn on two-factor authentication for your HarbourX account.">
+  <meta name="color-scheme" content="dark">
+  <script src="theme.js?v=20260920-0601"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap"></noscript>
+  <link rel="stylesheet" href="hx-motion.css?v=20260920-0601">
+  <link rel="stylesheet" href="portal.css?v=20260920-0601">
+  <script src="hx-motion.js?v=20260920-0601" defer></script>
+  <script src="portal-data.js?v=20260920-0601"></script>
+  <script src="qrcode.min.js?v=20260920-0601" defer></script>
+</head>
+<body>
+  <div class="portal-shell">
+    <aside class="portal-sidebar" id="portalSidebar">
+      <a class="portal-brand" href="dashboard.html"><svg viewBox="0 0 42 42" aria-hidden="true"><path d="M6 29 21 9l15 20"/><path d="m13 33 8-11 8 11"/></svg><strong>HarbourX</strong></a>
+      <nav class="portal-nav" aria-label="Primary navigation">
+        <a href="dashboard.html"><i>⌂</i>Overview</a><a href="portfolio.html"><i>◔</i>Portfolio</a><a href="transactions.html"><i>☷</i>Transactions</a><a href="dashboard.html"><i>↓</i>Deposit</a><a href="dashboard.html"><i>↑</i>Withdraw</a><a href="statements.html"><i>▤</i>Statements</a><a href="verification.html"><i>✓</i>Verification</a><a class="active" href="authenticator.html"><i>⚿</i>Authenticator</a><a href="change_password.php"><i>◇</i>Security</a><a href="support.html"><i>?</i>Support</a>
+      </nav>
+    </aside>
+
+    <div class="portal-workspace">
+      <header class="portal-topbar">
+        <button class="portal-menu" id="portalMenu" type="button" aria-label="Open navigation">☰</button>
+        <label class="portal-search"><span>⌕</span><input type="search" id="authTopSearch" placeholder="Search security help…"></label>
+        <div class="portal-user"><span class="portal-avatar" id="userInitials">HX</span><div><strong id="userName">HarbourX client</strong><small>Authenticator</small></div></div>
+      </header>
+
+      <main class="portal-main">
+        <div class="portal-breadcrumb"><a href="dashboard.html">Dashboard</a> &nbsp;›&nbsp; Authenticator</div>
+        <div class="portal-heading">
+          <div>
+            <h1>Authenticator</h1>
+            <p>A code from your phone on top of your password. It is the single most useful thing you can do for this account.</p>
+          </div>
+          <a class="portal-back" href="change_password.php">Password and sessions →</a>
+        </div>
+
+        <div class="message" id="pageMessage"></div>
+
+        <div class="auth2-layout">
+
+          <!-- ===================================================== setting it up -->
+          <section class="portal-card auth2-panel" data-reveal>
+
+            <div class="auth2-state is-off" id="stateCard">
+              <i aria-hidden="true" id="stateIcon">!</i>
+              <div>
+                <b id="stateTitle">Two-factor is off</b>
+                <small id="stateNote">Your password is the only thing protecting this account.</small>
+              </div>
+            </div>
+
+            <!-- off: the walk through -->
+            <div id="setupBlock" hidden>
+              <div class="auth2-step">
+                <b>1</b>
+                <div>
+                  <h3>Get an authenticator app</h3>
+                  <p>Any of them work — Google Authenticator, Microsoft Authenticator, Authy, 1Password, Bitwarden. If your password manager already offers this, use that one: the codes travel with you to a new phone.</p>
+                </div>
+              </div>
+
+              <div class="auth2-step">
+                <b>2</b>
+                <div>
+                  <h3>Scan this with it</h3>
+                  <p>Point the app at the square. If you are reading this on the same phone the app is on, type the key underneath instead.</p>
+                  <div class="auth2-qr"><div id="qrHost"></div><small>HarbourX · <span id="qrAccount">your account</span></small></div>
+                  <div class="auth2-key">
+                    <code id="secretText">—</code>
+                    <button type="button" id="copyKeyBtn">Copy key</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="auth2-step">
+                <b>3</b>
+                <div>
+                  <h3>Enter the code it shows you</h3>
+                  <p>Six digits, and it changes every thirty seconds. If it is refused, wait for the next one — a phone clock that is a minute out is the usual reason.</p>
+                  <input class="auth2-code" id="enableCode" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="000000" autocomplete="one-time-code">
+                  <div class="auth2-actions">
+                    <button class="auth2-btn" type="button" id="enableBtn">Turn on two-factor</button>
+                    <button class="auth2-btn is-quiet" type="button" id="cancelSetupBtn">Cancel</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- off, not started -->
+            <div id="startBlock">
+              <p class="auth2-lead" style="margin-top:18px">
+                Once it is on, signing in asks for a six-digit code as well as your password. Somebody who has your
+                password still cannot get in.
+              </p>
+              <div class="auth2-actions">
+                <button class="auth2-btn" type="button" id="startBtn">Set up two-factor</button>
+              </div>
+            </div>
+
+            <!-- the codes, shown once -->
+            <div id="codesBlock" hidden>
+              <h2 style="margin-top:22px">Save your backup codes</h2>
+              <p class="auth2-lead">Each one works once, in place of a code from the app. They are how you get in when your phone is lost, broken or flat.</p>
+              <ul class="auth2-codes" id="codesList"></ul>
+              <div class="auth2-warn">
+                <b aria-hidden="true">!</b>
+                <div><b>This is the only time these are shown.</b> HarbourX keeps only a one-way hash of them, so we cannot read them back to you — not over the phone, not by email, not ever. Put them somewhere you will still have them when your phone is not in your hand.</div>
+              </div>
+              <div class="auth2-actions">
+                <button class="auth2-btn is-quiet" type="button" id="copyCodesBtn">Copy all</button>
+                <button class="auth2-btn is-quiet" type="button" id="downloadCodesBtn">Download</button>
+                <button class="auth2-btn" type="button" id="doneCodesBtn">I have saved them</button>
+              </div>
+            </div>
+
+            <!-- on: managing it -->
+            <div id="manageBlock" hidden>
+              <div class="auth2-step" style="padding-top:20px">
+                <b>↻</b>
+                <div>
+                  <h3>New backup codes</h3>
+                  <p>Issuing a new set immediately retires the old one. Do it if you have used most of them, or if you think the list has been seen.</p>
+                  <input class="auth2-code" id="codesCode" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="000000" autocomplete="one-time-code">
+                  <div class="auth2-actions">
+                    <button class="auth2-btn is-quiet" type="button" id="newCodesBtn">Issue new codes</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="auth2-step">
+                <b>✕</b>
+                <div>
+                  <h3>Turn it off</h3>
+                  <p>Your account goes back to a password alone. Enter a current code, or one of your backup codes.</p>
+                  <input class="auth2-code" id="disableCode" type="text" maxlength="14" placeholder="000000" autocomplete="one-time-code">
+                  <div class="auth2-actions">
+                    <button class="auth2-btn is-danger" type="button" id="disableBtn">Turn off two-factor</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ===================================================== what it is for -->
+          <section class="portal-card auth2-panel" data-reveal>
+            <h2>Why this matters here</h2>
+            <p class="auth2-lead">This account can move money. A password on its own is one guess, one leak or one reused login away from somebody else holding it.</p>
+
+            <ul class="auth2-facts">
+              <li><b>◷</b><span>A code is good for thirty seconds and for one sign-in. Even captured, it is spent.</span></li>
+              <li><b>⎋</b><span>The secret is generated by HarbourX and shown to you once. It never leaves your account.</span></li>
+              <li><b>▤</b><span>Backup codes are stored only as hashes. Nobody at HarbourX can read them back.</span></li>
+              <li><b>✉</b><span>We will never ask for a code by email, phone or chat. Anyone who does is not us.</span></li>
+            </ul>
+
+            <h2 style="margin-top:26px">If you lose your phone</h2>
+            <p class="auth2-lead">Sign in with one of your backup codes, turn two-factor off on this page, and set it up again on the new phone. If the codes are gone too, <a href="support.html" style="color:var(--hx-teal)">open a support ticket</a> — identity checks apply before anything is reset.</p>
+          </section>
+
+        </div>
+
+        <footer class="portal-footer">
+          <span>© <span id="year">2026</span> HarbourX</span>
+          <nav>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="statements.html">Statements</a>
+            <a href="support.html">Support</a>
+          </nav>
+        </footer>
+      </main>
+    </div>
+  </div>
+
+<script>
+/* ============================================================================
+   authenticator.html
+   ----------------------------------------------------------------------------
+   Enrolment, drawn. Every decision belongs to twofactor.php: it mints the
+   secret, verifies the code, issues the backup codes and stores only their
+   hashes. This file shows what that endpoint says and sends back what the
+   client typed — it never decides whether a code is right.
+   ========================================================================== */
+(function () {
+  "use strict";
+
+  var user = hxPortal.requireUser();
+  if (!user) return;
+  hxPortal.shell("Authenticator");
+
+  var els = {
+    message: document.getElementById("pageMessage"),
+    state: document.getElementById("stateCard"),
+    stateIcon: document.getElementById("stateIcon"),
+    stateTitle: document.getElementById("stateTitle"),
+    stateNote: document.getElementById("stateNote"),
+    start: document.getElementById("startBlock"),
+    setup: document.getElementById("setupBlock"),
+    codes: document.getElementById("codesBlock"),
+    manage: document.getElementById("manageBlock"),
+    qr: document.getElementById("qrHost"),
+    secret: document.getElementById("secretText"),
+    codesList: document.getElementById("codesList")
+  };
+
+  var issued = [];
+
+  function say(text, tone) {
+    els.message.textContent = text || "";
+    els.message.className = "message" + (text ? " " + (tone || "info") : "");
+    if (text && window.hxMotion && typeof window.hxMotion.flash === "function") {
+      window.hxMotion.flash(els.message);
+    }
+  }
+
+  /** One call, one place that decides what the page looks like. */
+  function post(action, extra) {
+    var body = { action: action };
+    if (extra) Object.keys(extra).forEach(function (key) { body[key] = extra[key]; });
+    return fetch("twofactor.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    }).then(function (response) {
+      if (response.status === 401) {
+        window.location.replace("login.html");
+        return null;
+      }
+      return response.json();
+    });
+  }
+
+  function show(state) {
+    var on = !!state.enabled;
+    els.state.className = "auth2-state " + (on ? "is-on" : "is-off");
+    els.stateIcon.textContent = on ? "✓" : "!";
+    els.stateTitle.textContent = on ? "Two-factor is on" : "Two-factor is off";
+
+    if (on) {
+      var left = Number(state.backupCodesRemaining || 0);
+      var since = state.confirmedAt ? new Date(state.confirmedAt) : null;
+      els.stateNote.textContent =
+        (since && !isNaN(since.getTime())
+          ? "Protecting this account since " + since.toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" }) + ". "
+          : "") +
+        left + " backup code" + (left === 1 ? "" : "s") + " left.";
+    } else {
+      els.stateNote.textContent = "Your password is the only thing protecting this account.";
+    }
+
+    els.manage.hidden = !on;
+    els.start.hidden = on;
+    // The setup walk-through and the codes are only ever opened by a click.
+    if (on) els.setup.hidden = true;
+  }
+
+  function refresh() {
+    return post("status").then(function (result) {
+      if (result && result.success) show(result);
+      return result;
+    });
+  }
+
+  /* ------------------------------------------------------------- enrolment */
+
+  document.getElementById("startBtn").addEventListener("click", function () {
+    say("");
+    post("begin").then(function (result) {
+      if (!result) return;
+      if (!result.success) { say(result.message || "Could not start the setup.", "error"); return; }
+
+      els.secret.textContent = result.secretGrouped || result.secret;
+      els.secret.dataset.raw = result.secret;
+      document.getElementById("qrAccount").textContent = user.email || "your account";
+
+      els.qr.textContent = "";
+      /* qrcode.min.js draws into an element. If it did not load, the typed key
+         two lines down is the whole of what is needed — so this is a nicety,
+         not a dependency. */
+      if (typeof QRCode === "function") {
+        try {
+          new QRCode(els.qr, { text: result.uri, width: 168, height: 168, correctLevel: QRCode.CorrectLevel.M });
+        } catch (error) {
+          els.qr.textContent = "Enter the key below by hand.";
+        }
+      } else {
+        els.qr.textContent = "Enter the key below by hand.";
+      }
+
+      els.start.hidden = true;
+      els.setup.hidden = false;
+      document.getElementById("enableCode").focus();
+    });
+  });
+
+  document.getElementById("cancelSetupBtn").addEventListener("click", function () {
+    els.setup.hidden = true;
+    els.start.hidden = false;
+    document.getElementById("enableCode").value = "";
+    say("");
+  });
+
+  document.getElementById("copyKeyBtn").addEventListener("click", function () {
+    copy(els.secret.dataset.raw || els.secret.textContent, "Key copied.");
+  });
+
+  document.getElementById("enableBtn").addEventListener("click", function () {
+    var code = document.getElementById("enableCode").value.replace(/\s+/g, "");
+    if (code.length < 6) { say("Enter the six digits your app is showing.", "error"); return; }
+
+    this.disabled = true;
+    var button = this;
+    post("enable", { code: code }).then(function (result) {
+      button.disabled = false;
+      if (!result) return;
+      if (!result.success) {
+        say(result.message || "That code was not accepted.", "error");
+        if (window.hxMotion && window.hxMotion.shake) window.hxMotion.shake(document.getElementById("enableCode"));
+        return;
+      }
+      issued = result.backupCodes || [];
+      renderCodes();
+      els.setup.hidden = true;
+      els.codes.hidden = false;
+      document.getElementById("enableCode").value = "";
+      say(result.message || "Two-factor authentication is on.", "success");
+      refresh();
+    });
+  });
+
+  /* ---------------------------------------------------------- backup codes */
+
+  function renderCodes() {
+    els.codesList.textContent = "";
+    issued.forEach(function (code) {
+      var item = document.createElement("li");
+      item.textContent = code;
+      els.codesList.appendChild(item);
+    });
+  }
+
+  document.getElementById("doneCodesBtn").addEventListener("click", function () {
+    els.codes.hidden = true;
+    issued = [];
+    els.codesList.textContent = "";
+    refresh();
+  });
+
+  document.getElementById("copyCodesBtn").addEventListener("click", function () {
+    copy(issued.join("\n"), "Backup codes copied.");
+  });
+
+  document.getElementById("downloadCodesBtn").addEventListener("click", function () {
+    var text = "HarbourX backup codes\n"
+      + "Account: " + (user.email || "") + "\n"
+      + "Issued: " + new Date().toISOString() + "\n\n"
+      + issued.join("\n")
+      + "\n\nEach code works once, in place of a code from your authenticator app.\n"
+      + "HarbourX stores only a one-way hash of these and cannot read them back to you.\n";
+    var blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement("a");
+    link.href = url;
+    link.download = "harbourx-backup-codes.txt";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  });
+
+  document.getElementById("newCodesBtn").addEventListener("click", function () {
+    var code = document.getElementById("codesCode").value.replace(/\s+/g, "");
+    if (code.length < 6) { say("Enter a current code from your app.", "error"); return; }
+    post("codes", { code: code }).then(function (result) {
+      if (!result) return;
+      if (!result.success) { say(result.message || "Could not issue new codes.", "error"); return; }
+      issued = result.backupCodes || [];
+      renderCodes();
+      els.codes.hidden = false;
+      document.getElementById("codesCode").value = "";
+      say(result.message || "New backup codes issued.", "success");
+      refresh();
+    });
+  });
+
+  /* ---------------------------------------------------------- turning it off */
+
+  document.getElementById("disableBtn").addEventListener("click", function () {
+    var code = document.getElementById("disableCode").value.replace(/\s+/g, "");
+    if (!code) { say("Enter a current code, or one of your backup codes.", "error"); return; }
+    if (!window.confirm("Turn two-factor off? Your password becomes the only thing protecting this account.")) return;
+
+    post("disable", { code: code }).then(function (result) {
+      if (!result) return;
+      if (!result.success) { say(result.message || "That code was not accepted.", "error"); return; }
+      document.getElementById("disableCode").value = "";
+      els.codes.hidden = true;
+      say(result.message || "Two-factor authentication is off.", "success");
+      refresh();
+    });
+  });
+
+  /* ------------------------------------------------------------------ bits */
+
+  function copy(text, done) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { say(done, "success"); },
+        function () { say("Could not copy — select it and copy by hand.", "error"); });
+    } else {
+      say("Select it and copy by hand.", "info");
+    }
+  }
+
+  // Six digits and nothing else, so a pasted "123 456" still submits.
+  ["enableCode", "codesCode"].forEach(function (id) {
+    document.getElementById(id).addEventListener("input", function () {
+      this.value = this.value.replace(/[^0-9]/g, "").slice(0, 6);
+    });
+  });
+
+  refresh();
+})();
+</script>
+
+</body>
+</html>

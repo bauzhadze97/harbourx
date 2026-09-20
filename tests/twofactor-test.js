@@ -106,6 +106,66 @@ const check = (ok, label, detail='') => { if(!ok) fail++; console.log(`  ${ok?'o
   r = await (await browser.newContext()).request.post(BASE + '/login.php', { data: CREDS });
   check((await r.json()).success === true, 'sign-in returns to one step once disabled');
 
+  // 8. The page a client actually uses ---------------------------------------
+  // Everything above drives twofactor.php directly. authenticator.html is what
+  // a client meets, and a page that offers the wrong button at the wrong moment
+  // is as broken as an endpoint that answers wrongly.
+  require('./fixture').seedUsers();
+  const pageCtx = await browser.newContext();
+  const pageUser = (await (await pageCtx.request.post(BASE + '/login.php', { data: CREDS })).json()).user;
+  const page = await pageCtx.newPage();
+  const pageErrors = [];
+  page.on('pageerror', (e) => pageErrors.push(e.message));
+  page.on('dialog', (d) => d.accept());
+
+  await page.goto(BASE + '/tests/blank.html');
+  await page.evaluate((u) => localStorage.setItem('user', JSON.stringify(u)), pageUser);
+  await page.goto(BASE + '/authenticator.html', { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(1600);
+
+  check((await page.$eval('#stateTitle', (e) => e.textContent)).includes('off'),
+    'the page opens saying two-factor is off');
+  check(await page.$eval('#manageBlock', (e) => e.hidden), 'and offers nothing to manage yet');
+
+  await page.click('#startBtn');
+  await page.waitForTimeout(1400);
+  const pageSecret = await page.$eval('#secretText', (e) => e.dataset.raw);
+  check(/^[A-Z2-7]{32}$/.test(pageSecret || ''), 'starting setup shows a secret to enter by hand', pageSecret);
+  check(await page.$$eval('#qrHost canvas, #qrHost img', (n) => n.length) > 0,
+    'and a square to scan instead');
+
+  await page.fill('#enableCode', '000000');
+  await page.click('#enableBtn');
+  await page.waitForTimeout(1200);
+  check((await page.$eval('#pageMessage', (e) => e.textContent)).toLowerCase().includes('not right'),
+    'a wrong code is refused on the page too');
+  check(await page.$eval('#codesBlock', (e) => e.hidden), 'and no backup codes are handed out for it');
+
+  await page.fill('#enableCode', codeFor(pageSecret));
+  await page.click('#enableBtn');
+  await page.waitForTimeout(1600);
+  const shownCodes = await page.$$eval('#codesList li', (n) => n.map((x) => x.textContent));
+  check(shownCodes.length === 10, 'the right code turns it on and issues ten backup codes', String(shownCodes.length));
+
+  // The codes are shown once because only their hashes are kept. If a plaintext
+  // one ever reached the file, losing the file would lose the second factor.
+  const onDisk = JSON.stringify(
+    JSON.parse(require('fs').readFileSync(path.join(__dirname, '..', 'data/users.json'), 'utf8'))[0].totp.backupCodes);
+  check(!shownCodes.some((code) => onDisk.includes(code)),
+    'none of which is stored in a form anyone could read back');
+
+  await page.click('#doneCodesBtn');
+  await page.waitForTimeout(1200);
+  check((await page.$eval('#stateTitle', (e) => e.textContent)).includes('on'), 'the page then says it is on');
+  check(!(await page.$eval('#manageBlock', (e) => e.hidden)), 'and offers the controls for it');
+
+  await page.fill('#disableCode', codeFor(pageSecret));
+  await page.click('#disableBtn');
+  await page.waitForTimeout(1600);
+  check((await page.$eval('#stateTitle', (e) => e.textContent)).includes('off'),
+    'and turning it off from the page works');
+  check(pageErrors.length === 0, 'the page reports no errors', pageErrors.slice(0, 2).join(' | '));
+
   console.log(fail ? `\n${fail} check(s) failed` : '\nAll 2FA checks passed');
   await browser.close();
   process.exit(fail ? 1 : 0);
