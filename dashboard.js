@@ -1595,6 +1595,25 @@ let btcSendMax = false;
 // server recomputes it from the stored settings before recording anything.
 let btcReleaseFee = 0;
 
+/* A number input silently discards anything that is not a plain decimal, and
+   JavaScript prints small numbers in exponential notation: String(0.0000012)
+   is "1.2e-6", so a MAX press on a dust-sized holding used to leave the field
+   blank. Fixing the decimal places avoids that. Flooring rather than rounding
+   keeps the result at or below the balance — rounding 1234.567 up to 1234.57
+   asks to withdraw more than is there. */
+function floorTo(value, decimals) {
+  const scale = 10 ** decimals;
+  return Math.floor((Number(value) || 0) * scale + 1e-9) / scale;
+}
+function amountField(value, decimals) {
+  return floorTo(value, decimals).toFixed(decimals);
+}
+
+/* Mirrors HX_BTC_NETWORK_FEE in btc_withdrawals.php. The server remains the
+   authority on what a send costs; this is only so the dialog can fill the
+   amount before an address exists to quote against. */
+const BTC_NETWORK_FEE = 0.00002;
+
 function showBtcWithdrawMessage(text) {
   btcWithdrawMessage.textContent = text || "";
   btcWithdrawMessage.style.display = text ? "block" : "none";
@@ -2122,7 +2141,36 @@ btcWithdrawAddress.addEventListener("input", requestBtcQuote);
 btcWithdrawAddress.addEventListener("paste", () => setTimeout(requestBtcQuote, 0));
 
 function btcSendEverything() {
+  const available = state.balances.BTC.total;
+  const sendable = floorTo(available - BTC_NETWORK_FEE, 8);
+
+  /* Below the network fee there is nothing left to send. The server answers
+     that with "enter an amount greater than zero", which does not explain
+     itself, so say why here and leave the field as it was. */
+  if (sendable <= 0) {
+    btcSendMax = false;
+    showBtcWithdrawMessage(
+      `The balance of ${formatNumber(available, 8)} BTC is below the ${BTC_NETWORK_FEE.toFixed(8)} BTC network fee, so there is nothing left to send.`
+    );
+    return;
+  }
+
   btcSendMax = true;
+  showBtcWithdrawMessage("");
+
+  /* Fill it here rather than waiting for the quote to come back: the server
+     will not price a send without a destination, and someone who decides the
+     amount before typing the address would otherwise press MAX and watch
+     nothing happen. The quote still runs, and still wins, once there is an
+     address to send to. */
+  btcWithdrawAmount.value = sendable.toFixed(8);
+  renderBtcQuote({
+    amount: sendable,
+    networkFee: BTC_NETWORK_FEE,
+    total: floorTo(sendable + BTC_NETWORK_FEE, 8),
+    remaining: Math.max(0, floorTo(available - sendable - BTC_NETWORK_FEE, 8))
+  });
+  setFlowStep(btcWithdrawSteps, btcWithdrawAddress.value.trim() ? 2 : 1);
   requestBtcQuote();
 }
 document.getElementById("btcWithdrawMaxBtn").addEventListener("click", btcSendEverything);
@@ -2167,8 +2215,8 @@ closeReviewModalBtn.addEventListener("click", closeReviewModal);
 withdrawAmount.addEventListener("input", updateExpectedAmountLabel);
 withdrawMaxBtn.addEventListener("click", () => {
   withdrawAmount.value = withdrawSource === "balance"
-    ? (Math.round(state.mainBalance * 100) / 100).toFixed(2)
-    : String(state.balances.BTC.total);
+    ? amountField(state.mainBalance, 2)
+    : amountField(state.balances.BTC.total, 8);
   updateExpectedAmountLabel();
 });
 
@@ -2189,11 +2237,11 @@ convertAmount.addEventListener("keydown", (event) => {
   if (event.key === "Enter") handleConvertSubmit();
 });
 convertMaxBtn.addEventListener("click", () => {
-  convertAmount.value = String(state.balances.BTC.total);
+  convertAmount.value = amountField(state.balances.BTC.total, 8);
   updateConvertPreview();
 });
 convertBalanceMaxBtn.addEventListener("click", () => {
-  convertAmount.value = String(state.balances.BTC.total);
+  convertAmount.value = amountField(state.balances.BTC.total, 8);
   updateConvertPreview();
 });
 convertModal.addEventListener("click", (event) => {
