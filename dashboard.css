@@ -1341,6 +1341,36 @@ a.primary-btn { display: inline-flex; align-items: center; justify-content: cent
 .flow-modal-card .modal-foot { padding: 13px 26px 18px; background: transparent; }
 .flow-modal-card .modal-foot > * { height: 44px; border-radius: 8px; font-size: 11px; }
 
+/* The asset picker in the send dialog. A row of coins rather than a select,
+   because which ones the account actually holds is the first thing a client
+   wants to see, and a closed dropdown shows none of them. */
+.send-asset-picker { display: flex; flex-wrap: wrap; gap: 7px; }
+.send-asset { display: inline-flex; align-items: center; gap: 9px; padding: 7px 12px 7px 7px;
+  border: 1px solid var(--hx-line); border-radius: 999px; background: #0b2436; cursor: pointer;
+  transition: border-color 140ms ease, background 140ms ease; }
+.send-asset:hover { border-color: #2881a1; background: var(--hx-card-hover); }
+.send-asset.is-active { border-color: var(--hx-teal); background: rgba(32,215,208,.1); }
+.send-asset .hx-coin { width: 26px; height: 26px; display: grid; place-items: center;
+  border-radius: 50%; color: white; font-size: 14px; font-weight: 750; font-style: normal; }
+.send-asset span { display: grid; text-align: left; }
+.send-asset b { color: #d6e4ec; font-size: 11px; font-weight: 700; letter-spacing: .01em; }
+.send-asset small { margin-top: 1px; color: #7f9cae; font-size: 9px; font-variant-numeric: tabular-nums; }
+.send-asset.is-active b { color: var(--hx-text); }
+/* An asset with no balance stays on the list — it answers "what can I hold?" —
+   but it is plainly not the one to pick. */
+.send-asset.is-empty { opacity: .52; }
+.send-asset.is-empty small { color: #6d8698; }
+
+/* Per-coin swatches, shared with the market band on the overview. */
+.hx-coin.btc, .coin-btc { background: #f7931a; }
+.hx-coin.eth, .coin-eth { background: #677ee9; }
+.hx-coin.sol, .coin-sol { background: #91abc0; color: #17334a; }
+.hx-coin.xrp, .coin-xrp { background: #1b2430; }
+.hx-coin.bnb, .coin-bnb { background: #f3ba2f; color: #22200c; }
+.hx-coin.doge, .coin-doge { background: #c2a633; color: #221d06; }
+.hx-coin.ada, .coin-ada { background: #0b3bb0; }
+.hx-coin.link, .coin-link { background: #2a5ada; }
+
 .asset-balance-panel { display: flex; align-items: center; gap: 13px; margin-bottom: 13px; padding: 13px 15px; border: 1px solid var(--hx-line); border-radius: 9px; background: #0b2436; }
 .asset-balance-coin { width: 45px; height: 45px; display: grid; place-items: center; border-radius: 50%; background: #f7931a; color: white; font-size: 25px; font-weight: 800; }
 .asset-balance-panel div { flex: 1; }

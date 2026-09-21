@@ -30,9 +30,9 @@ const check = (ok, label, detail = '') => {
 
 /* The balances each scenario runs against. */
 const SCENARIOS = [
-  { name: 'round balances', btc: 1.25, mainBalance: 48250.5 },
-  { name: 'dust-sized holding', btc: 0.0000012, mainBalance: 7.5 },
-  { name: 'long-tailed holding', btc: 0.30000000000000004, mainBalance: 1234.567 }
+  { name: 'round balances', btc: 1.25, xrp: 1500, mainBalance: 48250.5 },
+  { name: 'dust-sized holding', btc: 0.0000012, xrp: 0.25, mainBalance: 7.5 },
+  { name: 'long-tailed holding', btc: 0.30000000000000004, xrp: 900.000001, mainBalance: 1234.567 }
 ];
 
 async function run(browser, scenario) {
@@ -41,6 +41,8 @@ async function run(browser, scenario) {
   const users = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests/fixtures/users.json'), 'utf8'));
   users[0].btc = scenario.btc;
   users[0].mainBalance = scenario.mainBalance;
+  // DOGE is deliberately absent, to give the picker an empty holding.
+  users[0].holdings = { XRP: scenario.xrp };
   fs.writeFileSync(path.join(ROOT, 'data/users.json'), JSON.stringify(users, null, 4));
 
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
@@ -62,6 +64,10 @@ async function run(browser, scenario) {
   }, id);
 
   const near = (a, b, tol = 1e-8) => Math.abs(a - b) <= tol;
+  const note = async () => page.evaluate(() => {
+    const el = document.getElementById('btcWithdrawMessage');
+    return el.style.display === 'none' ? '' : el.textContent.trim();
+  });
   const tag = scenario.name;
 
   // ------------------------------------------------- bank dialog, cash source
@@ -113,11 +119,6 @@ async function run(browser, scenario) {
   await page.click('#btcWithdrawMaxBtn');
   await page.waitForTimeout(900);
   r = await read('btcWithdrawAmount');
-  const note = async () => page.evaluate(() => {
-    const el = document.getElementById('btcWithdrawMessage');
-    return el.style.display === 'none' ? '' : el.textContent.trim();
-  });
-
   if (sendable > 0) {
     check(r.value !== '' && r.valid, `${tag}: send MAX works before an address is entered`, `value="${r.value}"`);
     check(near(r.number, sendable, 1e-8),
@@ -144,6 +145,31 @@ async function run(browser, scenario) {
     check(/network fee/i.test(await note()),
       `${tag}: "send everything" says why nothing can be sent`, `note="${await note()}"`);
   }
+
+  /* The same control, now that the dialog can be pointed at another coin.
+     XRP has six decimal places rather than eight and a network fee three
+     orders of magnitude smaller, which is exactly where a hard-coded 8 or a
+     hard-coded fee would show up. */
+  await page.click('.send-asset[data-asset="XRP"]');
+  await page.waitForTimeout(400);
+  await page.click('#btcWithdrawMaxBtn');
+  await page.waitForTimeout(700);
+  r = await read('btcWithdrawAmount');
+  const xrpSendable = Math.floor((scenario.xrp - 0.000012) * 1e6) / 1e6;
+  check(r.value !== '' && r.valid, `${tag}: send MAX works for XRP too`, `value="${r.value}"`);
+  check(near(r.number, xrpSendable, 1e-6), `${tag}: XRP MAX uses the XRP fee`, `${r.number} vs ${xrpSendable}`);
+  check(/\.\d{6}\b/.test(r.value) && !/\.\d{7}/.test(r.value),
+    `${tag}: XRP MAX is written to six decimal places`, r.value);
+  check((await page.textContent('#btcWithdrawFeeSummary')).includes('XRP'),
+    `${tag}: the summary is denominated in XRP`, await page.textContent('#btcWithdrawFeeSummary'));
+
+  /* An asset with no balance at all: MAX has nothing to offer and has to say
+     so rather than filling in a zero. */
+  await page.click('.send-asset[data-asset="DOGE"]');
+  await page.waitForTimeout(400);
+  await page.click('#btcWithdrawMaxBtn');
+  await page.waitForTimeout(500);
+  check(/network fee/i.test(await note()), `${tag}: MAX on an empty holding explains itself`, await note());
 
   check(errors.length === 0, `${tag}: no page errors`, errors.join(' | '));
   await ctx.close();

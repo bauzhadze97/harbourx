@@ -62,7 +62,7 @@
         <a href="transactions.html"><span class="hx-nav-icon">☷</span>Transactions</a>
         <button type="button" data-open-wallet><span class="hx-nav-icon">↓</span>Deposit</button>
         <button type="button" data-open-withdraw><span class="hx-nav-icon">↑</span>Withdraw</button>
-        <button type="button" data-open-btc-withdraw><span class="hx-nav-icon">₿</span>Send Bitcoin</button>
+        <button type="button" data-open-btc-withdraw><span class="hx-nav-icon">₿</span>Send crypto</button>
         <a href="statements.html"><span class="hx-nav-icon">▤</span>Statements</a>
         <a href="verification.html"><span class="hx-nav-icon">✓</span>Verification</a>
         <a href="authenticator.html"><span class="hx-nav-icon">⚿</span>Authenticator</a>
@@ -169,7 +169,7 @@
           </article>
 
           <article class="hx-card hx-market-card hx-sheen" data-reveal>
-            <div class="hx-card-head"><h2>Market prices (<span id="marketCurrency">USD</span>)</h2><div class="hx-card-actions"><button class="hx-text-button" id="openConvertBtn" type="button">Convert BTC</button><button class="hx-text-button" id="openBtcWithdrawBtn" type="button">Send BTC</button></div></div>
+            <div class="hx-card-head"><h2>Market prices (<span id="marketCurrency">USD</span>)</h2><div class="hx-card-actions"><button class="hx-text-button" id="openConvertBtn" type="button">Convert BTC</button><button class="hx-text-button" id="openBtcWithdrawBtn" type="button">Send crypto</button></div></div>
             <div class="hx-market-list">
               <div class="hx-market-row"><span class="hx-coin btc">₿</span><span class="hx-market-name"><b>Bitcoin</b><small>BTC</small></span><strong id="marketBtcPrice" class="is-loading">Loading…</strong><span class="hx-market-change">▲ +2.3%</span><svg viewBox="0 0 95 30"><path d="M1 28 9 10 16 19 24 8 33 13 43 12 52 5 63 8 74 3 84 6 94 1"/></svg></div>
               <div class="hx-market-row"><span class="hx-coin eth">◆</span><span class="hx-market-name"><b>Ethereum</b><small>ETH</small></span><strong id="marketEthPrice" class="is-loading">—</strong><span class="hx-market-change">▲ +1.8%</span><svg viewBox="0 0 95 30"><path d="M1 28 9 12 16 18 24 11 33 16 43 14 52 4 63 10 74 3 84 8 94 4"/></svg></div>
@@ -380,24 +380,31 @@
   <div class="modal" id="btcWithdrawModal" aria-hidden="true">
     <div class="modal-card flow-modal-card btc-withdraw-flow">
       <div class="modal-head">
-        <div><h3>Withdraw Bitcoin</h3></div>
+        <div><h3 id="sendModalTitle">Send crypto</h3></div>
         <button class="close-btn" id="closeBtcWithdrawBtn" type="button" aria-label="Close">×</button>
       </div>
 
       <div class="modal-body">
-        <div class="flow-steps" id="btcWithdrawSteps" data-step="0" aria-label="Bitcoin withdrawal progress"><div class="active"><i>1</i><span>Amount</span></div><b></b><div><i>2</i><span>Address</span></div><b></b><div><i>3</i><span>Review</span></div></div>
-        <p class="hint flow-intro">Send Bitcoin from your balance to an address you control. Requests are reviewed before they are broadcast.</p>
+        <div class="flow-steps" id="btcWithdrawSteps" data-step="0" aria-label="Send progress"><div class="active"><i>1</i><span>Amount</span></div><b></b><div><i>2</i><span>Address</span></div><b></b><div><i>3</i><span>Review</span></div></div>
+        <p class="hint flow-intro" id="sendModalIntro">Send crypto from your balance to an address you control. Requests are reviewed before they are broadcast.</p>
 
-        <div class="asset-balance-panel"><span class="asset-balance-coin">₿</span><div><small>Available BTC balance</small><strong id="btcWithdrawAvailable">0.00000000 BTC</strong><em id="btcWithdrawAvailableFiat">≈ 0.00</em></div><button id="btcWithdrawMaxBtn" type="button">MAX</button></div>
+        <!-- Which asset. Rendered from assets.php, so the list here and the
+             list the server will accept cannot drift apart. -->
+        <div class="field flow-field">
+          <label id="sendAssetLabel">Asset to send</label>
+          <div class="send-asset-picker" id="sendAssetPicker" role="radiogroup" aria-labelledby="sendAssetLabel"></div>
+        </div>
+
+        <div class="asset-balance-panel"><span class="asset-balance-coin" id="sendAssetGlyph">₿</span><div><small id="btcWithdrawAvailableLabel">Available BTC balance</small><strong id="btcWithdrawAvailable">0.00000000 BTC</strong><em id="btcWithdrawAvailableFiat">≈ 0.00</em></div><button id="btcWithdrawMaxBtn" type="button">MAX</button></div>
 
         <div class="field flow-field">
           <label for="btcWithdrawAmount">Amount to send</label>
-          <div class="amount-input"><input id="btcWithdrawAmount" type="number" step="0.00000001" min="0" placeholder="0.00000000" /><span>BTC</span></div>
+          <div class="amount-input"><input id="btcWithdrawAmount" type="number" step="0.00000001" min="0" placeholder="0.00000000" /><span id="btcWithdrawAmountUnit">BTC</span></div>
           <button class="link-btn" id="btcWithdrawSendAllBtn" type="button">Send everything (fee comes out of the amount)</button>
         </div>
 
         <div class="field flow-field">
-          <label for="btcWithdrawAddress">Destination Bitcoin address</label>
+          <label for="btcWithdrawAddress" id="btcWithdrawAddressLabel">Destination Bitcoin address</label>
           <div class="btc-address-input">
             <input id="btcWithdrawAddress" type="text" placeholder="bc1… or 1… / 3…" autocapitalize="off" autocorrect="off" spellcheck="false" autocomplete="off" />
             <span class="btc-address-state" id="btcAddressState" aria-live="polite"></span>
@@ -405,10 +412,20 @@
           <p class="btc-address-hint" id="btcAddressHint">Legacy, SegWit and Taproot addresses are accepted. The checksum is verified before anything is sent.</p>
         </div>
 
+        <!-- Only for chains that take one. An exchange deposit that arrives
+             without the tag it asked for is usually unrecoverable, so this is
+             a field of its own rather than a note under the address. -->
+        <div class="field flow-field" id="sendTagField" hidden>
+          <label for="sendTagInput">Destination tag</label>
+          <input id="sendTagInput" type="text" inputmode="numeric" placeholder="e.g. 1234567" autocomplete="off" />
+          <p class="btc-address-hint" id="sendTagHint">Required by most exchanges. If you are sending to your own wallet and it did not give you one, leave this empty.</p>
+        </div>
+
         <div class="summary-box flow-breakdown">
           <div class="summary-row"><span>Amount</span><strong id="btcWithdrawAmountSummary">0.00000000 BTC</strong></div>
           <div class="summary-row"><span>Network fee</span><strong id="btcWithdrawFeeSummary">0.00000000 BTC</strong></div>
           <div class="summary-row flow-total"><span>Total debited</span><strong id="btcWithdrawTotalSummary">0.00000000 BTC</strong></div>
+          <div class="summary-row" id="sendTagRow" hidden><span>Destination tag</span><strong id="sendTagSummary">—</strong></div>
           <div class="summary-row"><span>Remaining balance</span><strong id="btcWithdrawRemaining">0.00000000 BTC</strong></div>
           <div class="summary-row" id="btcWithdrawFiatRow"><span>Approximate value</span><strong id="btcWithdrawFiat">0.00</strong></div>
           <div class="summary-row" id="btcWithdrawReleaseFeeRow" style="display:none"><span>Release fee (paid separately)</span><strong id="btcWithdrawReleaseFee">0.00</strong></div>
@@ -420,7 +437,7 @@
 
         <div class="btc-warning">
           <span aria-hidden="true">⚠</span>
-          <p><strong>A Bitcoin send cannot be reversed.</strong> Check the address against the one you were given, character by character. If it is wrong the coins are gone and nobody can recover them.</p>
+          <p><strong id="sendWarningLead">A Bitcoin send cannot be reversed.</strong> <span id="sendWarningBody">Check the address against the one you were given, character by character. If it is wrong the coins are gone and nobody can recover them.</span></p>
         </div>
 
         <div class="bank-form-message" id="btcWithdrawMessage"></div>
@@ -433,7 +450,7 @@
 
       <div class="modal-foot">
         <button class="secondary-btn" id="cancelBtcWithdrawBtn" type="button">Cancel</button>
-        <button class="primary-btn" data-ripple id="submitBtcWithdrawBtn" type="button">Review withdrawal</button>
+        <button class="primary-btn" data-ripple id="submitBtcWithdrawBtn" type="button">Review send</button>
       </div>
     </div>
   </div>

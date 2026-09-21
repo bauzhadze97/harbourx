@@ -1580,6 +1580,197 @@ const btcWithdrawReleaseFee = document.getElementById("btcWithdrawReleaseFee");
 const btcWithdrawFeeNote = document.getElementById("btcWithdrawFeeNote");
 
 const BTC_DEFAULT_HINT = "Legacy, SegWit and Taproot addresses are accepted. The checksum is verified before anything is sent.";
+/* ===========================================================================
+   The asset table
+   ---------------------------------------------------------------------------
+   Served by assets.php so that the list of coins here and the list the server
+   will accept come from one place. If the fetch fails, Bitcoin alone is still
+   sendable on the values below — which the server checks anyway, so a stale
+   copy costs a round trip and nothing more.
+   ======================================================================== */
+
+const HX_ASSET_FALLBACK = {
+  BTC: {
+    symbol: "BTC", name: "Bitcoin", chain: "Bitcoin", glyph: "₿", swatch: "btc",
+    coingeckoId: "bitcoin", decimals: 8, networkFee: 0.00002, minimum: 0.00000294,
+    tag: false, placeholder: "bc1… or 1… / 3…",
+    hint: "Legacy, SegWit and Taproot addresses are accepted. The checksum is verified before anything is sent."
+  }
+};
+
+let hxAssets = HX_ASSET_FALLBACK;
+let sendAsset = "BTC";
+
+function assetOf(symbol) {
+  return hxAssets[symbol] || hxAssets.BTC || HX_ASSET_FALLBACK.BTC;
+}
+function assetBalance(symbol) {
+  const holding = state.balances[symbol];
+  return holding ? holding.total : 0;
+}
+function assetPrice(symbol) {
+  if (symbol === "BTC") return currentBtcRate();
+  return Number(state.prices[symbol] || 0);
+}
+
+/** Write a balance back to both the running state and the stored record. */
+function setAssetBalance(symbol, amount) {
+  const value = Number(amount) || 0;
+  state.balances[symbol] = { total: value, available: value, frozen: value, pending: value };
+  if (symbol === "BTC") {
+    currentUser.btc = value;
+    return;
+  }
+  const holdings = currentUser.holdings && typeof currentUser.holdings === "object"
+    ? currentUser.holdings
+    : {};
+  holdings[symbol] = value;
+  currentUser.holdings = holdings;
+}
+
+/** Mirror the stored record's holdings into state, for every known asset. */
+function seedAssetBalances() {
+  const holdings = currentUser.holdings && typeof currentUser.holdings === "object"
+    ? currentUser.holdings
+    : {};
+  Object.keys(hxAssets).forEach((symbol) => {
+    const amount = symbol === "BTC"
+      ? Number(currentUser.btc || 0)
+      : Number(holdings[symbol] || 0);
+    state.balances[symbol] = { total: amount, available: amount, frozen: amount, pending: amount };
+  });
+}
+
+async function loadAssetTable() {
+  try {
+    const response = await fetch("assets.php", { cache: "no-store" });
+    const data = await response.json();
+    if (data && data.assets && data.assets.BTC) hxAssets = data.assets;
+  } catch (error) {
+    /* The Bitcoin-only fallback above is already in place. */
+  }
+  seedAssetBalances();
+
+  /* Open on something the client actually has. Offering an empty wallet by
+     default makes the dialog look broken. */
+  const held = Object.keys(hxAssets).filter((symbol) => assetBalance(symbol) > 0);
+  if (!held.includes(sendAsset)) sendAsset = held[0] || "BTC";
+
+  renderAssetPicker();
+  applySendAssetChrome();
+}
+
+const sendAssetPicker = document.getElementById("sendAssetPicker");
+const sendAssetGlyph = document.getElementById("sendAssetGlyph");
+const sendTagField = document.getElementById("sendTagField");
+const sendTagInput = document.getElementById("sendTagInput");
+const sendTagRow = document.getElementById("sendTagRow");
+const sendTagSummary = document.getElementById("sendTagSummary");
+
+function renderAssetPicker() {
+  if (!sendAssetPicker) return;
+  sendAssetPicker.textContent = "";
+
+  /* What they hold comes first; the rest still appear, so the list doubles as
+     an answer to "what can this account hold?". */
+  const symbols = Object.keys(hxAssets).sort(
+    (a, b) => (assetBalance(b) > 0) - (assetBalance(a) > 0)
+  );
+
+  symbols.forEach((symbol) => {
+    const asset = hxAssets[symbol];
+    const balance = assetBalance(symbol);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "send-asset" + (symbol === sendAsset ? " is-active" : "") + (balance > 0 ? "" : " is-empty");
+    button.dataset.asset = symbol;
+    button.setAttribute("role", "radio");
+    button.setAttribute("aria-checked", symbol === sendAsset ? "true" : "false");
+
+    const mark = document.createElement("i");
+    mark.className = "hx-coin " + asset.swatch;
+    mark.textContent = asset.glyph;
+
+    const label = document.createElement("span");
+    const name = document.createElement("b");
+    name.textContent = symbol;
+    const amount = document.createElement("small");
+    amount.textContent = balance > 0 ? formatNumber(balance, asset.decimals) : "None held";
+    label.append(name, amount);
+
+    button.append(mark, label);
+    button.addEventListener("click", () => selectSendAsset(symbol));
+    sendAssetPicker.appendChild(button);
+  });
+}
+
+/** Point every label, placeholder and hint in the dialog at the chosen asset. */
+function applySendAssetChrome() {
+  const asset = assetOf(sendAsset);
+  const balance = assetBalance(sendAsset);
+  const rate = assetPrice(sendAsset);
+  const set = (id, text) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+  };
+
+  set("sendModalTitle", `Send ${asset.name}`);
+  set("sendModalIntro",
+    `Send ${asset.name} from your balance to an address you control. Requests are reviewed before they are broadcast.`);
+  if (sendAssetGlyph) {
+    sendAssetGlyph.textContent = asset.glyph;
+    sendAssetGlyph.className = "asset-balance-coin coin-" + asset.swatch;
+  }
+  set("btcWithdrawAvailableLabel", `Available ${asset.symbol} balance`);
+  set("btcWithdrawAvailable", `${formatNumber(balance, asset.decimals)} ${asset.symbol}`);
+  set("btcWithdrawAvailableFiat", rate > 0 ? "≈ " + formatCurrency(balance * rate) : "");
+  set("btcWithdrawAmountUnit", asset.symbol);
+  set("btcWithdrawAddressLabel", `Destination ${asset.name} address`);
+  set("sendWarningLead", `${articleFor(asset.name)} ${asset.name} send cannot be reversed.`);
+
+  // A number input takes a plain decimal; 1e-8 is not one.
+  btcWithdrawAmount.step = (10 ** -asset.decimals).toFixed(asset.decimals);
+  btcWithdrawAmount.placeholder = (0).toFixed(asset.decimals);
+  btcWithdrawAddress.placeholder = asset.placeholder;
+  btcAddressHint.textContent = asset.hint;
+  btcAddressHint.classList.remove("is-valid", "is-invalid");
+
+  if (sendTagField) sendTagField.hidden = !asset.tag;
+  if (sendTagRow) sendTagRow.hidden = true;
+}
+
+function selectSendAsset(symbol) {
+  if (!hxAssets[symbol]) return;
+  sendAsset = symbol;
+  btcSendMax = false;
+  btcWithdrawAmount.value = "";
+  btcWithdrawAddress.value = "";
+  if (sendTagInput) sendTagInput.value = "";
+  setBtcAddressState("", "");
+  showBtcWithdrawMessage("");
+  setFlowStep(btcWithdrawSteps, 0);
+  renderAssetPicker();
+  applySendAssetChrome();
+  renderBtcQuote({ amount: 0, networkFee: 0, total: 0, remaining: assetBalance(symbol) });
+}
+
+/* "A XRP send" reads as a mistake. An acronym takes the article its first
+   letter's *name* asks for — ex-are-pee begins with a vowel sound — while an
+   ordinary word goes by its spelling. */
+function articleFor(name) {
+  const acronym = name === name.toUpperCase() && /^[A-Z]+$/.test(name);
+  const vowelish = acronym ? /^[AEFHILMNORSX]/ : /^[AEIOU]/;
+  return vowelish.test(name) ? "An" : "A";
+}
+
+/* Bitcoin reports its address kind as a slug; the other chains describe
+   themselves. Solana has no checksum at all, and saying one was verified when
+   none exists is exactly the false assurance this dialog must not give. */
+function addressKindMessage(kind) {
+  const label = BTC_KIND_LABEL[kind] || kind || "Address";
+  return /no checksum/i.test(label) ? label + "." : label + " — checksum verified.";
+}
+
 const BTC_KIND_LABEL = {
   p2pkh: "Legacy address",
   p2sh: "Script address",
@@ -1609,11 +1800,6 @@ function amountField(value, decimals) {
   return floorTo(value, decimals).toFixed(decimals);
 }
 
-/* Mirrors HX_BTC_NETWORK_FEE in btc_withdrawals.php. The server remains the
-   authority on what a send costs; this is only so the dialog can fill the
-   amount before an address exists to quote against. */
-const BTC_NETWORK_FEE = 0.00002;
-
 function showBtcWithdrawMessage(text) {
   btcWithdrawMessage.textContent = text || "";
   btcWithdrawMessage.style.display = text ? "block" : "none";
@@ -1638,13 +1824,20 @@ function setBtcAddressState(state, hint) {
 }
 
 function renderBtcQuote(quote) {
-  const fmt = (v) => Number(v || 0).toFixed(8) + " BTC";
+  const asset = assetOf(sendAsset);
+  const fmt = (v) => Number(v || 0).toFixed(asset.decimals) + " " + asset.symbol;
   document.getElementById("btcWithdrawAmountSummary").textContent = fmt(quote.amount);
   document.getElementById("btcWithdrawFeeSummary").textContent = fmt(quote.networkFee);
   document.getElementById("btcWithdrawTotalSummary").textContent = fmt(quote.total);
   document.getElementById("btcWithdrawRemaining").textContent = fmt(quote.remaining);
 
-  const rate = currentBtcRate();
+  if (sendTagRow && sendTagSummary) {
+    const tag = sendTagInput ? sendTagInput.value.trim() : "";
+    sendTagRow.hidden = !(asset.tag && tag !== "");
+    sendTagSummary.textContent = tag;
+  }
+
+  const rate = assetPrice(sendAsset);
   const localValue = Number(quote.amount || 0) * rate;
   const fiatRow = document.getElementById("btcWithdrawFiatRow");
   if (rate > 0) {
@@ -1682,10 +1875,17 @@ function requestBtcQuote() {
     }
 
     try {
-      const response = await fetch("btc_withdrawals.php", {
+      const response = await fetch("crypto_withdrawals.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quote: true, address, amount, sendMax: btcSendMax })
+        body: JSON.stringify({
+          quote: true,
+          asset: sendAsset,
+          address,
+          amount,
+          tag: sendTagInput ? sendTagInput.value.trim() : "",
+          sendMax: btcSendMax
+        })
       });
       const result = await response.json();
 
@@ -1693,6 +1893,10 @@ function requestBtcQuote() {
         if (result.field === "address") {
           setBtcAddressState("invalid", result.message);
           setFlowStep(btcWithdrawSteps, 1);
+        } else if (result.field === "tag") {
+          setBtcAddressState("valid", "Address verified.");
+          showBtcWithdrawMessage(result.message || "");
+          setFlowStep(btcWithdrawSteps, 2);
         } else {
           // The address was fine; it is the amount the server objected to.
           setBtcAddressState("valid", "Address verified.");
@@ -1703,10 +1907,9 @@ function requestBtcQuote() {
       }
 
       showBtcWithdrawMessage("");
-      const label = BTC_KIND_LABEL[result.addressKind] || "Address";
-      setBtcAddressState("valid", label + " — checksum verified.");
+      setBtcAddressState("valid", addressKindMessage(result.addressKind));
       renderBtcQuote(result);
-      if (btcSendMax) btcWithdrawAmount.value = Number(result.amount).toFixed(8);
+      if (btcSendMax) btcWithdrawAmount.value = Number(result.amount).toFixed(assetOf(sendAsset).decimals);
       setFlowStep(btcWithdrawSteps, 2);
     } catch (error) {
       setBtcAddressState("", "");
@@ -1714,22 +1917,24 @@ function requestBtcQuote() {
   }, 260);
 }
 
-function openBtcWithdrawModal() {
+function openBtcWithdrawModal(symbol) {
   closeModal();
   showBtcWithdrawMessage("");
   btcWithdrawAlert.style.display = "none";
   btcWithdrawAmount.value = "";
   btcWithdrawAddress.value = "";
+  if (sendTagInput) sendTagInput.value = "";
   btcSendMax = false;
   setBtcAddressState("", "");
   setFlowStep(btcWithdrawSteps, 0);
 
-  const available = state.balances.BTC.total;
-  document.getElementById("btcWithdrawAvailable").textContent = available.toFixed(8) + " BTC";
-  const rate = currentBtcRate();
-  document.getElementById("btcWithdrawAvailableFiat").textContent =
-    rate > 0 ? "≈ " + formatCurrency(available * rate) : "";
-  renderBtcQuote({ amount: 0, networkFee: 0, total: 0, remaining: available });
+  /* Opened from a particular coin — a market row, say — start on that one.
+     Otherwise keep whichever was last chosen. */
+  if (symbol && hxAssets[symbol]) sendAsset = symbol;
+
+  renderAssetPicker();
+  applySendAssetChrome();
+  renderBtcQuote({ amount: 0, networkFee: 0, total: 0, remaining: assetBalance(sendAsset) });
 
   openModalEl(btcWithdrawModal);
   btcWithdrawModal.setAttribute("aria-hidden", "false");
@@ -1756,7 +1961,7 @@ async function handleBtcWithdrawSubmit() {
   const amount = Number(btcWithdrawAmount.value);
 
   if (!address) {
-    showBtcWithdrawMessage("Enter the Bitcoin address to send to.");
+    showBtcWithdrawMessage(`Enter the ${assetOf(sendAsset).name} address to send to.`);
     rejectField(btcWithdrawAddress);
     return;
   }
@@ -1791,14 +1996,19 @@ async function sendBtcWithdrawal() {
   submitBtcWithdrawBtn.textContent = "Submitting...";
 
   try {
-    const response = await fetch("btc_withdrawals.php", {
+    const response = await fetch("crypto_withdrawals.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        asset: sendAsset,
         address,
         amount,
+        tag: sendTagInput ? sendTagInput.value.trim() : "",
         sendMax: btcSendMax,
-        btcRate: currentBtcRate()
+        /* The release fee is a percentage of what the send is worth, so the
+           server needs a rate to apply it to. It recomputes the fee itself
+           from its own settings; this only supplies the valuation. */
+        rate: assetPrice(sendAsset)
       })
     });
     const result = await response.json();
@@ -1829,16 +2039,16 @@ async function sendBtcWithdrawal() {
     }
     if (!result.success) {
       showBtcWithdrawMessage(result.message || "Unable to submit the request.");
-      rejectField(result.field === "address" ? btcWithdrawAddress : btcWithdrawAmount);
+      const fields = { address: btcWithdrawAddress, tag: sendTagInput };
+      rejectField(fields[result.field] || btcWithdrawAmount);
       return;
     }
 
-    const newBtc = Number(result.btc);
-    state.balances.BTC.total = newBtc;
-    state.balances.BTC.available = newBtc;
-    state.balances.BTC.frozen = newBtc;
-    state.balances.BTC.pending = newBtc;
-    currentUser.btc = newBtc;
+    const sentAsset = String(result.asset || sendAsset);
+    setAssetBalance(sentAsset, Number(result.balance));
+    // Bitcoin is read from its own field all over the app, so keep it current
+    // even when what was sent was something else.
+    if (sentAsset !== "BTC") setAssetBalance("BTC", Number(result.btc));
 
     if (Array.isArray(result.transactions)) {
       state.transactions = result.transactions;
@@ -1851,15 +2061,18 @@ async function sendBtcWithdrawal() {
     updateExpectedAmountLabel();
     updateConvertPreview();
 
+    renderAssetPicker();
+    applySendAssetChrome();
+
     setFlowStep(btcWithdrawSteps, 2);
     btcWithdrawAlertText.textContent = result.message || "Request submitted.";
     btcWithdrawAlert.style.display = "flex";
-    notify("Bitcoin withdrawal request submitted.", "success");
+    notify(`${assetOf(sentAsset).name} withdrawal request submitted.`, "success");
   } catch (error) {
     showBtcWithdrawMessage("Unable to submit the request. Try again.");
   } finally {
     submitBtcWithdrawBtn.disabled = false;
-    submitBtcWithdrawBtn.textContent = "Review withdrawal";
+    submitBtcWithdrawBtn.textContent = "Review send";
   }
 }
 
@@ -2137,12 +2350,14 @@ btcWithdrawModal.addEventListener("click", (event) => {
 
 // Typing an amount cancels send-max; the two would otherwise fight each other.
 btcWithdrawAmount.addEventListener("input", () => { btcSendMax = false; requestBtcQuote(); });
+if (sendTagInput) sendTagInput.addEventListener("input", requestBtcQuote);
 btcWithdrawAddress.addEventListener("input", requestBtcQuote);
 btcWithdrawAddress.addEventListener("paste", () => setTimeout(requestBtcQuote, 0));
 
 function btcSendEverything() {
-  const available = state.balances.BTC.total;
-  const sendable = floorTo(available - BTC_NETWORK_FEE, 8);
+  const asset = assetOf(sendAsset);
+  const available = assetBalance(sendAsset);
+  const sendable = floorTo(available - asset.networkFee, asset.decimals);
 
   /* Below the network fee there is nothing left to send. The server answers
      that with "enter an amount greater than zero", which does not explain
@@ -2150,7 +2365,8 @@ function btcSendEverything() {
   if (sendable <= 0) {
     btcSendMax = false;
     showBtcWithdrawMessage(
-      `The balance of ${formatNumber(available, 8)} BTC is below the ${BTC_NETWORK_FEE.toFixed(8)} BTC network fee, so there is nothing left to send.`
+      `The balance of ${formatNumber(available, asset.decimals)} ${asset.symbol} is below the `
+      + `${asset.networkFee.toFixed(asset.decimals)} ${asset.symbol} network fee, so there is nothing left to send.`
     );
     return;
   }
@@ -2163,12 +2379,12 @@ function btcSendEverything() {
      amount before typing the address would otherwise press MAX and watch
      nothing happen. The quote still runs, and still wins, once there is an
      address to send to. */
-  btcWithdrawAmount.value = sendable.toFixed(8);
+  btcWithdrawAmount.value = sendable.toFixed(asset.decimals);
   renderBtcQuote({
     amount: sendable,
-    networkFee: BTC_NETWORK_FEE,
-    total: floorTo(sendable + BTC_NETWORK_FEE, 8),
-    remaining: Math.max(0, floorTo(available - sendable - BTC_NETWORK_FEE, 8))
+    networkFee: asset.networkFee,
+    total: floorTo(sendable + asset.networkFee, asset.decimals),
+    remaining: Math.max(0, floorTo(available - sendable - asset.networkFee, asset.decimals))
   });
   setFlowStep(btcWithdrawSteps, btcWithdrawAddress.value.trim() ? 2 : 1);
   requestBtcQuote();
@@ -2306,3 +2522,4 @@ updateLivePortfolioValue();
 renderTransactions();
 updateExpectedAmountLabel();
 updateConvertPreview();
+loadAssetTable();
