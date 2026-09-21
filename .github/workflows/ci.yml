@@ -55,6 +55,12 @@ jobs:
       - name: Bitcoin address validation (BIP-173 / BIP-350 vectors)
         run: php tests/btc-test.php
 
+      - name: Keccak-256 (published vectors, EIP-55 addresses)
+        run: php tests/keccak-test.php
+
+      - name: Asset table, balances and per-chain address validation
+        run: php tests/crypto-assets-test.php
+
       - name: Statement figures (amount parser, monthly grouping)
         run: php tests/statements-test.php
 

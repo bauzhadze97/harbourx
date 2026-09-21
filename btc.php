@@ -25,15 +25,24 @@ const HX_BECH32M_CONST = 0x2bc830a3;  // BIP-350, witness v1+
 
 /* -------------------------------------------------------------- Base58Check */
 
-/** Decode Base58 to raw bytes, or null if a character is outside the alphabet. */
-function hx_base58_decode(string $text): ?string
+/**
+ * Decode Base58 to raw bytes, or null if a character is outside the alphabet.
+ *
+ * The alphabet is a parameter because the XRP Ledger uses the same arithmetic
+ * over a different ordering of the same 58 characters; everything else about
+ * the encoding, including which character stands for a leading zero byte, is
+ * the same. Bitcoin's ordering stays the default, so every existing caller is
+ * unaffected.
+ */
+function hx_base58_decode(string $text, string $alphabet = HX_B58_ALPHABET): ?string
 {
     if ($text === '') return null;
 
+    $zero = $alphabet[0];
     $bytes = [0];
     $length = strlen($text);
     for ($i = 0; $i < $length; $i++) {
-        $value = strpos(HX_B58_ALPHABET, $text[$i]);
+        $value = strpos($alphabet, $text[$i]);
         if ($value === false) return null;
 
         // bytes = bytes * 58 + value, big-endian, carried by hand.
@@ -49,14 +58,14 @@ function hx_base58_decode(string $text): ?string
         }
     }
 
-    // Each leading '1' is a leading zero byte that the arithmetic above drops.
-    for ($i = 0; $i < $length && $text[$i] === '1'; $i++) {
+    // Each leading zero character is a leading zero byte the arithmetic drops.
+    for ($i = 0; $i < $length && $text[$i] === $zero; $i++) {
         array_unshift($bytes, 0);
     }
 
     // Strip any zero bytes the accumulator started with, beyond the real ones.
     $leadingOnes = 0;
-    while ($leadingOnes < $length && $text[$leadingOnes] === '1') $leadingOnes++;
+    while ($leadingOnes < $length && $text[$leadingOnes] === $zero) $leadingOnes++;
     while (count($bytes) > $leadingOnes && $bytes[0] === 0 && count($bytes) > 1) {
         // Only trim what is not accounted for by a leading '1'.
         $zeros = 0;
@@ -72,9 +81,9 @@ function hx_base58_decode(string $text): ?string
  * Verify a Base58Check payload and return [versionByte, hash160], or null.
  * The last four bytes must be the first four of sha256(sha256(rest)).
  */
-function hx_base58check_decode(string $text): ?array
+function hx_base58check_decode(string $text, string $alphabet = HX_B58_ALPHABET): ?array
 {
-    $raw = hx_base58_decode($text);
+    $raw = hx_base58_decode($text, $alphabet);
     if ($raw === null || strlen($raw) !== 25) return null;
 
     $payload = substr($raw, 0, 21);
@@ -119,14 +128,17 @@ function hx_bech32_hrp_expand(string $hrp): array
  * Which constant it verified against tells the caller whether it was bech32
  * or bech32m, and therefore which witness versions are legal.
  */
-function hx_bech32_decode(string $text): ?array
+function hx_bech32_decode(string $text, int $maxLength = 90): ?array
 {
     // Mixed case is invalid outright — the checksum is defined over one case.
     if ($text !== strtolower($text) && $text !== strtoupper($text)) return null;
     $text = strtolower($text);
 
     $length = strlen($text);
-    if ($length < 8 || $length > 90) return null;
+    // BIP-173 caps a Bitcoin address at 90 characters. Other chains use the
+    // same encoding for longer payloads — a Cardano base address is 103 — so
+    // the cap is a parameter, with Bitcoin's limit as the default.
+    if ($length < 8 || $length > $maxLength) return null;
 
     $split = strrpos($text, '1');
     if ($split === false || $split < 1 || $split + 7 > $length) return null;
