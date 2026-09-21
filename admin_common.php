@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/btc.php';
+require_once __DIR__ . '/crypto_assets.php';
 require_once __DIR__ . '/locale_config.php';
 require_once __DIR__ . '/payments_common.php';
 require_once __DIR__ . '/followups_common.php';
@@ -154,6 +155,44 @@ function computeWithdrawalFee($user, $localAmount) {
     $fee = $config['amount'] + ($config['percent'] / 100) * max(0, (float)$localAmount);
     return round(max(0, $fee), 2);
 }
+/**
+ * A crypto send request, read out of a stored transaction, or null.
+ *
+ * Records filed before there was an asset table use btcWithdrawal* field
+ * names; everything since uses cryptoWithdrawal*, and Bitcoin writes both.
+ * Stored records cannot be renamed retroactively, so this reads either and
+ * hands back one shape.
+ */
+function cryptoWithdrawalView($tx) {
+    $id = (string)($tx['cryptoWithdrawalRequestId'] ?? $tx['btcWithdrawalRequestId'] ?? '');
+    if ($id === '') return null;
+
+    $pick = static function ($suffix, $fallback = null) use ($tx) {
+        return $tx['cryptoWithdrawal' . $suffix] ?? $tx['btcWithdrawal' . $suffix] ?? $fallback;
+    };
+
+    $symbol = strtoupper((string)($tx['cryptoWithdrawalAsset'] ?? 'BTC'));
+    $asset = hx_asset($symbol);
+
+    return [
+        'requestId'   => $id,
+        'asset'       => $symbol,
+        'assetName'   => (string)($tx['cryptoWithdrawalAssetName'] ?? $asset['name'] ?? $symbol),
+        'chain'       => (string)($tx['cryptoWithdrawalChain'] ?? $asset['chain'] ?? $symbol),
+        'decimals'    => (int)($asset['decimals'] ?? 8),
+        'glyph'       => (string)($asset['glyph'] ?? '·'),
+        'swatch'      => (string)($asset['swatch'] ?? 'btc'),
+        'address'     => (string)$pick('Address', ''),
+        'addressKind' => (string)$pick('AddressKind', ''),
+        'amount'      => (float)$pick('Amount', 0),
+        'networkFee'  => (float)$pick('NetworkFee', 0),
+        'submittedAt' => (string)$pick('SubmittedAt', ''),
+        'tag'         => (string)($tx['cryptoWithdrawalTag'] ?? ''),
+        'releaseFee'  => $pick('ReleaseFee'),
+        'releaseFeeCurrency' => (string)$pick('ReleaseFeeCurrency', ''),
+    ];
+}
+
 function statusSlug($status) {
     $status = strtolower(trim((string)$status));
     $status = preg_replace('/[^a-z0-9]+/', '-', $status);

@@ -1,11 +1,11 @@
 <?php
 /**
- * Bitcoin withdrawal requests.
+ * Crypto withdrawal requests, for any asset in the table.
  *
- * The flow itself lives in crypto_withdrawal_core.php, which handles every
- * supported asset. This endpoint stays because the dialog, the tests and the
- * records already on disk all know it by name; it pins the asset to Bitcoin so
- * a request cannot name another one, and answers exactly as it always has.
+ * Same flow as the Bitcoin endpoint — it is the same code — except that the
+ * asset comes from the request. An asset the table does not list is refused
+ * before anything else is looked at, so this cannot be used to invent a
+ * holding by naming one.
  */
 
 require_once __DIR__ . '/crypto_withdrawal_core.php';
@@ -21,4 +21,4 @@ header('Content-Type: application/json');
 header('Cache-Control: no-store');
 
 $input = json_decode((string)file_get_contents('php://input'), true);
-hx_crypto_withdrawal_handle(is_array($input) ? $input : [], 'BTC');
+hx_crypto_withdrawal_handle(is_array($input) ? $input : []);

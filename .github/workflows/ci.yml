@@ -138,6 +138,9 @@ jobs:
       - name: Portfolio and transactions (sums, filters, export)
         run: node tests/portal-pages-test.js
 
+      - name: Sending assets other than Bitcoin
+        run: node tests/crypto-withdrawal-test.js
+
       - name: MAX controls fill their amount field
         run: node tests/max-buttons-test.js
 

@@ -31,7 +31,9 @@ const HX_XRP_ALPHABET = 'rpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65jkm8oFqi1tuvA
  *
  *   decimals    places the amount is held and displayed to
  *   networkFee  deducted from a send, in units of the asset itself
- *   minimum     smallest send the chain will carry
+ *   minimum     smallest send the chain will carry, with the sentence that
+ *               explains it — chains differ in why, and "below the minimum"
+ *               on its own tells a reader nothing they can act on
  *   addressing  which validator below applies
  *   tag         the chain takes a numeric destination tag alongside the address
  */
@@ -40,6 +42,7 @@ const HX_ASSETS = [
         'name' => 'Bitcoin', 'chain' => 'Bitcoin', 'glyph' => '₿', 'swatch' => 'btc',
         'coingeckoId' => 'bitcoin', 'decimals' => 8,
         'networkFee' => 0.00002, 'minimum' => 0.00000294,
+        'minimumMessage' => 'That is below the dust limit of %s BTC — the network will not relay it.',
         'addressing' => 'bitcoin', 'tag' => false,
         'placeholder' => 'bc1… or 1… / 3…',
         'hint' => 'Legacy, SegWit and Taproot addresses are accepted. The checksum is verified before anything is sent.'
@@ -48,6 +51,7 @@ const HX_ASSETS = [
         'name' => 'Ethereum', 'chain' => 'Ethereum', 'glyph' => '◆', 'swatch' => 'eth',
         'coingeckoId' => 'ethereum', 'decimals' => 8,
         'networkFee' => 0.0008, 'minimum' => 0.0005,
+        'minimumMessage' => 'That is below the minimum Ethereum send of %s ETH.',
         'addressing' => 'evm', 'tag' => false,
         'placeholder' => '0x…',
         'hint' => 'An Ethereum address, 0x followed by 40 hex characters. If yours has capital letters its EIP-55 checksum is verified.'
@@ -56,6 +60,7 @@ const HX_ASSETS = [
         'name' => 'XRP', 'chain' => 'XRP Ledger', 'glyph' => '✕', 'swatch' => 'xrp',
         'coingeckoId' => 'ripple', 'decimals' => 6,
         'networkFee' => 0.000012, 'minimum' => 0.000001,
+        'minimumMessage' => 'That is below the minimum XRP send of %s XRP.',
         'addressing' => 'xrp', 'tag' => true,
         'placeholder' => 'r…',
         'hint' => 'A classic XRP address beginning with r. Exchanges usually also require a destination tag — a deposit without one can be lost.'
@@ -64,6 +69,7 @@ const HX_ASSETS = [
         'name' => 'BNB', 'chain' => 'BNB Smart Chain', 'glyph' => '◈', 'swatch' => 'bnb',
         'coingeckoId' => 'binancecoin', 'decimals' => 8,
         'networkFee' => 0.0002, 'minimum' => 0.0001,
+        'minimumMessage' => 'That is below the minimum BNB Smart Chain send of %s BNB.',
         'addressing' => 'evm', 'tag' => false,
         'placeholder' => '0x…',
         'hint' => 'A BNB Smart Chain (BEP-20) address. It has the same 0x form as Ethereum, but the two are different networks — sending to the wrong one loses the coins.'
@@ -72,6 +78,7 @@ const HX_ASSETS = [
         'name' => 'Solana', 'chain' => 'Solana', 'glyph' => '≋', 'swatch' => 'sol',
         'coingeckoId' => 'solana', 'decimals' => 8,
         'networkFee' => 0.00001, 'minimum' => 0.000001,
+        'minimumMessage' => 'That is below the minimum Solana send of %s SOL.',
         'addressing' => 'solana', 'tag' => false,
         'placeholder' => 'Base58 address',
         'hint' => 'A Solana address is a raw public key with no checksum, so only its length and alphabet can be checked. Paste it; do not type it.'
@@ -80,6 +87,7 @@ const HX_ASSETS = [
         'name' => 'Dogecoin', 'chain' => 'Dogecoin', 'glyph' => 'Ð', 'swatch' => 'doge',
         'coingeckoId' => 'dogecoin', 'decimals' => 8,
         'networkFee' => 1.0, 'minimum' => 1.0,
+        'minimumMessage' => 'That is below the minimum Dogecoin send of %s DOGE — it would not cover the network fee.',
         'addressing' => 'dogecoin', 'tag' => false,
         'placeholder' => 'D…',
         'hint' => 'A Dogecoin address beginning with D, or a multisig address beginning with 9 or A. The checksum is verified.'
@@ -88,6 +96,7 @@ const HX_ASSETS = [
         'name' => 'Cardano', 'chain' => 'Cardano', 'glyph' => '₳', 'swatch' => 'ada',
         'coingeckoId' => 'cardano', 'decimals' => 6,
         'networkFee' => 0.17, 'minimum' => 1.0,
+        'minimumMessage' => 'That is below the minimum Cardano send of %s ADA. Cardano requires a minimum amount per output.',
         'addressing' => 'cardano', 'tag' => false,
         'placeholder' => 'addr1…',
         'hint' => 'A Shelley address beginning with addr1. The older Byron addresses (Ae2…, Ddz…) are not accepted here.'
@@ -96,6 +105,7 @@ const HX_ASSETS = [
         'name' => 'Chainlink', 'chain' => 'Ethereum (ERC-20)', 'glyph' => '⬡', 'swatch' => 'link',
         'coingeckoId' => 'chainlink', 'decimals' => 8,
         'networkFee' => 0.35, 'minimum' => 0.1,
+        'minimumMessage' => 'That is below the minimum LINK send of %s LINK.',
         'addressing' => 'evm', 'tag' => false,
         'placeholder' => '0x…',
         'hint' => 'An Ethereum address — LINK is an ERC-20 token, so it travels on Ethereum. Send only to a wallet that supports ERC-20 tokens.'
@@ -368,6 +378,7 @@ function hx_asset_public_table(): array
             'networkFee' => $asset['networkFee'],
             'minimum' => $asset['minimum'],
             'tag' => $asset['tag'],
+            'minimumMessage' => $asset['minimumMessage'],
             'placeholder' => $asset['placeholder'],
             'hint' => $asset['hint'],
         ];

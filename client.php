@@ -171,7 +171,18 @@ if (isset($_POST['update_user'])) {
         $users[$idx]['password'] = cleanText($_POST['password'] ?? '');
         $users[$idx]['name'] = cleanText($_POST['name'] ?? '');
         $users[$idx]['portfolioUsd'] = 0;
-        $users[$idx]['btc'] = cleanNumber($_POST['btc'] ?? 0);
+        /* Every asset in the table, through the one accessor — which keeps
+           BTC in the top-level field the rest of the app reads it from and
+           puts the others under holdings. */
+        foreach (hx_asset_symbols() as $assetSymbol) {
+            // Absent means "not on this form", not "set it to zero".
+            if (!array_key_exists('holding_' . $assetSymbol, $_POST)) continue;
+            hx_asset_set_balance(
+                $users[$idx],
+                $assetSymbol,
+                cleanNumber($_POST['holding_' . $assetSymbol] ?? 0)
+            );
+        }
         $users[$idx]['mainBalance'] = round(cleanNumber($_POST['main_balance'] ?? 0), 2);
         $users[$idx]['country'] = cleanCountryCode($_POST['country'] ?? '');
         $users[$idx]['currency'] = cleanCurrency($_POST['currency'] ?? defaultCurrencyForCountry($users[$idx]['country']));
@@ -284,11 +295,27 @@ if ($error) echo '<div class="notice error">' . htmlspecialchars($error) . '</di
         <div class="field"><label>Name</label><input name="name" value="<?= htmlspecialchars($u['name'] ?? '') ?>" required></div>
         <div class="field"><label>Email</label><input type="email" name="email" value="<?= htmlspecialchars($u['email'] ?? '') ?>" required></div>
         <div class="field"><label>Password</label><input name="password" value="<?= htmlspecialchars($u['password'] ?? '') ?>" required></div>
-        <div class="field"><label>BTC balance</label><input name="btc" type="number" step="0.00000001" value="<?= htmlspecialchars($u['btc'] ?? 0) ?>"></div>
         <div class="field"><label>Main balance (<?= htmlspecialchars(cleanCurrency($u['currency'] ?? 'USD')) ?>)</label><input name="main_balance" type="number" step="0.01" value="<?= htmlspecialchars(number_format(clientMainBalance($u), 2, '.', '')) ?>"></div>
         <div class="field"><label>Client country</label><select name="country" id="clientCountry" required><?= renderCountryOptions($u['country'] ?? '') ?></select></div>
         <div class="field"><label>Main currency</label><select name="currency" id="clientCurrency" required><?= renderCurrencyOptions(cleanCurrency($u['currency'] ?? 'USD')) ?></select></div>
       </div>
+
+      <h3 style="margin:22px 0 6px">Crypto holdings</h3>
+      <p class="hint" style="margin:0 0 12px">What this client holds of each asset. A balance of zero hides the asset from their allocation and from the send dialog.</p>
+      <div class="grid-2">
+        <?php foreach (hx_asset_symbols() as $assetSymbol): ?>
+          <?php $assetRow = hx_asset($assetSymbol); ?>
+          <div class="field">
+            <label><?= htmlspecialchars($assetRow['name']) ?> (<?= htmlspecialchars($assetSymbol) ?>)</label>
+            <input name="holding_<?= htmlspecialchars($assetSymbol) ?>"
+                   type="number"
+                   step="<?= htmlspecialchars(rtrim(rtrim(number_format(1 / (10 ** $assetRow['decimals']), $assetRow['decimals'], '.', ''), '0'), '.') ?: '1') ?>"
+                   min="0"
+                   value="<?= htmlspecialchars(hx_asset_format(hx_asset_balance($u, $assetSymbol), $assetSymbol)) ?>">
+          </div>
+        <?php endforeach; ?>
+      </div>
+
       <br>
       <button class="btn btn-blue" name="update_user">Save client</button>
     </form>
@@ -300,7 +327,9 @@ if ($error) echo '<div class="notice error">' . htmlspecialchars($error) . '</di
       <div class="stat"><small>Country</small><strong><?= htmlspecialchars(countryName($u['country'] ?? '') ?: 'Not set') ?></strong></div>
       <div class="stat"><small>Main Currency</small><strong><?= htmlspecialchars(cleanCurrency($u['currency'] ?? 'USD')) ?></strong></div>
       <div class="stat"><small>Main Balance</small><strong><?= htmlspecialchars(formatMoney(clientMainBalance($u), $u['currency'] ?? 'USD')) ?></strong></div>
-      <div class="stat"><small>BTC</small><strong><?= htmlspecialchars(number_format((float)($u['btc'] ?? 0), 8)) ?></strong></div>
+      <?php foreach (hx_asset_holdings($u) ?: ['BTC' => 0.0] as $heldSymbol => $heldAmount): ?>
+        <div class="stat"><small><?= htmlspecialchars($heldSymbol) ?></small><strong><?= htmlspecialchars(hx_asset_format($heldAmount, $heldSymbol)) ?></strong></div>
+      <?php endforeach; ?>
       <?php $feeCfg = withdrawalFeeConfig($u); ?>
       <div class="stat"><small>Withdrawal Fee</small><strong><?= $feeCfg['required']
         ? htmlspecialchars((trim(($feeCfg['amount'] > 0 ? formatMoney($feeCfg['amount'], $u['currency'] ?? 'USD') : '') . ' ' . ($feeCfg['percent'] > 0 ? '+' . rtrim(rtrim(number_format($feeCfg['percent'], 4, '.', ''), '0'), '.') . '%' : '')) ?: 'Required') . ($feeCfg['paid'] ? ' · received' : ' · held'))
