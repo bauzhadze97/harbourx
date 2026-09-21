@@ -144,6 +144,10 @@ The same suite CI runs (see .github/workflows/ci.yml):
      node tests/statements-page-test.js  the statements page and its download
      node tests/verification-test.js  document upload, who may read it, sessions
      node tests/portal-pages-test.js  portfolio sums, transaction filters, export
+     php tests/keccak-test.php      Keccak-256 vectors and the EIP-55 addresses
+     php tests/crypto-assets-test.php  the asset table, balances, address rules
+     node tests/crypto-withdrawal-test.js  sending assets other than Bitcoin
+     node tests/max-buttons-test.js  every MAX control fills the field it points at
 
 The browser tests sign in as the synthetic account, so they seed
 data/users.json with tests/fixtures/users.json and put back whatever was there
@@ -184,12 +188,12 @@ What changed in this version:
   three other jobs, to a donut and the most recent handful of rows with nothing
   to filter them by.
 
-  portfolio.html breaks the account into its holdings — Bitcoin and the cash
-  balance — priced at the live rate, with each one's share of the total, an
-  allocation bar, and a summary of what built it: Bitcoin received, Bitcoin
-  sent or converted, the amount converted, the amount withdrawn. When the price
-  feeds cannot be reached it says so and prices from the last rate the browser
-  saw, rather than showing a total it cannot stand behind.
+  portfolio.html breaks the account into its holdings — every asset it holds,
+  plus the cash balance — priced at the live rate, with each one's share of the
+  total, an allocation bar, and a summary of what built it: what came in and
+  went out per asset, the amount converted, the amount withdrawn. When the price
+  feeds cannot be reached it says so and prices indicatively, rather than
+  showing a total it cannot stand behind.
 
   transactions.html is the whole history: search, filters for type and status,
   a date range, sortable columns, 25 to a page, and an export that takes what
@@ -266,7 +270,7 @@ What changed in this version:
   — so a mark that survived would release every later withdrawal on a single
   payment. Each one needs its own tick. To change that, drop the block that
   clears withdrawalFeePaid near the end of withdrawals.php and
-  btc_withdrawals.php.
+  crypto_withdrawal_core.php, which is what btc_withdrawals.php now runs.
 - Fixed a bank withdrawal that could not be completed. The client's copy of the
   per-account withdrawal fee is whatever was written into the stored record at
   sign-in, so an administrator who switched the fee on during a session left
@@ -487,3 +491,55 @@ Security note:
 - This project stores client and AML data in JSON. Production deployment should use HTTPS, strict server permissions, encrypted backups, and a secured database.
 - Payout bank details are also stored in JSON in this version and require the same production safeguards.
 - The AML form supports manual HarbourX review; it does not claim government or third-party document verification.
+
+
+- Clients can send any of eight assets, not only Bitcoin. crypto_assets.php is
+  one table describing each — its decimals, network fee, minimum, and how its
+  addresses are checked — so adding a coin is a row rather than an edit in four
+  files. Balances keep Bitcoin in the top-level 'btc' field the rest of the app
+  already reads, and put everything else under 'holdings', reached through one
+  accessor.
+
+  Addresses are verified against each chain's own checksum, never a shape
+  regex: BIP-173/350 for Bitcoin, EIP-55 for Ethereum, BNB and LINK,
+  Base58Check over the XRP Ledger's own alphabet, Base58Check for Dogecoin,
+  bech32 for Shelley-era Cardano. Solana addresses carry no checksum at all,
+  and the hint on the field says so instead of implying one. EIP-55 needs
+  Keccak-256, which is not PHP's sha3-256 — NIST changed the padding byte when
+  Keccak became SHA-3 — so keccak.php implements it, checked against the
+  published vectors and the four addresses in EIP-55 itself.
+
+  The send dialog opens on a row of coins showing what the account holds.
+  Everything it says follows the chosen asset, including a destination tag
+  field for XRP, where a deposit arriving without the tag an exchange asked for
+  is usually unrecoverable. The list comes from assets.php rather than a copy
+  in JavaScript, so what the dialog offers and what the server accepts cannot
+  drift apart. The admin client page holds a balance field per asset and the
+  withdrawal queue lists every asset, reading both the old btcWithdrawal* field
+  names and the new cryptoWithdrawal* ones.
+
+- The client overview no longer prints figures the account does not have. The
+  "▲ +12.4%" beside the balance was literal text in the markup, and the gain
+  beside it was the balance multiplied by 0.124. The performance chart was a
+  fixed SVG path — the same curve for every client — and its 24H/7D/1M/1Y
+  buttons relabelled a tooltip without redrawing anything. Each market row
+  carried a hard-coded percentage and a hand-drawn sparkline, and two
+  allocation rows sat at a 0% no code could change.
+
+  Balance history is now computed from the client's own ledger, walked
+  backwards from the balance they hold now, so the last point is by
+  construction the figure at the top of the page. The axis is derived and
+  starts at zero, because cropping a baseline makes a small move look like a
+  cliff. The market band covers all eight assets with the real 24-hour move and
+  the real seven-day trend from one call, and says plainly when a figure is
+  indicative rather than measured. Above them sits a strip for anything wanting
+  the client — a held withdrawal, a missing document — which previously could
+  only be found by trying to withdraw.
+
+- The MAX controls fill the field they point at. The one in the send dialog
+  asked the server for a quote, and the quote returns early with no destination
+  address, so pressing MAX before typing an address did nothing at all. The
+  others built their value with String(), which prints small numbers in
+  exponential notation — String(0.0000012) is "1.2e-6", which a number input
+  discards. Both are covered by tests/max-buttons-test.js, across three
+  balances and two assets.
