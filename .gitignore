@@ -17,6 +17,11 @@ data.*/*
 # what clients put in it never is.
 uploads/*
 !uploads/.htaccess
+
+# Isolated Harbcoin demo state. The test app code is versioned; prices changed
+# from its admin screen are runtime data and never belong in Git.
+test/data/*
+!test/data/.htaccess
 *.zip
 
 # local screenshot/verification scratch (root only — tests/ has its own

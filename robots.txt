@@ -42,5 +42,6 @@ Disallow: /data/
 
 # Test fixtures and the static preview, which are not part of the site.
 Disallow: /tests/
+Disallow: /test/
 
 Sitemap: https://harbourx.org/sitemap.xml
