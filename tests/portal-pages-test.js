@@ -41,6 +41,17 @@ const num = t => Number(String(t).replace(/[^0-9.-]/g, ''));
     });
   }
   users[0].transactions = users[0].transactions.concat(extra);
+  /* More than Bitcoin, and one row in an asset with six decimal places: a
+     "-500.000000 ADA" row used to match no asset pattern and be counted as
+     five hundred dollars of cash leaving the account. */
+  users[0].holdings = { ETH: 4.2, ADA: 2000 };
+  users[0].transactions.push(
+    { date: '2026-04-02', type: 'Cardano Withdrawal', amount: '-500.000000 ADA', status: 'In review',
+      details: 'To addr1qx…a3x', detailsUrl: '' },
+    { date: '2026-04-05', type: 'Received', amount: '+4.20000000 ETH', status: 'Completed',
+      details: '0x5aAeb6…1BeAed', detailsUrl: '' }
+  );
+
   fs.writeFileSync(path.join(ROOT, 'data/users.json'), JSON.stringify(users, null, 4));
 
   const browser = await chromium.launch(
@@ -57,7 +68,8 @@ const num = t => Number(String(t).replace(/[^0-9.-]/g, ''));
     await page.goto(`${BASE}/tests/blank.html`);
     await page.evaluate(u => localStorage.setItem('user', JSON.stringify(u)), user);
 
-    // ------------------------------------------------------------ portfolio
+    // The ADA row must not be read as cash, on either page.
+  // ------------------------------------------------------------ portfolio
     await page.goto(`${BASE}/portfolio.html`, { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(2500);
 
@@ -66,23 +78,35 @@ const num = t => Number(String(t).replace(/[^0-9.-]/g, ''));
       btc: document.getElementById('pfBtc').textContent,
       cash: document.getElementById('pfCash').textContent,
       rate: document.getElementById('pfRate').textContent,
-      holdings: [...document.querySelectorAll('.holding')].length,
+      names: [...document.querySelectorAll('.holding b')].map(e => e.textContent.trim()),
+      values: [...document.querySelectorAll('.holding-value strong')].map(e => e.textContent.trim()),
       shares: [...document.querySelectorAll('.holding-value em')].map(e => parseFloat(e.textContent)),
       widths: [...document.querySelectorAll('.alloc-bar i')].map(e => parseFloat(e.style.width)),
-      history: [...document.querySelectorAll('#pfHistory li')].length
+      history: [...document.querySelectorAll('#pfHistory li span')].map(e => e.textContent.trim())
     }));
 
-    check(pf.holdings === 2, 'the portfolio breaks the account into its holdings', `${pf.holdings}`);
+    /* Bitcoin, Ethereum, Cardano and cash — the page used to show Bitcoin and
+       cash whatever else the account held. */
+    check(pf.names.length === 4, 'the portfolio breaks the account into its holdings', pf.names.join(', '));
+    check(['Bitcoin', 'Ethereum', 'Cardano', 'Cash balance'].every(n => pf.names.includes(n)),
+      'and names every one of them', pf.names.join(', '));
     check(Math.abs(pf.shares.reduce((a, b) => a + b, 0) - 100) < 0.2,
       'whose shares add up to the whole', pf.shares.join(' + '));
     check(Math.abs(pf.widths.reduce((a, b) => a + b, 0) - 100) < 0.2,
       'and the allocation bar is drawn to the same split', pf.widths.join(' + '));
 
-    // total = bitcoin priced at the shown rate + the cash balance
-    const expected = num(pf.btc) * num(pf.rate) + num(pf.cash);
-    check(Math.abs(num(pf.total) - expected) < 1,
-      'the total is the holdings priced and added', `${pf.total} vs ${expected.toFixed(2)}`);
-    check(pf.history === 5, 'and the account history is summarised beside it', `${pf.history} lines`);
+    // The headline total has to be the rows beneath it, added up.
+    const rowSum = pf.values.reduce((sum, text) => sum + num(text), 0);
+    check(Math.abs(num(pf.total) - rowSum) < 1,
+      'the total is the holdings priced and added', `${pf.total} vs ${rowSum.toFixed(2)}`);
+    check(num(pf.total) > num(pf.cash) + num(pf.btc) * num(pf.rate),
+      'and counts the assets that are not Bitcoin', `${pf.total}`);
+
+    /* The Cardano send is 500 ADA, not five hundred dollars: it must appear in
+       the history as ADA and must not be added to the bank-withdrawal line. */
+    const history = pf.history.join(' | ');
+    check(/Cardano sent or converted/.test(history), 'a non-Bitcoin movement is summarised as its own asset', history);
+    check(/Ethereum received/.test(history), 'as is one received', history);
 
     // --------------------------------------------------------- transactions
     await page.goto(`${BASE}/transactions.html`, { waitUntil: 'domcontentloaded' });

@@ -20,16 +20,16 @@
   <title>HarbourX · Portfolio</title>
   <meta name="description" content="What your HarbourX account holds, priced at today’s rate, and how it got there.">
   <meta name="color-scheme" content="dark">
-  <script src="theme.js?v=20260921-0718"></script>
+  <script src="theme.js?v=20260921-0723"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap"></noscript>
-  <link rel="stylesheet" href="hx-motion.css?v=20260921-0718">
-  <link rel="stylesheet" href="portal.css?v=20260921-0718">
-  <script src="hx-motion.js?v=20260921-0718" defer></script>
-  <script src="portal-data.js?v=20260921-0718"></script>
+  <link rel="stylesheet" href="hx-motion.css?v=20260921-0723">
+  <link rel="stylesheet" href="portal.css?v=20260921-0723">
+  <script src="hx-motion.js?v=20260921-0723" defer></script>
+  <script src="portal-data.js?v=20260921-0723"></script>
 </head>
 <body>
   <div class="portal-shell">
@@ -59,7 +59,7 @@
 
         <div class="figures" data-reveal>
           <div class="portal-card figure-card"><small>Total value</small><strong id="pfTotal">—</strong><span id="pfTotalNote">across every holding</span></div>
-          <div class="portal-card figure-card"><small>Bitcoin</small><strong id="pfBtc">0.00000000</strong><span id="pfBtcNote">BTC</span></div>
+          <div class="portal-card figure-card"><small id="pfBtcLabel">Bitcoin</small><strong id="pfBtc">0.00000000</strong><span id="pfBtcNote">BTC</span></div>
           <div class="portal-card figure-card"><small>Cash balance</small><strong id="pfCash">—</strong><span id="pfCashNote">ready to withdraw</span></div>
           <div class="portal-card figure-card"><small>Bitcoin price</small><strong id="pfRate">—</strong><span id="pfRateNote">per BTC</span></div>
         </div>
@@ -125,47 +125,81 @@
   hxPortal.shell("Portfolio");
 
   var CURRENCY = String(user.currency || "USD").toUpperCase();
-  var btc = Math.max(0, Number(user.btc) || 0);
   var cash = Math.max(0, Number(user.mainBalance) || 0);
   var transactions = Array.isArray(user.transactions) ? user.transactions : [];
 
+  /* A colour per asset, so the bar, the legend and the holding marks agree. */
+  var SWATCH = {
+    btc: "#f7931a", eth: "#6d87ff", xrp: "#6f7f92", bnb: "#f3ba2f",
+    sol: "#91abc0", doge: "#c2a633", ada: "#2f6bd6", link: "#5a83e8"
+  };
+
   document.getElementById("pfCurrencyName").textContent = CURRENCY;
-  document.getElementById("pfBtc").textContent = hxPortal.number(btc, 8);
   document.getElementById("pfCash").textContent = hxPortal.money(cash, CURRENCY);
 
-  function render(rate, live) {
-    var btcValue = btc * rate;
-    var total = btcValue + cash;
+  function render(quote) {
+    var held = hxPortal.holdings(user, quote);
+    var cryptoValue = held.reduce(function (sum, holding) { return sum + holding.value; }, 0);
+    var total = cryptoValue + cash;
+    var largest = held[0];
 
     document.getElementById("pfTotal").textContent = hxPortal.money(total, CURRENCY);
-    document.getElementById("pfBtcNote").textContent = rate > 0 ? hxPortal.money(btcValue, CURRENCY) : "BTC";
-    document.getElementById("pfRate").textContent = rate > 0 ? hxPortal.money(rate, CURRENCY) : "—";
+    document.getElementById("pfTotalNote").textContent = held.length
+      ? "across " + held.length + " holding" + (held.length === 1 ? "" : "s") + " and cash"
+      : "cash only";
+
+    /* The second card used to be Bitcoin whatever the account held. It now
+       names the largest holding, which on a Bitcoin-only account is the same
+       card it always was. */
+    document.getElementById("pfBtcLabel").textContent = largest ? largest.asset.name : "Crypto";
+    document.getElementById("pfBtc").textContent = largest
+      ? hxPortal.number(largest.amount, Math.min(8, largest.asset.decimals || 8))
+      : "0.00000000";
+    document.getElementById("pfBtcNote").textContent = largest
+      ? (largest.price > 0 ? hxPortal.money(largest.value, CURRENCY) : largest.symbol)
+      : "nothing held";
+
+    var btcPrice = (quote.prices.BTC && quote.prices.BTC.price) || 0;
+    document.getElementById("pfRate").textContent = btcPrice > 0 ? hxPortal.money(btcPrice, CURRENCY) : "—";
 
     var note = document.getElementById("pfPriceNote");
-    note.classList.toggle("is-stale", !live);
-    document.getElementById("pfPriceNoteText").textContent = live
+    note.classList.toggle("is-stale", !quote.live);
+    document.getElementById("pfPriceNoteText").textContent = quote.live
       ? "Priced at the live market rate, fetched just now."
-      : "The price feeds could not be reached, so this uses the last rate this browser saw. Your balances are unaffected.";
+      : "The price feeds could not be reached, so these are indicative rates. Your balances are unaffected.";
 
-    renderHoldings(btcValue, total);
-    renderAllocation(btcValue, total);
+    renderHoldings(held, total);
+    renderAllocation(held, total);
   }
 
-  function renderHoldings(btcValue, total) {
-    var holdings = [
-      { mark: "₿", cls: "is-btc", name: "Bitcoin", sub: hxPortal.number(btc, 8) + " BTC", value: btcValue },
-      { mark: CURRENCY.slice(0, 1), cls: "is-cash", name: "Cash balance", sub: CURRENCY + " held with HarbourX", value: cash }
-    ];
+  function renderHoldings(held, total) {
+    var rows = held.map(function (holding) {
+      return {
+        mark: holding.asset.glyph || "·",
+        colour: SWATCH[holding.asset.swatch] || "#2a536b",
+        name: holding.asset.name,
+        sub: hxPortal.number(holding.amount, Math.min(8, holding.asset.decimals || 8)) + " " + holding.symbol,
+        value: holding.value
+      };
+    });
+    rows.push({
+      mark: CURRENCY.slice(0, 1),
+      colour: "#25beb8",
+      name: "Cash balance",
+      sub: CURRENCY + " held with HarbourX",
+      value: cash
+    });
 
     var host = document.getElementById("pfHoldings");
     host.textContent = "";
 
-    holdings.forEach(function (holding) {
+    rows.forEach(function (holding) {
       var row = document.createElement("div");
       row.className = "holding";
 
       var mark = document.createElement("span");
-      mark.className = "holding-mark " + holding.cls;
+      mark.className = "holding-mark";
+      mark.style.background = holding.colour;
       mark.setAttribute("aria-hidden", "true");
       mark.textContent = holding.mark;
 
@@ -193,11 +227,11 @@
     });
   }
 
-  function renderAllocation(btcValue, total) {
-    var parts = [
-      { cls: "is-btc", colour: "#f7931a", label: "Bitcoin", value: btcValue },
-      { cls: "is-cash", colour: "#25beb8", label: "Cash balance", value: cash }
-    ];
+  function renderAllocation(held, total) {
+    var parts = held.map(function (holding) {
+      return { colour: SWATCH[holding.asset.swatch] || "#2a536b", label: holding.asset.name, value: holding.value };
+    });
+    parts.push({ colour: "#25beb8", label: "Cash balance", value: cash });
 
     var bar = document.getElementById("pfAllocBar");
     var legend = document.getElementById("pfAllocLegend");
@@ -208,8 +242,8 @@
       var share = total > 0 ? (part.value / total) * 100 : 0;
 
       var segment = document.createElement("i");
-      segment.className = part.cls;
       segment.style.width = share + "%";
+      segment.style.background = part.colour;
       bar.appendChild(segment);
 
       var item = document.createElement("li");
@@ -227,29 +261,41 @@
   }
 
   /* Totals over the whole history, so the page can say where the holding came
-     from rather than only what it is now. */
-  function renderHistory() {
-    var received = 0, sent = 0, converted = 0, withdrawn = 0;
+     from rather than only what it is now. Counted per asset: a row reading
+     "-1000 DOGE" used to fall through to the cash branch and be reported as a
+     thousand dollars withdrawn. */
+  function renderHistory(quote) {
+    var moved = {};
+    var converted = 0;
+    var withdrawn = 0;
 
     transactions.forEach(function (tx) {
       var parsed = hxPortal.parse(tx);
       var type = String(tx.type || "").toLowerCase();
 
-      if (parsed.asset === "BTC") {
-        if (parsed.direction === "in") received += parsed.value;
-        else sent += parsed.value;
+      if (parsed.asset && parsed.asset !== "LOCAL") {
+        if (!moved[parsed.asset]) moved[parsed.asset] = { in: 0, out: 0 };
+        moved[parsed.asset][parsed.direction === "in" ? "in" : "out"] += parsed.value;
       }
       if (type.indexOf("conversion") >= 0 || type.indexOf("swap") >= 0) converted += parsed.local;
-      if (type.indexOf("withdrawal") >= 0 && parsed.direction === "out" && parsed.asset !== "BTC") withdrawn += parsed.local;
+      if (type.indexOf("withdrawal") >= 0 && parsed.direction === "out" && parsed.asset === "LOCAL") withdrawn += parsed.local;
     });
 
-    var lines = [
-      { label: "Bitcoin received", value: hxPortal.number(received, 8) + " BTC" },
-      { label: "Bitcoin sent or converted", value: hxPortal.number(sent, 8) + " BTC" },
-      { label: "Converted to " + CURRENCY, value: hxPortal.money(converted, CURRENCY) },
-      { label: "Withdrawn to your bank", value: hxPortal.money(withdrawn, CURRENCY) },
-      { label: "Movements recorded", value: String(transactions.length) }
-    ];
+    var table = (quote && quote.table) || {};
+    var lines = [];
+    Object.keys(moved).forEach(function (symbol) {
+      var decimals = Math.min(8, (table[symbol] && table[symbol].decimals) || 8);
+      var name = (table[symbol] && table[symbol].name) || symbol;
+      if (moved[symbol].in > 0) {
+        lines.push({ label: name + " received", value: hxPortal.number(moved[symbol].in, decimals) + " " + symbol });
+      }
+      if (moved[symbol].out > 0) {
+        lines.push({ label: name + " sent or converted", value: hxPortal.number(moved[symbol].out, decimals) + " " + symbol });
+      }
+    });
+    lines.push({ label: "Converted to " + CURRENCY, value: hxPortal.money(converted, CURRENCY) });
+    lines.push({ label: "Withdrawn to your bank", value: hxPortal.money(withdrawn, CURRENCY) });
+    lines.push({ label: "Movements recorded", value: String(transactions.length) });
 
     var host = document.getElementById("pfHistory");
     host.textContent = "";
@@ -268,12 +314,10 @@
     });
   }
 
-  /* Draw immediately with whatever rate is already known, so the page is never
-     blank while a feed is being waited on, then redraw when one answers. */
-  hxPortal.btcPrice(CURRENCY).then(function (result) {
-    render(result.price, result.live);
+  hxPortal.board(CURRENCY).then(function (quote) {
+    render(quote);
+    renderHistory(quote);
   });
-  renderHistory();
 })();
 </script>
 

@@ -152,8 +152,15 @@
      display, useless for filtering or totalling, so this turns it back into
      the numbers behind it. */
 
-  var BTC_PATTERN = /([+-]?)\s*([\d,]+(?:\.\d+)?)\s*BTC/i;
-  var LOCAL_PATTERN = /([+-]?)\s*[^\d\s+-]{0,4}\s*([\d,]+(?:\.\d{1,2})?)(?!\s*BTC)/i;
+  /* Every asset a client can hold. A row reading "-1000.00000000 DOGE" used to
+     match nothing here and fall through to the local-currency branch, where it
+     was counted as a thousand dollars of cash leaving the account. */
+  var ASSET_SYMBOLS = ["BTC", "ETH", "XRP", "BNB", "SOL", "DOGE", "ADA", "LINK"];
+  var ASSET_PATTERN = new RegExp("([+-]?)\\s*([\\d,]+(?:\\.\\d+)?)\\s*(" + ASSET_SYMBOLS.join("|") + ")\\b", "i");
+  var LOCAL_PATTERN = new RegExp(
+    "([+-]?)\\s*[^\\d\\s+-]{0,4}\\s*([\\d,]+(?:\\.\\d{1,2})?)(?!\\s*(?:" + ASSET_SYMBOLS.join("|") + "))",
+    "i"
+  );
 
   function toNumber(text) { return Number(String(text || "").replace(/,/g, "")) || 0; }
 
@@ -167,10 +174,10 @@
       display: amount
     };
 
-    var btc = amount.match(BTC_PATTERN);
-    if (btc) {
-      out.asset = "BTC";
-      out.value = toNumber(btc[2]);
+    var asset = amount.match(ASSET_PATTERN);
+    if (asset) {
+      out.asset = asset[3].toUpperCase();
+      out.value = toNumber(asset[2]);
     }
 
     /* A conversion names both sides: "-0.5 BTC -> A$48,250.50". The local
@@ -178,7 +185,7 @@
        only figure there is. */
     var arrow = amount.indexOf("->");
     var tail = arrow >= 0 ? amount.slice(arrow + 2) : amount;
-    if (!btc || arrow >= 0) {
+    if (!asset || arrow >= 0) {
       var local = tail.match(LOCAL_PATTERN);
       if (local) {
         out.local = toNumber(local[2]);
@@ -221,6 +228,113 @@
     return record;
   }
 
+  /* ------------------------------------------------------- the asset table */
+
+  /* Indicative prices as a ratio of Bitcoin's, for when the market call does
+     not answer. The same table the dashboard carries, so two pages open side
+     by side cannot disagree about what a holding is worth. */
+  var INDICATIVE_RATIO = {
+    BTC: 1, ETH: 0.038, XRP: 0.00003, BNB: 0.0089,
+    SOL: 0.0021, DOGE: 0.0000021, ADA: 0.0000095, LINK: 0.00024
+  };
+
+  var assetTable = null;
+
+  /** The supported assets, fetched once per page. */
+  function assets() {
+    if (assetTable) return assetTable;
+    assetTable = fetch("assets.php", { cache: "no-store" })
+      .then(function (response) { return response.json(); })
+      .then(function (data) { return (data && data.assets) || {}; })
+      .catch(function () { return {}; });
+    return assetTable;
+  }
+
+  /**
+   * A price for every asset, and whether it was measured.
+   *
+   * One /coins/markets call covers the lot. If it fails, the last board this
+   * browser saw is used; if there is none, Bitcoin's price times the ratios
+   * above — marked not live, so a page can say which kind of figure it shows.
+   */
+  function board(code) {
+    var upper = String(code || "USD").toUpperCase();
+    var lower = upper.toLowerCase();
+    var cacheKey = "hx_board_" + lower;
+
+    return assets().then(function (table) {
+      var symbols = Object.keys(table).length ? Object.keys(table) : Object.keys(INDICATIVE_RATIO);
+      var ids = symbols
+        .map(function (name) { return (table[name] && table[name].coingeckoId) || ""; })
+        .filter(Boolean)
+        .join(",");
+
+      var controller = new AbortController();
+      var timer = setTimeout(function () { controller.abort(); }, PRICE_TIMEOUT_MS);
+
+      return fetch(
+        "https://api.coingecko.com/api/v3/coins/markets?vs_currency=" + lower
+          + "&ids=" + ids + "&sparkline=false&price_change_percentage=24h",
+        { cache: "no-store", signal: controller.signal }
+      )
+        .then(function (response) {
+          if (!response.ok) throw new Error("Market feed unavailable");
+          return response.json();
+        })
+        .then(function (rows) {
+          if (!Array.isArray(rows) || !rows.length) throw new Error("Empty market feed");
+          var byId = {};
+          rows.forEach(function (row) { byId[String(row.id)] = row; });
+
+          var prices = {};
+          symbols.forEach(function (name) {
+            var row = byId[(table[name] && table[name].coingeckoId) || ""];
+            var price = row ? Number(row.current_price) : 0;
+            if (price > 0) prices[name] = { price: price, change: Number(row.price_change_percentage_24h) };
+          });
+          if (!prices.BTC) throw new Error("No Bitcoin quote");
+
+          try { localStorage.setItem(cacheKey, JSON.stringify(prices)); } catch (e) { /* full or blocked */ }
+          return { prices: prices, live: true, table: table };
+        })
+        .catch(function () {
+          try {
+            var cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
+            if (cached && cached.BTC) return { prices: cached, live: false, table: table };
+          } catch (e) { /* fall through */ }
+
+          return btcPrice(upper).then(function (result) {
+            var prices = {};
+            symbols.forEach(function (name) {
+              var ratio = INDICATIVE_RATIO[name];
+              if (ratio) prices[name] = { price: result.price * ratio, change: NaN };
+            });
+            return { prices: prices, live: false, table: table };
+          });
+        })
+        .finally(function () { clearTimeout(timer); });
+    });
+  }
+
+  /** What this account holds, largest first, priced from a board. */
+  function holdings(record, quote) {
+    var stored = (record && typeof record.holdings === "object" && record.holdings) || {};
+    var table = (quote && quote.table) || {};
+    var prices = (quote && quote.prices) || {};
+
+    return Object.keys(Object.keys(table).length ? table : INDICATIVE_RATIO)
+      .map(function (name) {
+        var amount = name === "BTC"
+          ? Math.max(0, Number(record && record.btc) || 0)
+          : Math.max(0, Number(stored[name]) || 0);
+        var price = (prices[name] && prices[name].price) || 0;
+        var asset = table[name] || { name: name, glyph: "·", decimals: 8, swatch: "btc" };
+        return { symbol: name, asset: asset, amount: amount, price: price, value: amount * price };
+      })
+      .filter(function (holding) { return holding.amount > 0; })
+      .sort(function (a, b) { return b.value - a.value; });
+  }
+
   window.hxPortal = {
     user: user,
     requireUser: requireUser,
@@ -228,6 +342,9 @@
     money: money,
     number: number,
     btcPrice: btcPrice,
+    assets: assets,
+    board: board,
+    holdings: holdings,
     parse: parse,
     shell: shell
   };

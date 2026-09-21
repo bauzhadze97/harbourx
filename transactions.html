@@ -20,16 +20,16 @@
   <title>HarbourX · Transactions</title>
   <meta name="description" content="Your full HarbourX transaction history, with filters, sorting and CSV export.">
   <meta name="color-scheme" content="dark">
-  <script src="theme.js?v=20260921-0718"></script>
+  <script src="theme.js?v=20260921-0723"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap"></noscript>
-  <link rel="stylesheet" href="hx-motion.css?v=20260921-0718">
-  <link rel="stylesheet" href="portal.css?v=20260921-0718">
-  <script src="hx-motion.js?v=20260921-0718" defer></script>
-  <script src="portal-data.js?v=20260921-0718"></script>
+  <link rel="stylesheet" href="hx-motion.css?v=20260921-0723">
+  <link rel="stylesheet" href="portal.css?v=20260921-0723">
+  <script src="hx-motion.js?v=20260921-0723" defer></script>
+  <script src="portal-data.js?v=20260921-0723"></script>
 </head>
 <body>
   <div class="portal-shell">
@@ -59,8 +59,8 @@
 
         <div class="figures" id="figures" data-reveal>
           <div class="portal-card figure-card"><small>Showing</small><strong id="figCount">0</strong><span id="figCountNote">of 0 movements</span></div>
-          <div class="portal-card figure-card"><small>Bitcoin in</small><strong id="figBtcIn">0.00000000</strong><span>BTC received</span></div>
-          <div class="portal-card figure-card"><small>Bitcoin out</small><strong id="figBtcOut">0.00000000</strong><span>BTC sent or converted</span></div>
+          <div class="portal-card figure-card"><small id="figInLabel">Crypto in</small><strong id="figBtcIn">0.00000000</strong><span id="figInNote">received</span></div>
+          <div class="portal-card figure-card"><small id="figOutLabel">Crypto out</small><strong id="figBtcOut">0.00000000</strong><span id="figOutNote">sent or converted</span></div>
           <div class="portal-card figure-card"><small>Cash out</small><strong id="figCashOut">0.00</strong><span id="figCashOutNote">withdrawn and fees</span></div>
         </div>
 
@@ -166,6 +166,7 @@
   });
 
   var state = { search: "", type: "", status: "", from: "", to: "", sort: "date", dir: "desc", page: 0 };
+  var assetTable = {};
 
   var els = {
     rows: document.getElementById("txRows"),
@@ -225,10 +226,13 @@
     });
   }
 
-  var btcRate = 0;
+  /* Prices per asset, so sorting by amount compares a DOGE row against a
+     Bitcoin one on the same scale rather than on their bare digits. */
+  var rates = {};
   function worth(tx) {
     if (tx.local > 0) return tx.local;
-    if (tx.asset === "BTC") return tx.value * (btcRate || 0);
+    var rate = rates[tx.asset];
+    if (rate > 0) return tx.value * rate;
     return tx.value;
   }
 
@@ -298,19 +302,48 @@
   /* The figures describe what is on screen, not the whole account — filter to
      March and they answer for March. */
   function renderFigures(list) {
-    var btcIn = 0, btcOut = 0, cashOut = 0;
+    /* Counted per asset. A row reading "-1000 DOGE" used to miss the Bitcoin
+       branch and land in the cash one, where it was reported as a thousand
+       dollars withdrawn. */
+    var moved = {};
+    var cashOut = 0;
     list.forEach(function (tx) {
-      if (tx.asset === "BTC") {
-        if (tx.direction === "in") btcIn += tx.value; else btcOut += tx.value;
+      if (tx.asset && tx.asset !== "LOCAL") {
+        if (!moved[tx.asset]) moved[tx.asset] = { in: 0, out: 0 };
+        moved[tx.asset][tx.direction === "in" ? "in" : "out"] += tx.value;
+      } else if (tx.direction === "out" && tx.local > 0) {
+        cashOut += tx.local;
       }
-      if (tx.direction === "out" && tx.local > 0 && tx.asset !== "BTC") cashOut += tx.local;
     });
+
+    /* With one asset moving, the cards name it, as they always did. With
+       several, they count the assets rather than pick one and mislead. */
+    var symbols = Object.keys(moved);
+    var only = symbols.length === 1 ? symbols[0] : "";
+    var decimals = function (symbol) {
+      return Math.min(8, (assetTable[symbol] && assetTable[symbol].decimals) || 8);
+    };
+    var totalIn = symbols.reduce(function (sum, s) { return sum + moved[s].in; }, 0);
+    var totalOut = symbols.reduce(function (sum, s) { return sum + moved[s].out; }, 0);
+
+    document.getElementById("figInLabel").textContent = only ? only + " in" : "Crypto in";
+    document.getElementById("figOutLabel").textContent = only ? only + " out" : "Crypto out";
+    document.getElementById("figInNote").textContent = only
+      ? "received"
+      : symbols.length + " asset" + (symbols.length === 1 ? "" : "s") + " received";
+    document.getElementById("figOutNote").textContent = only
+      ? "sent or converted"
+      : symbols.length + " asset" + (symbols.length === 1 ? "" : "s") + " sent or converted";
 
     document.getElementById("figCount").textContent = String(list.length);
     document.getElementById("figCountNote").textContent =
       list.length === all.length ? "movements in total" : "of " + all.length + " movements";
-    document.getElementById("figBtcIn").textContent = hxPortal.number(btcIn, 8);
-    document.getElementById("figBtcOut").textContent = hxPortal.number(btcOut, 8);
+    document.getElementById("figBtcIn").textContent = only
+      ? hxPortal.number(moved[only].in, decimals(only))
+      : hxPortal.number(totalIn, 4);
+    document.getElementById("figBtcOut").textContent = only
+      ? hxPortal.number(moved[only].out, decimals(only))
+      : hxPortal.number(totalOut, 4);
     document.getElementById("figCashOut").textContent = hxPortal.money(cashOut, CURRENCY);
   }
 
@@ -418,9 +451,10 @@
   /* Sorting by amount needs a rate to compare Bitcoin against cash. The page is
      useful before it arrives, so it renders first and re-sorts if it was already
      sorted that way. */
-  hxPortal.btcPrice(CURRENCY).then(function (result) {
-    btcRate = result.price;
-    if (state.sort === "amount") render();
+  hxPortal.board(CURRENCY).then(function (quote) {
+    assetTable = quote.table || {};
+    Object.keys(quote.prices).forEach(function (symbol) { rates[symbol] = quote.prices[symbol].price; });
+    render();
   });
 })();
 </script>
