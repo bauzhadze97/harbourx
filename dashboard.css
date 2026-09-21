@@ -1173,26 +1173,84 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 .hx-card-head a, .hx-text-button { border: 0; background: transparent; color: var(--hx-teal); text-decoration: none; font-size: 11px; cursor: pointer; }
 .hx-card-head a:hover, .hx-text-button:hover { color: #75ece7; text-decoration: underline; }
 
+/* Anything the account needs the client to do, above the fold. It used to live
+   inside modals and a corner of the sidebar, so a held withdrawal was
+   something you found out about by trying to withdraw. */
+.hx-attention { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; margin: 14px 0 0; }
+.hx-attention:empty { display: none; }
+.hx-attention-item { display: grid; grid-template-columns: 26px minmax(0,1fr) auto; gap: 11px; align-items: center;
+  padding: 11px 14px; border: 1px solid var(--hx-line); border-radius: 10px; background: rgba(10,33,50,.9); }
+.hx-attention-item i { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 8px; font-style: normal; font-size: 13px; }
+.hx-attention-item b { display: block; color: var(--hx-text); font-size: 12px; font-weight: 640; }
+.hx-attention-item small { display: block; margin-top: 3px; color: var(--hx-muted); font-size: 10px; }
+.hx-attention-item a { border: 0; background: transparent; color: var(--hx-teal); font-size: 11px; text-decoration: none; white-space: nowrap; }
+.hx-attention-item a:hover { text-decoration: underline; }
+.hx-attention-item.is-action { border-color: rgba(246,184,63,.38); background: rgba(246,184,63,.07); }
+.hx-attention-item.is-action i { background: rgba(246,184,63,.16); color: var(--hx-amber); }
+.hx-attention-item.is-wait i { background: rgba(32,215,208,.14); color: var(--hx-teal); }
+.hx-attention-item.is-ok i { background: rgba(54,229,165,.13); color: var(--hx-green); }
+
+/* What replaced the "▲ +12.4%" that sat here as literal text. */
+.hx-asat { display: flex; align-items: center; gap: 8px; margin: 11px 0 20px; color: var(--hx-muted); font-size: 11px; }
+.hx-asat i { width: 6px; height: 6px; border-radius: 50%; background: var(--hx-green); font-style: normal; box-shadow: 0 0 8px rgba(54,229,165,.8); }
+
+.hx-head-group { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.hx-chart-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px;
+  border: 1px solid rgba(54,229,165,.28); background: rgba(54,229,165,.09); color: var(--hx-green);
+  font-size: 11px; font-weight: 680; white-space: nowrap; }
+.hx-chart-badge.is-down { border-color: rgba(255,139,139,.3); background: rgba(255,139,139,.09); color: #ff8b8b; }
+.hx-chart-note { margin: 8px 20px 14px 50px; color: var(--hx-muted); font-size: 10px; line-height: 1.45; }
+.hx-chart-empty { height: 180px; margin: 0 19px 10px; display: grid; place-items: center; text-align: center;
+  border: 1px dashed var(--hx-line); border-radius: 10px; }
+/* Both of these set `display`, which beats the hidden attribute's own rule. */
+.hx-chart-empty[hidden], .hx-chart-wrap[hidden] { display: none; }
+.hx-chart-empty b { display: block; color: var(--hx-copy); font-size: 12px; }
+.hx-chart-empty small { display: block; margin-top: 6px; color: var(--hx-muted); font-size: 10px; }
+
+/* The market band: one tile per coin, full width. */
+.hx-coin-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 1px;
+  background: var(--hx-line-soft); border-top: 1px solid var(--hx-line-soft); }
+.hx-coin-tile { position: relative; display: grid; grid-template-columns: 36px minmax(0,1fr); column-gap: 11px; row-gap: 2px;
+  padding: 14px 16px 13px; background: linear-gradient(160deg, rgba(13,41,60,.6), rgba(8,28,44,.6));
+  cursor: pointer; transition: background 160ms ease; }
+.hx-coin-tile:hover { background: var(--hx-card-hover); }
+.hx-coin-tile .hx-coin { grid-row: 1 / 3; width: 36px; height: 36px; font-size: 18px; }
+.hx-coin-tile .c-name { grid-column: 2; display: flex; align-items: baseline; gap: 7px; min-width: 0; }
+.hx-coin-tile .c-name b { color: #d2e0e7; font-size: 12px; font-weight: 640; }
+.hx-coin-tile .c-name small { color: #718ea2; font-size: 10px; }
+.hx-coin-tile .c-price { grid-column: 2; color: var(--hx-text); font-size: 15px; font-weight: 750;
+  letter-spacing: -.025em; font-variant-numeric: tabular-nums; }
+.hx-coin-tile .c-foot { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; }
+.hx-coin-tile .c-foot svg { width: 78px; height: 24px; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.hx-coin-tile.up .c-foot svg { stroke: var(--hx-green); }
+.hx-coin-tile.down .c-foot svg { stroke: #ff8b8b; }
+.hx-coin-tile.flat .c-foot svg { stroke: #7f9caf; }
+.hx-held { position: absolute; top: 13px; right: 14px; padding: 3px 7px; border-radius: 999px;
+  border: 1px solid rgba(32,215,208,.32); background: rgba(32,215,208,.1); color: var(--hx-teal); font-size: 9px; font-weight: 700; }
+.hx-market-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 11px 20px; border-top: 1px solid var(--hx-line-soft); color: var(--hx-muted); font-size: 10px; }
+
 .hx-balance-card { min-height: 268px; }
 .hx-balance-card .hx-card-head { padding: 15px 20px 4px; }
 .balance-label { display: flex; align-items: center; gap: 11px; color: #abc4d4; font-size: 13px; }
 .hx-currency-chip { display: inline-flex; align-items: center; gap: 7px; padding: 5px 8px; border: 1px solid #24506a; border-radius: 9px; color: #bbd2df; font-size: 11px; }
-.hx-balance-layout { display: grid; grid-template-columns: 1fr .9fr; padding: 2px 20px 18px; }
-.hx-balance-main { padding-right: 20px; border-right: 1px solid var(--hx-line); }
-.hx-balance-main h2 { margin: 4px 0 2px; color: var(--hx-text); font-size: clamp(35px, 4vw, 51px); line-height: 1.08; font-weight: 820; letter-spacing: -.055em; font-variant-numeric: tabular-nums; }
+.hx-balance-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(196px, .72fr); padding: 2px 20px 18px; }
+.hx-balance-main { min-width: 0; padding-right: 20px; border-right: 1px solid var(--hx-line); }
+.hx-balance-main h2 { margin: 4px 0 2px; color: var(--hx-text); font-size: clamp(32px, 3.3vw, 46px); line-height: 1.08; font-weight: 820; letter-spacing: -.055em; font-variant-numeric: tabular-nums; }
 .hx-return { display: flex; align-items: center; gap: 9px; margin: 10px 0 21px; font-size: 12px; }
 .hx-return span, .hx-return strong { color: var(--hx-green); }
 .hx-return small { color: #7895a8; }
-.hx-primary-actions { display: flex; gap: 10px; }
-.hx-primary-actions button { width: 160px; height: 45px; display: inline-flex; align-items: center; justify-content: center; gap: 11px; border-radius: 7px; font-weight: 760; cursor: pointer; }
+.hx-primary-actions { display: flex; gap: 9px; min-width: 0; }
+.hx-primary-actions button { flex: 1 1 0; width: auto; min-width: 0; padding: 0 12px; overflow: hidden; white-space: nowrap; font-size: 13px; height: 45px; display: inline-flex; align-items: center; justify-content: center; gap: 11px; border-radius: 7px; font-weight: 760; cursor: pointer; }
 .hx-action-primary { border: 1px solid var(--hx-teal); background: linear-gradient(135deg, #18c7c2, #25ded5); color: #041a25; box-shadow: 0 9px 22px rgba(32,215,208,.12); }
 .hx-action-secondary { border: 1px solid #10bcb8; background: rgba(9, 34, 48, .5); color: var(--hx-teal); }
 .hx-primary-actions button:hover { transform: translateY(-1px); filter: brightness(1.05); }
-.hx-primary-actions button span { font-size: 20px; font-weight: 400; }
+.hx-primary-actions button span { flex: none; font-size: 18px; font-weight: 400; }
 .hx-breakdown { display: grid; align-content: center; padding: 18px 0 0 18px; }
-.hx-breakdown div { display: flex; justify-content: space-between; gap: 14px; padding: 13px 0; border-bottom: 1px solid var(--hx-line-soft); font-size: 11px; }
+.hx-breakdown div { display: flex; justify-content: space-between; gap: 10px; padding: 13px 0; border-bottom: 1px solid var(--hx-line-soft); font-size: 11px; }
 .hx-breakdown div:last-child { border-bottom: 0; }
-.hx-breakdown span { color: #8ca9bb; }
+.hx-breakdown span { color: #8ca9bb; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hx-breakdown strong.pending { color: var(--hx-amber); }
 .hx-breakdown strong { color: var(--hx-text); text-align: right; font-variant-numeric: tabular-nums; }
 .hx-breakdown strong.positive { color: var(--hx-green); }
 
@@ -1211,12 +1269,26 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 .hx-allocation-list i.btc { background: #f7931a; }
 .hx-allocation-list i.eth { background: #6d87ff; }
 .hx-allocation-list i.other { background: #83a5bc; }
+.hx-allocation-list i.xrp { background: #6f7f92; }
+.hx-allocation-list i.bnb { background: #f3ba2f; }
+.hx-allocation-list i.doge { background: #c2a633; }
+.hx-allocation-list i.ada { background: #2f6bd6; }
+.hx-allocation-list i.link { background: #5a83e8; }
+:root {
+  --slice-cash: #20d7d0; --slice-btc: #f7931a; --slice-eth: #6d87ff; --slice-sol: #91abc0;
+  --slice-xrp: #6f7f92; --slice-bnb: #f3ba2f; --slice-doge: #c2a633; --slice-ada: #2f6bd6; --slice-link: #5a83e8;
+}
 .hx-allocation-list b, .hx-allocation-list small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hx-allocation-list b { color: #bed1dc; font-size: 11px; font-weight: 560; }
 .hx-allocation-list small { margin-top: 4px; color: #728fa2; font-size: 10px; }
 .hx-allocation-list > div > strong { color: #c7dae4; font-size: 11px; }
 
+.hx-performance-card, .hx-market-card { grid-column: 1 / -1; }
 .hx-performance-card { min-height: 246px; }
+.hx-performance-card .hx-chart-wrap { height: 206px; margin-right: 28px; }
+.hx-performance-card .hx-chart { height: 179px; }
+/* Park the read-out clear of the line rather than on top of it. */
+.hx-performance-card .hx-chart-tooltip { top: auto; bottom: 40px; right: -14px; }
 .hx-periods { display: flex; border: 1px solid #21485f; border-radius: 9px; overflow: hidden; }
 .hx-periods button { min-width: 48px; height: 30px; border: 0; border-right: 1px solid #21485f; background: transparent; color: #88a8bb; font-size: 10px; cursor: pointer; }
 .hx-periods button:last-child { border-right: 0; }
@@ -1246,7 +1318,10 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 .hx-market-name b { color: #d2e0e7; font-size: 12px; }
 .hx-market-name small { color: #718ea2; font-size: 10px; }
 .hx-market-row > strong { color: var(--hx-text); font-size: 12px; font-variant-numeric: tabular-nums; }
-.hx-market-change { color: var(--hx-green); font-size: 10px; font-weight: 700; }
+.hx-market-change { padding: 4px 8px; border-radius: 999px; font-size: 10px; font-weight: 700; }
+.hx-market-change.up { background: rgba(54,229,165,.11); color: var(--hx-green); }
+.hx-market-change.down { background: rgba(255,120,120,.11); color: #ff8b8b; }
+.hx-market-change.flat { background: rgba(127,156,175,.12); color: var(--hx-muted); }
 .hx-market-row svg { width: 76px; fill: none; stroke: var(--hx-green); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
 .hx-transactions-card { grid-column: 1 / -1; min-height: 218px; }
@@ -1398,6 +1473,7 @@ a.primary-btn { display: inline-flex; align-items: center; justify-content: cent
   .hx-sidebar { width: 210px; }
   .hx-workspace { margin-left: 210px; }
   .hx-overview-grid { grid-template-columns: 1fr; }
+  .hx-coin-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
   .hx-allocation-layout { grid-template-columns: 190px 1fr; }
   .hx-user { min-width: 160px; }
   .hx-live time { display: none; }}
@@ -1431,7 +1507,38 @@ a.primary-btn { display: inline-flex; align-items: center; justify-content: cent
   .hx-allocation-layout { grid-template-columns: 1fr; }
   .hx-donut { width: 155px; }
   .hx-market-row { grid-template-columns: 34px minmax(75px,1fr) auto; }
-  .hx-market-change, .hx-market-row svg { display: none; }
+  .hx-market-row svg { display: none; }
+  /* The 24h move is measured now rather than decorative, so it stays on a
+     phone; only the sparkline goes. */
+  .hx-coin-grid { grid-template-columns: 1fr; }
+  .hx-coin-tile { grid-template-columns: 32px minmax(0,1fr) auto; column-gap: 10px; row-gap: 3px; padding: 10px 15px; }
+  .hx-coin-tile .hx-coin { grid-row: 1 / 3; width: 32px; height: 32px; font-size: 16px; }
+  .hx-coin-tile .c-name { grid-column: 2; grid-row: 1; }
+  .hx-coin-tile .c-price { grid-column: 3; grid-row: 1; text-align: right; font-size: 14px; }
+  .hx-coin-tile .c-foot { grid-column: 2 / -1; grid-row: 2; margin-top: 0; justify-content: flex-start; }
+  .hx-coin-tile .c-foot svg { display: none; }
+  .hx-held { display: none; }
+  .hx-attention { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .hx-attention-item.is-action, .hx-attention-item.is-wait { grid-column: 1 / -1; }
+  .hx-attention-item.is-ok { grid-template-columns: 22px minmax(0,1fr); padding: 9px 10px; }
+  .hx-attention-item.is-ok i { width: 22px; height: 22px; font-size: 11px; }
+  .hx-attention-item.is-ok small, .hx-attention-item.is-ok a { display: none; }
+  .hx-attention-item.is-ok b { font-size: 11px; }
+  .hx-card-head h2 { font-size: 14px; }
+  .hx-head-group { gap: 8px; flex-wrap: wrap; min-width: 0; }
+  .hx-performance-card .hx-card-head { flex-wrap: wrap; row-gap: 10px; }
+  .hx-performance-card .hx-periods { width: 100%; }
+  .hx-performance-card .hx-periods button { flex: 1 1 0; min-width: 0; }
+  .hx-performance-card .hx-chart-wrap { height: 176px; margin-left: 44px; margin-right: 15px; }
+  .hx-performance-card .hx-chart { height: 150px; }
+  .hx-chart-note { margin-left: 44px; margin-right: 15px; }
+  .hx-chart-badge { font-size: 10px; padding: 4px 8px; }
+  .hx-market-card .hx-head-group { flex-wrap: nowrap; }
+  .hx-allocation-card, .hx-balance-card, .hx-performance-card, .hx-market-card { min-height: 0; }
+  .hx-donut { width: 132px; }
+  .hx-primary-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+  .hx-primary-actions button { width: auto; min-width: 0; height: 43px; padding: 0 6px; gap: 6px; font-size: 12px; }
+  .hx-primary-actions button span { font-size: 15px; }
   .hx-chart-wrap { margin-left: 44px; }
   .hx-chart-x span:nth-child(even) { display: none; }
   .hx-tx-head { display: none; }

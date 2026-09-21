@@ -19,7 +19,7 @@
        comes from cache — unlike this document, which is sent no-store. It used to
        be inlined here as a hand-kept duplicate of theme.js; the copy has been
        dropped so there is only one version of the theme logic to maintain. -->
-  <script src="theme.js?v=20260920-0601"></script>
+  <script src="theme.js?v=20260921-0718"></script>
 
   <!-- Plus Jakarta Sans as one variable font rather than a set of static weights: a
        single file covers every weight the stylesheets ask for. Loaded off the critical
@@ -41,10 +41,10 @@
        one. Both scripts are deferred, so they execute after parsing in source
        order — hx-motion first, so window.hxMotion exists before the dashboard
        reaches for it. -->
-  <link rel="stylesheet" href="hx-motion.css?v=20260920-0601" />
-  <link rel="stylesheet" href="dashboard.css?v=20260920-0601" />
-  <script src="hx-motion.js?v=20260920-0601" defer></script>
-  <script src="dashboard.js?v=20260920-0601" defer></script>
+  <link rel="stylesheet" href="hx-motion.css?v=20260921-0718" />
+  <link rel="stylesheet" href="dashboard.css?v=20260921-0718" />
+  <script src="hx-motion.js?v=20260921-0718" defer></script>
+  <script src="dashboard.js?v=20260921-0718" defer></script>
 </head>
 <body>
   <div class="hx-shell">
@@ -112,6 +112,11 @@
           <blockquote>“A clearer way to a brighter financial future.”<cite>HarbourX</cite></blockquote>
         </section>
 
+        <!-- Anything that wants the client, before anything else. Built in
+             dashboard.js from the account's own state; when there is nothing
+             outstanding it says so rather than disappearing. -->
+        <section class="hx-attention" id="attentionStrip" aria-label="Needs your attention"></section>
+
         <section class="hx-overview-grid hx-stagger" id="portfolio">
           <article class="hx-card hx-balance-card hx-sheen" data-reveal>
             <div class="hx-card-head">
@@ -120,16 +125,18 @@
             <div class="hx-balance-layout">
               <div class="hx-balance-main">
                 <h2 id="portfolioValue">$0.00</h2>
-                <p class="hx-return"><span>▲ +12.4%</span><strong id="portfolioGain">+$0.00</strong><small>(1M)</small></p>
+                <p class="hx-asat"><i></i><span id="valuationNote">Live valuation</span></p>
                 <div class="hx-primary-actions">
                   <button class="hx-action-primary" id="openWalletBtn" type="button" data-ripple><span>↓</span>Deposit</button>
                   <button class="hx-action-secondary" id="openWithdrawBtn" type="button" data-ripple><span>↑</span>Withdraw</button>
+                  <button class="hx-action-secondary" type="button" data-open-btc-withdraw data-ripple><span>₿</span>Send</button>
                 </div>
               </div>
               <div class="hx-breakdown">
-                <div><span>Main balance (<span id="curCodeBreakdown">USD</span>)</span><strong id="heroMainBalance">$0.00</strong></div>
-                <div><span>Crypto value</span><strong id="heroBtcValue">$0.00</strong></div>
-                <div><span>Total P&amp;L (1M)</span><strong class="positive" id="pnlValue">+$0.00</strong></div>
+                <div><span>Cash (<span id="curCodeBreakdown">USD</span>)</span><strong id="heroMainBalance">$0.00</strong></div>
+                <div><span id="heroCryptoLabel">Crypto</span><strong id="heroBtcValue">$0.00</strong></div>
+                <div id="heroPendingRow" hidden><span>Pending out</span><strong class="pending" id="heroPendingValue">$0.00</strong></div>
+                <div><span>Available to withdraw</span><strong id="heroAvailableValue">$0.00</strong></div>
               </div>
             </div>
           </article>
@@ -138,47 +145,51 @@
             <div class="hx-card-head"><h2>Asset allocation</h2></div>
             <div class="hx-allocation-layout">
               <div class="hx-donut" id="allocationDonut"><div><strong id="allocationTotal">$0.00</strong><span>Total value</span></div></div>
-              <div class="hx-allocation-list">
-                <div><i class="cash"></i><span><b id="allocationCurrencyName">Cash balance</b><small id="assetCashStrong">$0.00</small></span><strong id="cashPercent">0%</strong></div>
-                <div><i class="btc"></i><span><b>Bitcoin (BTC)</b><small id="assetBtcUsd">$0.00</small></span><strong id="btcPercent">0%</strong></div>
-                <div><i class="eth"></i><span><b>Ethereum (ETH)</b><small id="assetEthFiat">$0.00</small></span><strong>0%</strong></div>
-                <div><i class="other"></i><span><b>Other assets</b><small id="assetUsdcFiat">$0.00</small></span><strong>0%</strong></div>
-              </div>
+              <!-- One row per thing the account actually holds. An asset at a
+                   hard-coded 0% told the client nothing and could never change. -->
+              <div class="hx-allocation-list" id="allocationList"></div>
             </div>
           </article>
 
           <article class="hx-card hx-performance-card hx-sheen" data-reveal>
             <div class="hx-card-head">
-              <h2>Portfolio performance</h2>
+              <div class="hx-head-group">
+                <h2>Balance history</h2>
+                <span class="hx-chart-badge" id="chartChange" hidden></span>
+              </div>
               <div class="hx-periods" role="group" aria-label="Chart timeframe">
-                <button type="button" data-period="1D">24H</button><button type="button" data-period="7D">7D</button><button class="is-active" type="button" data-period="1M">1M</button><button type="button" data-period="1Y">1Y</button>
+                <button type="button" data-period="1M">1M</button><button type="button" data-period="3M">3M</button><button type="button" data-period="1Y">1Y</button><button class="is-active" type="button" data-period="ALL">All</button>
               </div>
             </div>
-            <div class="hx-chart-wrap">
-              <div class="hx-chart-y"><span>320K</span><span>280K</span><span>240K</span><span>200K</span></div>
-              <svg class="hx-chart" viewBox="0 0 760 190" preserveAspectRatio="none" role="img" aria-label="Portfolio value increased over the selected month">
+            <div class="hx-chart-wrap" id="chartWrap">
+              <div class="hx-chart-y" id="chartAxisY"></div>
+              <svg class="hx-chart" viewBox="0 0 760 190" preserveAspectRatio="none" role="img" aria-label="Account balance over time" id="balanceChart">
                 <defs><linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#20d7d0" stop-opacity=".36"/><stop offset="1" stop-color="#20d7d0" stop-opacity="0"/></linearGradient></defs>
                 <g class="hx-grid-lines"><path d="M0 12H760M0 65H760M0 118H760M0 171H760"/><path d="M0 12V171M118 12V171M236 12V171M354 12V171M472 12V171M590 12V171M708 12V171"/></g>
-                <path class="hx-chart-area" d="M0 158 L34 144 L68 130 L92 134 L128 121 L151 125 L178 119 L206 120 L224 103 L246 107 L266 128 L289 116 L310 115 L330 102 L355 98 L379 106 L405 96 L428 88 L449 89 L472 80 L492 72 L514 74 L536 63 L556 70 L580 65 L602 59 L625 64 L646 58 L668 57 L692 45 L716 39 L738 41 L760 31 L760 171 L0 171Z"/>
-                <path class="hx-chart-line hx-draw" d="M0 158 L34 144 L68 130 L92 134 L128 121 L151 125 L178 119 L206 120 L224 103 L246 107 L266 128 L289 116 L310 115 L330 102 L355 98 L379 106 L405 96 L428 88 L449 89 L472 80 L492 72 L514 74 L536 63 L556 70 L580 65 L602 59 L625 64 L646 58 L668 57 L692 45 L716 39 L738 41 L760 31"/>
-                <circle class="hx-chart-dot" cx="760" cy="31" r="5"/>
+                <path class="hx-chart-area" id="chartArea" d=""/>
+                <path class="hx-chart-line" id="chartLine" d=""/>
+                <circle class="hx-chart-dot" id="chartDot" cx="760" cy="95" r="5"/>
               </svg>
-              <div class="hx-chart-tooltip"><strong id="chartValue">$0.00</strong><span id="chartDate">Today</span></div>
-              <div class="hx-chart-x"><span>3 Aug</span><span>8 Aug</span><span>13 Aug</span><span>18 Aug</span><span>23 Aug</span><span>28 Aug</span><span>Today</span></div>
+              <div class="hx-chart-tooltip" id="chartTooltip"><strong id="chartValue">$0.00</strong><span id="chartDate">Today</span></div>
+              <div class="hx-chart-x" id="chartAxisX"></div>
             </div>
+            <div class="hx-chart-empty" id="chartEmpty" hidden>
+              <div><b>Not enough history yet</b><small id="chartEmptyNote">This chart is drawn from your recorded transactions. It appears once there is at least one.</small></div>
+            </div>
+            <p class="hx-chart-note" id="chartNote"></p>
           </article>
 
           <article class="hx-card hx-market-card hx-sheen" data-reveal>
-            <div class="hx-card-head"><h2>Market prices (<span id="marketCurrency">USD</span>)</h2><div class="hx-card-actions"><button class="hx-text-button" id="openConvertBtn" type="button">Convert BTC</button><button class="hx-text-button" id="openBtcWithdrawBtn" type="button">Send crypto</button></div></div>
-            <div class="hx-market-list">
-              <div class="hx-market-row"><span class="hx-coin btc">₿</span><span class="hx-market-name"><b>Bitcoin</b><small>BTC</small></span><strong id="marketBtcPrice" class="is-loading">Loading…</strong><span class="hx-market-change">▲ +2.3%</span><svg viewBox="0 0 95 30"><path d="M1 28 9 10 16 19 24 8 33 13 43 12 52 5 63 8 74 3 84 6 94 1"/></svg></div>
-              <div class="hx-market-row"><span class="hx-coin eth">◆</span><span class="hx-market-name"><b>Ethereum</b><small>ETH</small></span><strong id="marketEthPrice" class="is-loading">—</strong><span class="hx-market-change">▲ +1.8%</span><svg viewBox="0 0 95 30"><path d="M1 28 9 12 16 18 24 11 33 16 43 14 52 4 63 10 74 3 84 8 94 4"/></svg></div>
-              <div class="hx-market-row"><span class="hx-coin sol">≋</span><span class="hx-market-name"><b>Solana</b><small>SOL</small></span><strong id="marketSolPrice" class="is-loading">—</strong><span class="hx-market-change">▲ +3.1%</span><svg viewBox="0 0 95 30"><path d="M1 27 9 7 16 17 24 9 33 16 43 12 52 4 63 10 74 2 84 6 94 3"/></svg></div>
+            <div class="hx-card-head">
+              <div class="hx-head-group"><h2>Market prices</h2><span class="hx-currency-chip"><span id="marketCurrency">USD</span>⌄</span></div>
+              <div class="hx-card-actions"><button class="hx-text-button" id="openConvertBtn" type="button">Convert BTC</button><button class="hx-text-button" id="openBtcWithdrawBtn" type="button">Send crypto</button></div>
             </div>
+            <div class="hx-coin-grid" id="marketGrid"></div>
+            <div class="hx-market-foot"><span id="marketFootNote">Live prices · 7-day trend</span><a class="hx-text-button" href="portfolio.html">Open portfolio →</a></div>
           </article>
 
           <article class="hx-card hx-transactions-card hx-sheen" id="transactions" data-reveal>
-            <div class="hx-card-head"><div><h2>Recent transactions</h2><p>Your latest account activity</p></div><a href="#transactions">View activity</a></div>
+            <div class="hx-card-head"><div><h2>Recent transactions</h2><p id="txSubtitle">Your latest account activity</p></div><a href="transactions.html">View all transactions →</a></div>
             <div class="hx-tx-head"><span>Date &amp; details</span><span>Type</span><span>Amount</span><span>Status</span></div>
             <div class="tx-list" id="txList"></div>
           </article>
@@ -186,7 +197,7 @@
 
         <footer class="hx-footer">
           <span>© 2026 HarbourX. All rights reserved.</span>
-          <nav aria-label="Legal"><a href="#terms">Terms of Service</a><a href="#privacy">Privacy Policy</a><a href="#risk">Risk Disclosure</a><a href="support.html">Support</a></nav>
+          <nav aria-label="Legal"><a href="terms.html">Terms of Service</a><a href="privacy.html">Privacy Policy</a><a href="complaints.html">Complaints</a><a href="support.html">Support</a></nav>
         </footer>
       </main>
     </div>

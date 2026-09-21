@@ -124,6 +124,17 @@ async function scrollThrough(page) {
     window.scrollTo({ top: 0, behavior: 'instant' });
     await wait();
   });
+
+  /* A reveal takes --hx-dur-slow plus its stagger delay to finish. Auditing
+     the moment the last scroll step lands catches whatever was released on it
+     mid-transition and reads that as hidden. Wait for them to settle — and
+     only wait: if one really is stuck, the audit below is what says so. */
+  await page.waitForFunction(
+    () => [...document.querySelectorAll('[data-reveal]')]
+      .every(el => el.offsetParent === null || getComputedStyle(el).opacity === '1'),
+    null,
+    { timeout: 4000 }
+  ).catch(() => {});
 }
 
 const audit = page => page.evaluate(() => ({
@@ -346,12 +357,19 @@ try {
     // works, so a genuinely dead market panel cannot pass unnoticed.
     await page.click('#closeConvertModalBtn');
     await page.waitForTimeout(400);
-    const btcPrice = await page.$eval('#marketBtcPrice', el => ({
-      text: el.textContent.trim(),
-      shimmering: el.classList.contains('is-loading')
-    }));
-    check(!btcPrice.shimmering && /\d/.test(btcPrice.text),
-      'feeds down still shows a price', JSON.stringify(btcPrice));
+    const band = await page.$$eval('.hx-coin-tile', tiles => tiles.map(tile => ({
+      symbol: tile.querySelector('.c-name small')?.textContent.trim(),
+      price: tile.querySelector('.c-price')?.textContent.trim(),
+      change: tile.querySelector('.hx-market-change')?.textContent.trim()
+    })));
+    const btcTile = band.find(tile => tile.symbol === 'BTC');
+    check(!!btcTile && /\d/.test(btcTile.price || ''),
+      'feeds down still shows a price', JSON.stringify(btcTile));
+    check(band.length >= 8, 'every supported coin has a tile', `${band.length} tiles`);
+    /* With no feed there is no 24-hour move to report, and the tile has to say
+       that rather than print a number nobody measured. */
+    check(band.every(tile => tile.change && (/%/.test(tile.change) || /not measured/i.test(tile.change))),
+      'a coin with no measured move says so', JSON.stringify(band[0]));
 
     await context.close();
   }

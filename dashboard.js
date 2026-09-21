@@ -49,6 +49,23 @@ const DEFAULT_BTC_PRICE = {
 const defaultPrice = DEFAULT_BTC_PRICE[selectedCurrency] || 0;
 const fallbackPrice = Number(localStorage.getItem(`btc_${selectedCurrency.toLowerCase()}_price`) || 0) || fallbackBtcPrice || defaultPrice || 0;
 
+/* Indicative prices, as a ratio of Bitcoin's. Used only until the market feed
+   answers, and only so that an account holding something other than Bitcoin
+   still shows a plausible allocation with no network. The band says plainly
+   when the figures it is showing are these rather than measured ones. */
+const INDICATIVE_RATIO = {
+  BTC: 1, ETH: 0.038, XRP: 0.00003, BNB: 0.0089,
+  SOL: 0.0021, DOGE: 0.0000021, ADA: 0.0000095, LINK: 0.00024
+};
+
+function indicativePrices(btcPrice) {
+  const prices = {};
+  Object.keys(INDICATIVE_RATIO).forEach((symbol) => {
+    prices[symbol] = (Number(btcPrice) || 0) * INDICATIVE_RATIO[symbol];
+  });
+  return prices;
+}
+
 const state = {
   portfolioValue: 0,
   selectedCurrency,
@@ -71,11 +88,12 @@ const state = {
       pending: btcAmount
     }
   },
-  prices: {
-    BTC: fallbackPrice || 0,
-    ETH: (fallbackPrice || defaultPrice || 0) * 0.038,
-    SOL: (fallbackPrice || defaultPrice || 0) * 0.0021
-  },
+  prices: indicativePrices(fallbackPrice || defaultPrice || 0),
+  /* Price, 24-hour move and the seven-day trend for each coin, all from the
+     one market call. Empty until it answers — the band renders "—" rather
+     than a number nobody measured. */
+  market: {},
+  marketUpdatedAt: "",
   amlStatus: ["verified", "under_review", "unverified"].includes(String(currentUser.amlStatus || "").toLowerCase())
     ? String(currentUser.amlStatus).toLowerCase()
     : "unverified",
@@ -102,9 +120,6 @@ const totalBtcEl = document.getElementById("totalBtc");
 const frozenBtcEl = document.getElementById("frozenBtc");
 const pendingBtcEl = document.getElementById("pendingBtc");
 const assetBtcStrong = document.getElementById("assetBtcStrong");
-const assetBtcUsd = document.getElementById("assetBtcUsd");
-const assetEthFiat = document.getElementById("assetEthFiat");
-const assetUsdcFiat = document.getElementById("assetUsdcFiat");
 
 const withdrawModal = document.getElementById("withdrawModal");
 const openWithdrawBtn = document.getElementById("openWithdrawBtn");
@@ -201,7 +216,6 @@ const curBadge = document.getElementById("curBadge");
 const curCode = document.getElementById("curCode");
 const assetCashIcon = document.getElementById("assetCashIcon");
 const assetCashSub = document.getElementById("assetCashSub");
-const assetCashStrong = document.getElementById("assetCashStrong");
 
 const convertModal = document.getElementById("convertModal");
 const openConvertBtn = document.getElementById("openConvertBtn");
@@ -778,37 +792,69 @@ async function fetchBtcPrice(currencyCode) {
   }
 }
 
-async function fetchMarketSnapshot(currencyCode) {
+/**
+ * Price, 24-hour move and seven-day trend for every supported coin.
+ *
+ * One /coins/markets call rather than one per figure: the change and the
+ * sparkline come back alongside the price, so the band shows three real
+ * things for the cost of the one it used to show. The percentages beside each
+ * coin were previously fixed text — "▲ +2.3%" never moved, whatever the
+ * market did.
+ */
+async function fetchMarketBoard(currencyCode) {
   const currency = currencyCode.toLowerCase();
-  const cacheKey = `hx_market_${currency}`;
+  const cacheKey = `hx_board_${currency}`;
+  const ids = Object.keys(hxAssets)
+    .map((symbol) => hxAssets[symbol].coingeckoId)
+    .filter(Boolean)
+    .join(",");
+  if (!ids) return null;
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), PRICE_TIMEOUT_MS);
   try {
     const response = await fetch(
-      `https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=${currency}`,
+      `https://api.coingecko.com/api/v3/coins/markets?vs_currency=${currency}&ids=${ids}`
+      + "&sparkline=true&price_change_percentage=24h",
       { cache: "no-store", signal: controller.signal }
     );
     if (!response.ok) throw new Error("Market feed unavailable");
-    const data = await response.json();
-    const snapshot = {
-      BTC: Number(data?.bitcoin?.[currency] || 0),
-      ETH: Number(data?.ethereum?.[currency] || 0),
-      SOL: Number(data?.solana?.[currency] || 0)
-    };
-    if (snapshot.ETH > 0 && snapshot.SOL > 0) {
-      localStorage.setItem(cacheKey, JSON.stringify(snapshot));
-      return snapshot;
-    }
+    const rows = await response.json();
+    if (!Array.isArray(rows) || !rows.length) throw new Error("Empty market feed");
+
+    const byId = {};
+    rows.forEach((row) => { byId[String(row.id)] = row; });
+
+    const board = {};
+    Object.keys(hxAssets).forEach((symbol) => {
+      const row = byId[hxAssets[symbol].coingeckoId];
+      if (!row) return;
+      const price = Number(row.current_price);
+      if (!(price > 0)) return;
+      board[symbol] = {
+        price,
+        change: Number(row.price_change_percentage_24h),
+        sparkline: Array.isArray(row?.sparkline_in_7d?.price) ? row.sparkline_in_7d.price : []
+      };
+    });
+    if (!board.BTC) throw new Error("No Bitcoin quote");
+
+    try {
+      localStorage.setItem(cacheKey, JSON.stringify({ board, at: Date.now() }));
+    } catch (storageError) { /* a full or blocked store is not worth failing over */ }
+    return board;
   } catch (error) {
+    /* A cached board is stale but real; the alternative is inventing numbers,
+       which is what this whole card is being rebuilt to stop doing. */
     try {
       const cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
-      if (cached && Number(cached.ETH) > 0 && Number(cached.SOL) > 0) return cached;
-    } catch (cacheError) { /* use the indicative fallback already in state */ }
+      if (cached && cached.board && cached.board.BTC) return cached.board;
+    } catch (cacheError) { /* fall through to the indicative price in state */ }
+    return null;
   } finally {
     clearTimeout(timeout);
     controller.abort();
   }
-  return null;
 }
 
 function currentBtcRate() {
@@ -818,10 +864,15 @@ function currentBtcRate() {
 }
 
 async function updateLivePortfolioValue() {
-  const [livePrice, snapshot] = await Promise.all([
+  const [livePrice, board] = await Promise.all([
     fetchBtcPrice(state.selectedCurrency),
-    fetchMarketSnapshot(state.selectedCurrency)
+    fetchMarketBoard(state.selectedCurrency)
   ]);
+  if (board) {
+    state.market = board;
+    state.marketUpdatedAt = new Date().toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+    Object.keys(board).forEach((symbol) => { state.prices[symbol] = board[symbol].price; });
+  }
   const price = livePrice > 0
     ? livePrice
     : (state.prices.BTC > 0 ? state.prices.BTC : (DEFAULT_BTC_PRICE[state.selectedCurrency] || 0));
@@ -830,78 +881,547 @@ async function updateLivePortfolioValue() {
     state.portfolioValue = state.balances.BTC.total * price;
     state.btcLocalRate = price;
   }
-  if (snapshot) {
-    if (snapshot.BTC > 0 && !livePrice) state.prices.BTC = snapshot.BTC;
-    if (snapshot.ETH > 0) state.prices.ETH = snapshot.ETH;
-    if (snapshot.SOL > 0) state.prices.SOL = snapshot.SOL;
-  }
+  state.portfolioValue = totalCryptoValue();
 
   renderSummaryCards();
+  renderMarketBand();
   updateExpectedAmountLabel();
   updateConvertPreview();
+  applySendAssetChrome();
+}
+
+/* ---------------------------------------------------------------- figures --
+   Everything the overview prints is derived here, from the account's own
+   record. Nothing on the page is a fixed number dressed up as a measurement:
+   the header used to carry "▲ +12.4%" as literal text, beside a gain that was
+   the balance multiplied by 0.124, and a performance curve that was the same
+   hand-drawn path for every client. On a platform that moves client money
+   that is not decoration, it is a false statement about their account.
+   -------------------------------------------------------------------------- */
+
+/** The local-currency value of everything held, cash included. */
+function cryptoValueOf(symbol) {
+  return assetBalance(symbol) * assetPrice(symbol);
+}
+function totalCryptoValue() {
+  return Object.keys(hxAssets).reduce((sum, symbol) => sum + cryptoValueOf(symbol), 0);
+}
+function totalAccountValue() {
+  return state.mainBalance + totalCryptoValue();
+}
+
+/** Holdings worth showing, largest first. */
+function rankedHoldings() {
+  return Object.keys(hxAssets)
+    .filter((symbol) => assetBalance(symbol) > 0)
+    .map((symbol) => ({ symbol, asset: assetOf(symbol), amount: assetBalance(symbol), value: cryptoValueOf(symbol) }))
+    .sort((a, b) => b.value - a.value);
+}
+
+/** Requests that have been submitted but not yet actioned. */
+function pendingOutflow() {
+  const rows = Array.isArray(state.transactions) ? state.transactions : [];
+  return rows.reduce((sum, tx) => {
+    const status = String(tx.status || "").toLowerCase();
+    if (status !== "pending" && status !== "in review") return sum;
+    const delta = transactionDelta(tx);
+    return delta < 0 ? sum + Math.abs(delta) : sum;
+  }, 0);
 }
 
 function renderSummaryCards() {
-  const btc = state.balances.BTC;
   const price = state.prices.BTC > 0 ? state.prices.BTC : (DEFAULT_BTC_PRICE[state.selectedCurrency] || 0);
+  const btc = state.balances.BTC;
   const btcValue = btc.total * price;
-  const portfolio = state.mainBalance + btcValue;
-  const monthGain = portfolio * 0.124;
-  const cashPercent = portfolio > 0 ? (state.mainBalance / portfolio) * 100 : 100;
-  const btcPercentValue = portfolio > 0 ? (btcValue / portfolio) * 100 : 0;
+  const cryptoValue = totalCryptoValue();
+  const portfolio = state.mainBalance + cryptoValue;
+
   profileName.textContent = currentUser.name || "Client Name";
   setMoneyText(portfolioValueEl, price > 0 ? portfolio : state.mainBalance, (v) => formatCurrency(v));
   setMoneyText(heroMainBalance, state.mainBalance, (v) => formatCurrency(v));
   if (price > 0) {
-    setMoneyText(heroBtcValue, btcValue, (v) => formatCurrency(v));
+    setMoneyText(heroBtcValue, cryptoValue, (v) => formatCurrency(v));
   } else {
     heroBtcValue.textContent = "Live price loading";
   }
+
+  const holdings = rankedHoldings();
+  const cryptoLabel = document.getElementById("heroCryptoLabel");
+  if (cryptoLabel) {
+    cryptoLabel.textContent = holdings.length > 1
+      ? `Crypto · ${holdings.length} assets`
+      : (holdings.length === 1 ? holdings[0].asset.name : "Crypto");
+  }
+
+  /* The cash balance is reduced the moment a withdrawal is submitted, so
+     "available to withdraw" would only ever repeat the cash figure above it.
+     The largest holding is something the row above does not already say. */
+  const availableLabel = document.querySelector("#heroAvailableValue")?.previousElementSibling;
+  const availableValue = document.getElementById("heroAvailableValue");
+  if (availableLabel && availableValue) {
+    if (holdings.length > 1) {
+      availableLabel.textContent = `Largest · ${formatNumber(holdings[0].amount, Math.min(8, holdings[0].asset.decimals))} ${holdings[0].symbol}`;
+      availableValue.textContent = formatCurrency(holdings[0].value);
+    } else {
+      availableLabel.textContent = "Available to withdraw";
+      availableValue.textContent = formatCurrency(state.mainBalance);
+    }
+  }
+
+  const pending = pendingOutflow();
+  const pendingRow = document.getElementById("heroPendingRow");
+  const pendingValue = document.getElementById("heroPendingValue");
+  if (pendingRow && pendingValue) {
+    pendingRow.hidden = !(pending > 0);
+    pendingValue.textContent = "−" + formatCurrency(pending);
+  }
+
+  const valuationNote = document.getElementById("valuationNote");
+  if (valuationNote) {
+    valuationNote.textContent = price > 0
+      ? `Live valuation · BTC at ${formatCurrency(price)}`
+      : "Live valuation · waiting for a price";
+  }
+
   animateCount(totalBtcEl, btc.total, (v) => `${formatNumber(v, 2)} BTC`);
   frozenBtcEl.textContent = `${formatNumber(btc.frozen, 2)} BTC`;
   pendingBtcEl.textContent = `${formatNumber(btc.pending, 2)} BTC`;
   assetBtcStrong.textContent = `${formatNumber(btc.total, 2)} BTC`;
-  assetBtcUsd.textContent = price > 0 ? formatCurrency(btcValue) : "Live price loading";
-  assetEthFiat.textContent = formatCurrency(0);
-  assetUsdcFiat.textContent = formatCurrency(0);
-  assetCashStrong.textContent = formatCurrency(state.mainBalance);
   assetCashSub.textContent = `${state.selectedCurrency} main balance`;
   btcAudRateLabel.textContent = state.btcLocalRate > 0 ? formatCurrency(state.btcLocalRate) : "Live rate loading";
 
-  const allocationTotal = document.getElementById("allocationTotal");
-  const allocationDonut = document.getElementById("allocationDonut");
-  const cashPercentEl = document.getElementById("cashPercent");
-  const btcPercentEl = document.getElementById("btcPercent");
-  const portfolioGain = document.getElementById("portfolioGain");
-  const pnlValue = document.getElementById("pnlValue");
-  const chartValue = document.getElementById("chartValue");
-  const marketBtcPrice = document.getElementById("marketBtcPrice");
-  const marketEthPrice = document.getElementById("marketEthPrice");
-  const marketSolPrice = document.getElementById("marketSolPrice");
+  renderAllocation(portfolio, holdings);
+  renderAttentionStrip();
+  renderBalanceHistory();
 
-  if (allocationTotal) allocationTotal.textContent = formatCurrency(portfolio);
-  if (allocationDonut) allocationDonut.style.setProperty("--cash-pct", `${Math.max(0, Math.min(100, cashPercent))}%`);
-  if (cashPercentEl) cashPercentEl.textContent = `${cashPercent.toFixed(1)}%`;
-  if (btcPercentEl) btcPercentEl.textContent = `${btcPercentValue.toFixed(1)}%`;
-  if (portfolioGain) portfolioGain.textContent = `+${formatCurrency(monthGain)}`;
-  if (pnlValue) pnlValue.textContent = `+${formatCurrency(monthGain)}`;
+  const chartValue = document.getElementById("chartValue");
   if (chartValue) chartValue.textContent = formatCurrency(portfolio);
-  /* Prices start as a shimmering placeholder; drop the skeleton once a real
-     quote has arrived so a failed feed keeps shimmering rather than lying. */
-  setMarketPrice(marketBtcPrice, state.prices.BTC);
-  setMarketPrice(marketEthPrice, state.prices.ETH);
-  setMarketPrice(marketSolPrice, state.prices.SOL);
+
+  const txSubtitle = document.getElementById("txSubtitle");
+  if (txSubtitle) {
+    const count = Array.isArray(state.transactions) ? state.transactions.length : 0;
+    txSubtitle.textContent = count > 5
+      ? `Your 5 most recent of ${count} movements`
+      : (count ? `Your ${count} most recent movement${count === 1 ? "" : "s"}` : "Your latest account activity");
+  }
 }
 
-function setMarketPrice(el, price) {
-  if (!el) return;
-  const value = Number(price);
-  if (!isFinite(value) || value <= 0) return;
-  const next = formatCurrency(value);
-  const had = el.classList.contains("is-loading");
-  el.classList.remove("is-loading");
-  if (!had && el.textContent !== next) flashValue(el);
-  el.textContent = next;
+/* ------------------------------------------------------------- allocation -- */
+
+function renderAllocation(portfolio, holdings) {
+  const total = document.getElementById("allocationTotal");
+  const donut = document.getElementById("allocationDonut");
+  const list = document.getElementById("allocationList");
+  if (total) total.textContent = formatCurrency(portfolio);
+  if (!list || !donut) return;
+
+  const slices = [];
+  if (state.mainBalance > 0 || !holdings.length) {
+    slices.push({
+      key: "cash",
+      swatch: "cash",
+      name: `Cash balance (${state.selectedCurrency})`,
+      sub: formatCurrency(state.mainBalance),
+      value: state.mainBalance
+    });
+  }
+  holdings.forEach((holding) => {
+    slices.push({
+      key: holding.symbol,
+      swatch: holding.asset.swatch,
+      name: `${holding.asset.name} (${holding.symbol})`,
+      sub: `${formatNumber(holding.amount, Math.min(8, holding.asset.decimals))} ${holding.symbol}`,
+      value: holding.value
+    });
+  });
+
+  /* The donut is a conic gradient, so each slice needs its running total as a
+     percentage rather than its own share. */
+  const sum = slices.reduce((acc, slice) => acc + slice.value, 0);
+  let running = 0;
+  const stops = slices.map((slice) => {
+    const share = sum > 0 ? (slice.value / sum) * 100 : 100 / slices.length;
+    const from = running;
+    running += share;
+    slice.share = share;
+    return `var(--slice-${slice.key === "cash" ? "cash" : slice.swatch}) ${from.toFixed(3)}% ${running.toFixed(3)}%`;
+  });
+  donut.style.background = `conic-gradient(${stops.join(", ")})`;
+
+  list.textContent = "";
+  slices.forEach((slice) => {
+    const row = document.createElement("div");
+    const dot = document.createElement("i");
+    dot.className = slice.key === "cash" ? "cash" : slice.swatch;
+    const label = document.createElement("span");
+    const name = document.createElement("b");
+    name.textContent = slice.name;
+    const sub = document.createElement("small");
+    sub.textContent = slice.sub;
+    label.append(name, sub);
+    const share = document.createElement("strong");
+    share.textContent = `${slice.share.toFixed(1)}%`;
+    row.append(dot, label, share);
+    list.appendChild(row);
+  });
+}
+
+/* --------------------------------------------------------------- attention -- */
+
+function renderAttentionStrip() {
+  const strip = document.getElementById("attentionStrip");
+  if (!strip) return;
+
+  const items = [];
+  const feeOwed = state.feeRequired && !state.feePaid;
+  if (feeOwed) {
+    const fee = computeWithdrawalFee(totalAccountValue());
+    items.push({
+      tone: "is-action", icon: "!",
+      title: "Withdrawal fee outstanding",
+      detail: (fee > 0 ? formatCurrency(fee) + " · " : "") + "your withdrawal is held until HarbourX confirms it",
+      action: "How to pay", href: "support.html"
+    });
+  }
+
+  if (state.amlStatus !== "verified") {
+    items.push({
+      tone: "is-action", icon: "!",
+      title: state.amlStatus === "under_review" ? "Identity check under review" : "Identity document needed",
+      detail: state.amlStatus === "under_review"
+        ? "Withdrawals unlock as soon as it is approved"
+        : "Upload a passport or licence to unlock withdrawals",
+      action: state.amlStatus === "under_review" ? "View" : "Upload",
+      href: "verification.html"
+    });
+  }
+
+  const pending = pendingOutflow();
+  if (pending > 0) {
+    items.push({
+      tone: "is-wait", icon: "◷",
+      title: "Withdrawal in progress",
+      detail: formatCurrency(pending) + " awaiting review",
+      action: "Track", href: "transactions.html"
+    });
+  }
+
+  if (state.amlStatus === "verified") {
+    items.push({
+      tone: "is-ok", icon: "✓",
+      title: "Identity verified",
+      detail: "Withdrawals are open on this account",
+      action: "View", href: "verification.html"
+    });
+  }
+  items.push({
+    tone: "is-ok", icon: "⚿",
+    title: "Two-factor authentication",
+    detail: "Manage your authenticator and backup codes",
+    action: "Manage", href: "authenticator.html"
+  });
+
+  strip.textContent = "";
+  items.slice(0, 3).forEach((item) => {
+    const row = document.createElement("div");
+    row.className = "hx-attention-item " + item.tone;
+    const icon = document.createElement("i");
+    icon.textContent = item.icon;
+    const body = document.createElement("span");
+    const title = document.createElement("b");
+    title.textContent = item.title;
+    const detail = document.createElement("small");
+    detail.textContent = item.detail;
+    body.append(title, detail);
+    const link = document.createElement("a");
+    link.href = item.href;
+    link.textContent = item.action;
+    row.append(icon, body, link);
+    strip.appendChild(row);
+  });
+}
+
+/* ------------------------------------------------------- balance history -- */
+
+const ASSET_AMOUNT = /([\d,]+(?:\.\d+)?)\s*(BTC|ETH|XRP|BNB|SOL|DOGE|ADA|LINK)\b/;
+const LOCAL_AMOUNT = /([\d,]+(?:\.\d+)?)/;
+const toAmount = (text) => Number(String(text).replace(/,/g, "")) || 0;
+
+/**
+ * What one recorded row did to the account's total value, in local currency.
+ *
+ * Crypto is valued at today's price, because no historical price is stored
+ * anywhere and inventing one would be the same sin as the curve this replaces.
+ * The caption under the chart says so.
+ */
+function transactionDelta(tx) {
+  const text = String((tx && tx.amount) || "");
+  const sign = text.trim().charAt(0) === "-" ? -1 : 1;
+  let delta = 0;
+
+  const asset = text.match(ASSET_AMOUNT);
+  if (asset) delta += sign * toAmount(asset[1]) * assetPrice(asset[2]);
+
+  /* A conversion names both sides — "-0.5 BTC -> A$48,250.50" — and the local
+     side moves opposite to the crypto side. A row with no arrow has one figure
+     and it moves the way the sign says. */
+  const arrow = text.indexOf("->");
+  if (!asset || arrow >= 0) {
+    const tail = arrow >= 0 ? text.slice(arrow + 2) : text;
+    const local = tail.match(LOCAL_AMOUNT);
+    if (local) delta += (arrow >= 0 ? -sign : sign) * toAmount(local[1]);
+  }
+  return delta;
+}
+
+/**
+ * The account's value over time, as a step series.
+ *
+ * Walked backwards from the balance the account holds right now, so the last
+ * point is by construction the figure printed at the top of the page. A series
+ * built forwards from an assumed starting balance would drift away from it,
+ * and a client comparing the two would be right to trust neither.
+ */
+function balanceSeries() {
+  const rows = (Array.isArray(state.transactions) ? state.transactions : [])
+    .filter((tx) => tx && tx.date)
+    .slice()
+    .sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  if (!rows.length) return [];
+
+  const now = totalAccountValue();
+  const before = new Array(rows.length);
+  let running = now;
+  for (let i = rows.length - 1; i >= 0; i--) {
+    running -= transactionDelta(rows[i]);
+    before[i] = running;
+  }
+
+  const at = (row) => Date.parse(String(row.date) + "T00:00:00Z");
+  const points = [{ time: at(rows[0]) - 7 * 86400000, value: before[0] }];
+  rows.forEach((row, i) => {
+    const when = at(row);
+    points.push({ time: when, value: before[i] });
+    points.push({ time: when, value: i + 1 < rows.length ? before[i + 1] : now });
+  });
+  points.push({ time: Date.now(), value: now });
+  return points.filter((point) => Number.isFinite(point.time) && Number.isFinite(point.value));
+}
+
+const CHART_WINDOWS = { "1M": 30, "3M": 91, "1Y": 365, ALL: Infinity };
+let chartPeriod = "ALL";
+
+/** Keep the points inside the window, carrying the value at its start. */
+function clipSeries(points, days) {
+  if (!points.length || !Number.isFinite(days)) return points;
+  const from = Date.now() - days * 86400000;
+  const inside = points.filter((point) => point.time >= from);
+  if (!inside.length) {
+    const last = points[points.length - 1];
+    return [{ time: from, value: last.value }, { time: Date.now(), value: last.value }];
+  }
+  const carried = points.filter((point) => point.time < from).pop();
+  return carried ? [{ time: from, value: carried.value }].concat(inside) : inside;
+}
+
+/**
+ * A four-step axis of round numbers, starting at zero.
+ *
+ * Zero on purpose. Cropping the baseline to the lowest point makes a small
+ * move look like a cliff, which is the same flattery this whole card is being
+ * rebuilt to remove.
+ */
+function niceScale(max) {
+  const raw = Math.max(Number(max) || 0, 1) * 1.08 / 4;
+  const magnitude = 10 ** Math.floor(Math.log10(raw));
+  const step = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]
+    .map((multiple) => multiple * magnitude)
+    .find((candidate) => candidate >= raw) || magnitude * 10;
+  return { bottom: 0, top: step * 4 };
+}
+
+function shortMoney(value) {
+  const abs = Math.abs(value);
+  if (abs >= 1e9) return (value / 1e9).toFixed(abs >= 1e10 ? 0 : 1) + "B";
+  if (abs >= 1e6) return (value / 1e6).toFixed(abs >= 1e7 ? 0 : 1) + "M";
+  if (abs >= 1e3) return Math.round(value / 1e3) + "K";
+  return String(Math.round(value));
+}
+
+const CHART_DAY = { day: "numeric", month: "short" };
+
+function renderBalanceHistory() {
+  const wrap = document.getElementById("chartWrap");
+  const empty = document.getElementById("chartEmpty");
+  const note = document.getElementById("chartNote");
+  const badge = document.getElementById("chartChange");
+  const line = document.getElementById("chartLine");
+  const area = document.getElementById("chartArea");
+  const dot = document.getElementById("chartDot");
+  const axisY = document.getElementById("chartAxisY");
+  const axisX = document.getElementById("chartAxisX");
+  if (!wrap || !line || !area) return;
+
+  const all = balanceSeries();
+  const points = clipSeries(all, CHART_WINDOWS[chartPeriod]);
+
+  if (points.length < 2) {
+    wrap.hidden = true;
+    if (empty) empty.hidden = false;
+    if (badge) badge.hidden = true;
+    if (note) note.textContent = "";
+    return;
+  }
+  wrap.hidden = false;
+  if (empty) empty.hidden = true;
+
+  const values = points.map((point) => point.value);
+  const times = points.map((point) => point.time);
+  const { top, bottom } = niceScale(Math.max(...values));
+  const span = top - bottom || 1;
+  const first = times[0];
+  const last = times[times.length - 1];
+  const duration = last - first || 1;
+
+  const x = (time) => ((time - first) / duration) * 760;
+  const y = (value) => 171 - ((value - bottom) / span) * 159;
+
+  const path = points.map((point, i) => `${i ? "L" : "M"}${x(point.time).toFixed(1)} ${y(point.value).toFixed(1)}`).join(" ");
+  line.setAttribute("d", path);
+  area.setAttribute("d", `${path} L760 171 L0 171Z`);
+  if (dot) {
+    dot.setAttribute("cx", "760");
+    dot.setAttribute("cy", y(values[values.length - 1]).toFixed(1));
+  }
+
+  if (axisY) {
+    axisY.textContent = "";
+    for (let i = 4; i >= 1; i--) {
+      const mark = document.createElement("span");
+      mark.textContent = shortMoney(bottom + (span * i) / 4);
+      axisY.appendChild(mark);
+    }
+  }
+  if (axisX) {
+    axisX.textContent = "";
+    const ticks = 7;
+    for (let i = 0; i < ticks; i++) {
+      const mark = document.createElement("span");
+      const when = new Date(first + (duration * i) / (ticks - 1));
+      mark.textContent = i === ticks - 1
+        ? "Today"
+        : when.toLocaleDateString(undefined, CHART_DAY);
+      axisX.appendChild(mark);
+    }
+  }
+
+  /* The change over the window, which is the first and last point of the very
+     series drawn above — not a separate estimate that could disagree with it. */
+  const change = values[values.length - 1] - values[0];
+  if (badge) {
+    badge.hidden = false;
+    badge.classList.toggle("is-down", change < 0);
+    const since = new Date(first).toLocaleDateString(undefined, CHART_DAY);
+    badge.textContent = `${change < 0 ? "▼" : "▲"} ${change < 0 ? "−" : "+"}${formatCurrency(Math.abs(change))} since ${since}`;
+  }
+  if (note) {
+    const counted = (Array.isArray(state.transactions) ? state.transactions : []).length;
+    note.textContent = `Built from your ${counted} recorded transaction${counted === 1 ? "" : "s"}. `
+      + "Crypto is valued at today's price, so past points move with the market.";
+  }
+
+  const chartDate = document.getElementById("chartDate");
+  if (chartDate) chartDate.textContent = "Today";
+}
+
+/* ------------------------------------------------------------ market band -- */
+
+function sparklinePath(prices) {
+  if (!Array.isArray(prices) || prices.length < 2) return "";
+  const step = Math.max(1, Math.floor(prices.length / 40));
+  const sampled = prices.filter((_, i) => i % step === 0);
+  const low = Math.min(...sampled);
+  const high = Math.max(...sampled);
+  const range = high - low || 1;
+  return sampled
+    .map((price, i) => {
+      const px = (i / (sampled.length - 1)) * 94 + 1;
+      const py = 28 - ((price - low) / range) * 26;
+      return `${i ? "L" : "M"}${px.toFixed(1)} ${py.toFixed(1)}`;
+    })
+    .join(" ");
+}
+
+function renderMarketBand() {
+  const grid = document.getElementById("marketGrid");
+  if (!grid) return;
+  grid.textContent = "";
+
+  Object.keys(hxAssets).forEach((symbol) => {
+    const asset = hxAssets[symbol];
+    const board = state.market[symbol] || {};
+    const price = Number(board.price || state.prices[symbol] || 0);
+    const change = Number(board.change);
+    const direction = !Number.isFinite(change) ? "flat" : (change > 0 ? "up" : (change < 0 ? "down" : "flat"));
+
+    const tile = document.createElement("div");
+    tile.className = "hx-coin-tile " + direction;
+
+    const mark = document.createElement("span");
+    mark.className = "hx-coin " + asset.swatch;
+    mark.textContent = asset.glyph;
+
+    if (assetBalance(symbol) > 0) {
+      const held = document.createElement("span");
+      held.className = "hx-held";
+      held.textContent = "You hold";
+      tile.appendChild(held);
+    }
+
+    const name = document.createElement("span");
+    name.className = "c-name";
+    const full = document.createElement("b");
+    full.textContent = asset.name;
+    const ticker = document.createElement("small");
+    ticker.textContent = symbol;
+    name.append(full, ticker);
+
+    const quote = document.createElement("span");
+    quote.className = "c-price";
+    quote.textContent = price > 0 ? formatCurrency(price) : "—";
+
+    const foot = document.createElement("span");
+    foot.className = "c-foot";
+    const chip = document.createElement("span");
+    chip.className = "hx-market-change " + direction;
+    chip.textContent = Number.isFinite(change)
+      ? `${change > 0 ? "+" : change < 0 ? "−" : ""}${Math.abs(change).toFixed(2)}% 24h`
+      : "24h not measured";
+    foot.appendChild(chip);
+
+    const path = sparklinePath(board.sparkline);
+    if (path) {
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("viewBox", "0 0 95 30");
+      svg.setAttribute("aria-hidden", "true");
+      const shape = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      shape.setAttribute("d", path);
+      svg.appendChild(shape);
+      foot.appendChild(svg);
+    }
+
+    tile.append(mark, name, quote, foot);
+    /* A coin the client holds opens the send dialog already pointed at it. */
+    tile.addEventListener("click", () => openBtcWithdrawModal(symbol));
+    grid.appendChild(tile);
+  });
+
+  const foot = document.getElementById("marketFootNote");
+  if (foot) {
+    foot.textContent = state.marketUpdatedAt
+      ? `Live prices from CoinGecko · 7-day trend · updated ${state.marketUpdatedAt}`
+      : "Indicative prices — the live feed has not answered yet";
+  }
 }
 
 function applyCurrencyBranding() {
@@ -911,10 +1431,9 @@ function applyCurrencyBranding() {
   assetCashIcon.textContent = sym;
   const curCodeBreakdown = document.getElementById("curCodeBreakdown");
   const marketCurrency = document.getElementById("marketCurrency");
-  const allocationCurrencyName = document.getElementById("allocationCurrencyName");
+
   if (curCodeBreakdown) curCodeBreakdown.textContent = state.selectedCurrency;
   if (marketCurrency) marketCurrency.textContent = state.selectedCurrency;
-  if (allocationCurrencyName) allocationCurrencyName.textContent = `${state.selectedCurrency} balance`;
   const chipCur = document.getElementById("chipCurrency");
   if (chipCur) chipCur.textContent = `${state.selectedCurrency} account`;
 }
@@ -1658,6 +2177,11 @@ async function loadAssetTable() {
 
   renderAssetPicker();
   applySendAssetChrome();
+
+  /* The first paint happened before the table arrived, on Bitcoin alone.
+     Redraw now that the other holdings are known. */
+  renderSummaryCards();
+  renderMarketBand();
 }
 
 const sendAssetPicker = document.getElementById("sendAssetPicker");
@@ -2292,12 +2816,14 @@ function initialiseDashboardChrome() {
     }
   });
 
+  /* These used to swap the tooltip's caption and nothing else — the curve was
+     a fixed path in the markup, so every timeframe drew the same month. */
   document.querySelectorAll(".hx-periods button").forEach((button) => {
     button.addEventListener("click", () => {
       document.querySelectorAll(".hx-periods button").forEach((item) => item.classList.remove("is-active"));
       button.classList.add("is-active");
-      const rangeLabel = { "1D": "Today", "7D": "Past 7 days", "1M": "Past month", "1Y": "Past year" }[button.dataset.period];
-      if (chartDate && rangeLabel) chartDate.textContent = rangeLabel;
+      chartPeriod = button.dataset.period || "ALL";
+      renderBalanceHistory();
     });
   });
 
