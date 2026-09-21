@@ -342,6 +342,28 @@ try {
       check(closed, `${id} finishes closed`);
     }
 
+    // Adding a payout account is one short flow. The verified profile supplies
+    // the holder name, so the client never has to type the same identity twice.
+    await page.click('#openWithdrawBtn');
+    await page.click('#addPaymentMethodBtn');
+    await page.selectOption('#newBankName', 'ANZ');
+    await page.click('#continueBankLoginBtn');
+    check(await page.$eval('#addBankSteps', el => el.dataset.step) === '2',
+      'add-bank flow advances from bank to details');
+    check((await page.$eval('#bankHolderDisplay', el => el.textContent.trim())) === user.name,
+      'the account holder comes from the verified profile');
+    await page.fill('#newBsbNumber', '123456');
+    await page.fill('#newAccountNumber', '12345678');
+    await page.click('#continueBankLoginBtn');
+    check(await page.$eval('#addBankSteps', el => el.dataset.step) === '3',
+      'valid bank details advance to review');
+    check((await page.$eval('#bankReviewAccount', el => el.textContent.trim())).endsWith('5678'),
+      'review masks the account number');
+    check(await page.$eval('#confirmBankBtn', el => !el.hidden),
+      'the account is only connected from the review step');
+    await page.click('#closeAddBankModalBtn');
+    await page.waitForTimeout(400);
+
     // a rejected amount must point at the field it belongs to
     await page.click('#openConvertBtn');
     await page.waitForTimeout(500);

@@ -177,23 +177,27 @@ let pendingWithdrawal = null;
 const addBankModal = document.getElementById("addBankModal");
 const closeAddBankModalBtn = document.getElementById("closeAddBankModalBtn");
 const cancelAddBankBtn = document.getElementById("cancelAddBankBtn");
+const backAddBankBtn = document.getElementById("backAddBankBtn");
 const continueBankLoginBtn = document.getElementById("continueBankLoginBtn");
+const confirmBankBtn = document.getElementById("confirmBankBtn");
 const newBankName = document.getElementById("newBankName");
-const newAccountFirstName = document.getElementById("newAccountFirstName");
-const newAccountLastName = document.getElementById("newAccountLastName");
 const newBsbNumber = document.getElementById("newBsbNumber");
 const newAccountNumber = document.getElementById("newAccountNumber");
+const bankCodeField = document.getElementById("bankCodeField");
 const bankCodeLabel = document.getElementById("bankCodeLabel");
+const bankCodeHelp = document.getElementById("bankCodeHelp");
+const bankAccountNumberLabel = document.getElementById("bankAccountNumberLabel");
+const bankCountryDisplay = document.getElementById("bankCountryDisplay");
+const bankHolderDisplay = document.getElementById("bankHolderDisplay");
+const addBankSteps = document.getElementById("addBankSteps");
+const bankReviewCountry = document.getElementById("bankReviewCountry");
+const bankReviewName = document.getElementById("bankReviewName");
+const bankReviewCodeLabel = document.getElementById("bankReviewCodeLabel");
+const bankReviewCode = document.getElementById("bankReviewCode");
+const bankReviewAccount = document.getElementById("bankReviewAccount");
+const bankReviewHolder = document.getElementById("bankReviewHolder");
 const addBankMessage = document.getElementById("addBankMessage");
-
-const bankLoginModal = document.getElementById("bankLoginModal");
-const closeBankLoginModalBtn = document.getElementById("closeBankLoginModalBtn");
-const backToBankDetailsBtn = document.getElementById("backToBankDetailsBtn");
-const confirmBankLoginBtn = document.getElementById("confirmBankLoginBtn");
-const bankLoginTitle = document.getElementById("bankLoginTitle");
-const bankHolderFirstName = document.getElementById("bankHolderFirstName");
-const bankHolderLastName = document.getElementById("bankHolderLastName");
-const bankLoginMessage = document.getElementById("bankLoginMessage");
+let addBankStep = 1;
 let pendingBankAccount = null;
 
 const alertBox = document.getElementById("alertBox");
@@ -465,6 +469,19 @@ function bankSettingsForCountry(code) {
         return digits.length === 6 ? `${digits.slice(0, 2)}-${digits.slice(2)}` : digits;
       },
       error: "Enter a 6-digit New Zealand bank and branch code."
+    },
+    GE: {
+      label: "Bank code",
+      placeholder: "Read from IBAN",
+      accountLabel: "IBAN",
+      accountPlaceholder: "GE00 XX00 0000 0000 0000 00",
+      banks: ["Bank of Georgia", "TBC Bank", "Liberty Bank", "Basisbank", "Credo Bank", "ProCredit Bank Georgia"],
+      hideCode: true,
+      validate: () => true,
+      normalise: (value) => value.trim().toUpperCase(),
+      validateAccount: (value) => /^GE\d{2}[A-Z]{2}\d{16}$/.test(value.replace(/\s+/g, "").toUpperCase()),
+      accountError: "Enter a valid 22-character Georgian IBAN, for example GE29NB0000000000000000.",
+      error: "Enter a valid Georgian bank account."
     }
   };
   return settings[code] || {
@@ -493,6 +510,14 @@ function configureLocaleUi() {
   const settings = bankSettingsForCountry(state.selectedCountry);
   bankCodeLabel.textContent = settings.label;
   newBsbNumber.placeholder = settings.placeholder;
+  bankCodeField.hidden = !!settings.hideCode;
+  bankAccountNumberLabel.textContent = settings.accountLabel || "Account number or IBAN";
+  newAccountNumber.placeholder = settings.accountPlaceholder || "Account number or IBAN";
+  bankCodeHelp.textContent = settings.hideCode
+    ? "The bank code is read automatically from your IBAN."
+    : "We check the format as you type.";
+  bankCountryDisplay.textContent = country;
+  bankHolderDisplay.textContent = currentUser.name || "Verified account holder";
   newBankName.innerHTML = '<option value="">Select bank</option>';
   [...settings.banks, "Other bank"].forEach((bankName) => {
     const option = document.createElement("option");
@@ -611,6 +636,7 @@ function showBankMessage(element, text) {
 function openAddBankModal() {
   closeModal();
   showBankMessage(addBankMessage, "");
+  setAddBankStep(1);
   openModalEl(addBankModal);
   addBankModal.setAttribute("aria-hidden", "false");
 }
@@ -618,35 +644,67 @@ function openAddBankModal() {
 function closeAddBankModal() {
   closeModalEl(addBankModal);
   addBankModal.setAttribute("aria-hidden", "true");
+  pendingBankAccount = null;
 }
 
-function openBankLoginModal() {
-  closeAddBankModal();
-  showBankMessage(bankLoginMessage, "");
-  bankHolderFirstName.value = pendingBankAccount.accountFirstName || "";
-  bankHolderLastName.value = pendingBankAccount.accountLastName || "";
-  bankLoginTitle.textContent = `Confirm ${pendingBankAccount.bankName} account holder`;
-  openModalEl(bankLoginModal);
-  bankLoginModal.setAttribute("aria-hidden", "false");
+function verifiedBankHolder() {
+  const fullName = safeText(currentUser.name).trim().replace(/\s+/g, " ");
+  const parts = fullName.split(" ").filter(Boolean);
+  return {
+    fullName: fullName || "Verified account holder",
+    firstName: safeText(currentUser.firstName).trim() || parts[0] || "Account",
+    lastName: safeText(currentUser.lastName).trim() || parts.slice(1).join(" ") || parts[0] || "Holder"
+  };
 }
 
-function closeBankLoginModal() {
-  bankHolderFirstName.value = "";
-  bankHolderLastName.value = "";
-  closeModalEl(bankLoginModal);
-  bankLoginModal.setAttribute("aria-hidden", "true");
+function setAddBankStep(step) {
+  addBankStep = Math.max(1, Math.min(3, Number(step) || 1));
+  addBankSteps.dataset.step = String(addBankStep);
+  Array.from(addBankSteps.querySelectorAll("div")).forEach((item, index) => {
+    item.classList.toggle("active", index + 1 <= addBankStep);
+  });
+  document.querySelectorAll("[data-bank-step]").forEach((panel) => {
+    panel.classList.toggle("active", Number(panel.dataset.bankStep) === addBankStep);
+  });
+  cancelAddBankBtn.hidden = addBankStep !== 1;
+  backAddBankBtn.hidden = addBankStep === 1;
+  continueBankLoginBtn.hidden = addBankStep === 3;
+  confirmBankBtn.hidden = addBankStep !== 3;
+  continueBankLoginBtn.textContent = addBankStep === 1 ? "Continue" : "Continue to review";
+  showBankMessage(addBankMessage, "");
+}
+
+function populateBankReview() {
+  const holder = verifiedBankHolder();
+  const settings = bankSettingsForCountry(state.selectedCountry);
+  bankReviewCountry.textContent = countryLabel(state.selectedCountry);
+  bankReviewName.textContent = pendingBankAccount.bankName;
+  bankReviewCodeLabel.textContent = settings.hideCode ? "Bank code from IBAN" : settings.label;
+  bankReviewCode.textContent = pendingBankAccount.bsb;
+  bankReviewAccount.textContent = maskAccountNumber(pendingBankAccount.accountNumber);
+  bankReviewHolder.textContent = holder.fullName;
 }
 
 function handleContinueBankLogin() {
+  if (addBankStep === 1) {
+    if (!newBankName.value.trim()) {
+      showBankMessage(addBankMessage, "Choose a payout bank.");
+      newBankName.focus();
+      return;
+    }
+    setAddBankStep(2);
+    (bankSettingsForCountry(state.selectedCountry).hideCode ? newAccountNumber : newBsbNumber).focus();
+    return;
+  }
+
   const bankNameValue = newBankName.value.trim();
-  const firstNameValue = newAccountFirstName.value.trim();
-  const lastNameValue = newAccountLastName.value.trim();
-  const bankCodeValue = newBsbNumber.value.trim();
   const accountValue = newAccountNumber.value.trim().replace(/[^A-Za-z0-9]+/g, "").toUpperCase();
   const bankSettings = bankSettingsForCountry(state.selectedCountry);
+  const holder = verifiedBankHolder();
+  const bankCodeValue = bankSettings.hideCode ? accountValue.slice(4, 6) : newBsbNumber.value.trim();
 
-  if (!bankNameValue || !firstNameValue || !lastNameValue || !bankCodeValue || !accountValue) {
-    showBankMessage(addBankMessage, "Complete all payout bank fields.");
+  if (!bankCodeValue || !accountValue) {
+    showBankMessage(addBankMessage, bankSettings.hideCode ? "Enter the payout account IBAN." : "Complete the bank code and account fields.");
     return;
   }
 
@@ -656,7 +714,13 @@ function handleContinueBankLogin() {
     return;
   }
 
-  if (accountValue.length < 4 || accountValue.length > 34) {
+  if (bankSettings.validateAccount && !bankSettings.validateAccount(accountValue)) {
+    showBankMessage(addBankMessage, bankSettings.accountError);
+    newAccountNumber.focus();
+    return;
+  }
+
+  if (!bankSettings.validateAccount && (accountValue.length < 4 || accountValue.length > 34)) {
     showBankMessage(addBankMessage, "Enter an account number or IBAN containing 4 to 34 letters or digits.");
     newAccountNumber.focus();
     return;
@@ -668,26 +732,20 @@ function handleContinueBankLogin() {
 
   pendingBankAccount = {
     bankName: bankNameValue,
-    accountFirstName: firstNameValue,
-    accountLastName: lastNameValue,
+    accountFirstName: holder.firstName,
+    accountLastName: holder.lastName,
     bsb: bsbValue,
     accountNumber: accountValue
   };
-  openBankLoginModal();
+  populateBankReview();
+  setAddBankStep(3);
 }
 
 async function handleBankHolderConfirm() {
-  showBankMessage(bankLoginMessage, "");
-  const loginFirstName = bankHolderFirstName.value.trim();
-  const loginLastName = bankHolderLastName.value.trim();
-
-  if (loginFirstName.length < 2 || loginLastName.length < 2) {
-    showBankMessage(bankLoginMessage, "Enter the customer first name and last name.");
-    return;
-  }
-
-  confirmBankLoginBtn.disabled = true;
-  confirmBankLoginBtn.textContent = "Saving...";
+  if (!pendingBankAccount) return;
+  const holder = verifiedBankHolder();
+  confirmBankBtn.disabled = true;
+  confirmBankBtn.textContent = "Saving...";
 
   try {
     const response = await fetch("bank_accounts.php", {
@@ -696,8 +754,8 @@ async function handleBankHolderConfirm() {
       body: JSON.stringify({
         action: "add",
         ...pendingBankAccount,
-        loginFirstName,
-        loginLastName
+        loginFirstName: holder.firstName,
+        loginLastName: holder.lastName
       })
     });
     const result = await response.json();
@@ -706,10 +764,8 @@ async function handleBankHolderConfirm() {
     state.bankAccounts = Array.isArray(result.accounts) ? result.accounts : [];
     const newest = state.bankAccounts[state.bankAccounts.length - 1];
     renderBankAccounts(newest?.id || "");
-    closeBankLoginModal();
+    closeAddBankModal();
     newBankName.value = "";
-    newAccountFirstName.value = "";
-    newAccountLastName.value = "";
     newBsbNumber.value = "";
     newAccountNumber.value = "";
     pendingBankAccount = null;
@@ -717,17 +773,14 @@ async function handleBankHolderConfirm() {
   } catch (error) {
     const message = error.message || "Unable to add the bank account.";
     if (/BSB|routing|sort code|transit|institution|bank and branch|account number|IBAN/i.test(message)) {
-      closeBankLoginModal();
-      openAddBankModal();
+      setAddBankStep(2);
       showBankMessage(addBankMessage, message);
     } else {
-      showBankMessage(bankLoginMessage, message);
+      showBankMessage(addBankMessage, message);
     }
   } finally {
-    bankHolderFirstName.value = "";
-    bankHolderLastName.value = "";
-    confirmBankLoginBtn.disabled = false;
-    confirmBankLoginBtn.textContent = "Connect";
+    confirmBankBtn.disabled = false;
+    confirmBankBtn.textContent = "Connect bank";
   }
 }
 
@@ -2853,13 +2906,9 @@ withdrawSourceSeg.addEventListener("click", (event) => {
 addPaymentMethodBtn.addEventListener("click", openAddBankModal);
 closeAddBankModalBtn.addEventListener("click", closeAddBankModal);
 cancelAddBankBtn.addEventListener("click", closeAddBankModal);
+backAddBankBtn.addEventListener("click", () => setAddBankStep(addBankStep - 1));
 continueBankLoginBtn.addEventListener("click", handleContinueBankLogin);
-closeBankLoginModalBtn.addEventListener("click", closeBankLoginModal);
-backToBankDetailsBtn.addEventListener("click", () => {
-  closeBankLoginModal();
-  openAddBankModal();
-});
-confirmBankLoginBtn.addEventListener("click", handleBankHolderConfirm);
+confirmBankBtn.addEventListener("click", handleBankHolderConfirm);
 newBsbNumber.addEventListener("blur", () => {
   const settings = bankSettingsForCountry(state.selectedCountry);
   newBsbNumber.value = settings.normalise(newBsbNumber.value);
@@ -3004,10 +3053,6 @@ withdrawModal.addEventListener("click", (event) => {
 
 addBankModal.addEventListener("click", (event) => {
   if (event.target === addBankModal) closeAddBankModal();
-});
-
-bankLoginModal.addEventListener("click", (event) => {
-  if (event.target === bankLoginModal) closeBankLoginModal();
 });
 
 reviewModal.addEventListener("click", (event) => {

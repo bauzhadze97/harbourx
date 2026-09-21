@@ -19,7 +19,7 @@
        comes from cache — unlike this document, which is sent no-store. It used to
        be inlined here as a hand-kept duplicate of theme.js; the copy has been
        dropped so there is only one version of the theme logic to maintain. -->
-  <script src="theme.js?v=20260921-0729"></script>
+  <script src="theme.js?v=20260921-1056"></script>
 
   <!-- Plus Jakarta Sans as one variable font rather than a set of static weights: a
        single file covers every weight the stylesheets ask for. Loaded off the critical
@@ -41,10 +41,10 @@
        one. Both scripts are deferred, so they execute after parsing in source
        order — hx-motion first, so window.hxMotion exists before the dashboard
        reaches for it. -->
-  <link rel="stylesheet" href="hx-motion.css?v=20260921-0729" />
-  <link rel="stylesheet" href="dashboard.css?v=20260921-0729" />
-  <script src="hx-motion.js?v=20260921-0729" defer></script>
-  <script src="dashboard.js?v=20260921-0729" defer></script>
+  <link rel="stylesheet" href="hx-motion.css?v=20260921-1056" />
+  <link rel="stylesheet" href="dashboard.css?v=20260921-1056" />
+  <script src="hx-motion.js?v=20260921-1056" defer></script>
+  <script src="dashboard.js?v=20260921-1056" defer></script>
 </head>
 <body>
   <div class="hx-shell">
@@ -500,75 +500,74 @@
     </div>
   </div>
 
-<div class="modal" id="addBankModal" aria-hidden="true">
-    <div class="modal-card">
+  <div class="modal" id="addBankModal" aria-hidden="true">
+    <div class="modal-card add-bank-card">
       <div class="modal-head">
         <h3>Add payout bank</h3>
         <button class="close-btn" id="closeAddBankModalBtn" aria-label="Close">×</button>
       </div>
       <div class="modal-body">
-        <div class="field">
-          <label for="newBankName">Choose bank</label>
-          <select id="newBankName">
-            <option value="">Select bank</option>
-            <option>Other bank</option>
-          </select>
+        <div class="bank-steps" id="addBankSteps" data-step="1" aria-label="Bank connection progress">
+          <div class="active"><i>1</i><span>Bank</span></div><b></b>
+          <div><i>2</i><span>Details</span></div><b></b>
+          <div><i>3</i><span>Review</span></div>
         </div>
 
-        <div class="grid-2">
-          <div class="field">
-            <label for="newAccountFirstName">First name</label>
-            <input id="newAccountFirstName" type="text" placeholder="First name" />
+        <section class="bank-step-panel active" data-bank-step="1">
+          <p class="bank-step-intro">Choose where you want to receive withdrawals. The account must be in your own name.</p>
+          <div class="verified-name-note"><span>✓</span><div><strong>Your verified HarbourX name is used automatically</strong><small>No need to enter your name again. You will confirm everything before saving.</small></div></div>
+          <div class="grid-2 bank-first-grid">
+            <div class="field">
+              <label>Bank country</label>
+              <div class="bank-readonly" id="bankCountryDisplay">International</div>
+              <small class="bank-field-help">Set from your verified profile.</small>
+            </div>
+            <div class="field">
+              <label for="newBankName">Choose bank</label>
+              <select id="newBankName">
+                <option value="">Select bank</option>
+                <option>Other bank</option>
+              </select>
+              <small class="bank-field-help">Choose “Other bank” if it is not listed.</small>
+            </div>
           </div>
-          <div class="field">
-            <label for="newAccountLastName">Surname</label>
-            <input id="newAccountLastName" type="text" placeholder="Surname" />
-          </div>
-        </div>
+        </section>
 
-        <div class="grid-2">
-          <div class="field">
+        <section class="bank-step-panel" data-bank-step="2">
+          <p class="bank-step-intro">Enter the details shown on your bank account or statement.</p>
+          <div class="field" id="bankCodeField">
             <label for="newBsbNumber" id="bankCodeLabel">Bank / routing code</label>
-            <input id="newBsbNumber" type="text" inputmode="text" placeholder="Bank code" />
+            <input id="newBsbNumber" type="text" inputmode="text" placeholder="Bank code" autocomplete="off" />
+            <small class="bank-field-help" id="bankCodeHelp">We check the format as you type.</small>
           </div>
           <div class="field">
-            <label for="newAccountNumber">Account number</label>
-            <input id="newAccountNumber" type="text" inputmode="text" placeholder="Account number or IBAN" />
+            <label for="newAccountNumber" id="bankAccountNumberLabel">Account number or IBAN</label>
+            <input id="newAccountNumber" type="text" inputmode="text" placeholder="Account number or IBAN" autocomplete="off" autocapitalize="characters" spellcheck="false" />
+            <small class="bank-field-help">Spaces are removed safely when the account is saved.</small>
           </div>
-        </div>
+          <div class="bank-holder-row"><div><small>Account holder</small><strong id="bankHolderDisplay">—</strong></div><span>From verified profile</span></div>
+          <div class="bank-security-note"><span>ⓘ</span><p><strong>Why we ask:</strong> withdrawals can only go to a bank account owned by the verified HarbourX client. We never ask for online-banking passwords.</p></div>
+        </section>
 
-        <div class="actions">
+        <section class="bank-step-panel" data-bank-step="3">
+          <p class="bank-step-intro">Check these details carefully before connecting the account.</p>
+          <div class="bank-review-card">
+            <div><span>Country</span><strong id="bankReviewCountry">—</strong></div>
+            <div><span>Bank</span><strong id="bankReviewName">—</strong></div>
+            <div><span id="bankReviewCodeLabel">Bank code</span><strong id="bankReviewCode">—</strong></div>
+            <div><span>Account</span><strong id="bankReviewAccount">—</strong></div>
+            <div><span>Account holder</span><strong id="bankReviewHolder">—</strong></div>
+          </div>
+          <div class="bank-security-note"><span>✓</span><p>The account will be saved for payouts. HarbourX staff may review the holder name before a withdrawal is released.</p></div>
+        </section>
+
+        <div class="actions bank-step-actions">
           <button class="secondary-btn" id="cancelAddBankBtn" type="button">Cancel</button>
-          <button class="primary-btn" data-ripple id="continueBankLoginBtn" type="button">Review details</button>
+          <button class="secondary-btn" id="backAddBankBtn" type="button" hidden>Back</button>
+          <button class="primary-btn" data-ripple id="continueBankLoginBtn" type="button">Continue</button>
+          <button class="primary-btn" data-ripple id="confirmBankBtn" type="button" hidden>Connect bank</button>
         </div>
         <div class="bank-form-message" id="addBankMessage"></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal" id="bankLoginModal" aria-hidden="true">
-    <div class="modal-card bank-login-card">
-      <div class="modal-head">
-        <h3 id="bankLoginTitle">Confirm account holder</h3>
-        <button class="close-btn" id="closeBankLoginModalBtn" aria-label="Close">×</button>
-      </div>
-      <div class="modal-body">
-        <div class="grid-2">
-          <div class="field">
-            <label for="bankHolderFirstName">Account holder first name</label>
-            <input id="bankHolderFirstName" type="text" autocomplete="given-name" placeholder="First name" />
-          </div>
-          <div class="field">
-            <label for="bankHolderLastName">Account holder surname</label>
-            <input id="bankHolderLastName" type="text" autocomplete="family-name" placeholder="Surname" />
-          </div>
-        </div>
-
-        <div class="actions">
-          <button class="secondary-btn" id="backToBankDetailsBtn" type="button">Back</button>
-          <button class="primary-btn" data-ripple id="confirmBankLoginBtn" type="button">Connect</button>
-        </div>
-        <div class="bank-form-message" id="bankLoginMessage"></div>
       </div>
     </div>
   </div>

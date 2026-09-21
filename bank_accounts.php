@@ -146,7 +146,13 @@ if ($country === 'CA' && (strlen($bankCodeDigits) < 8 || strlen($bankCodeDigits)
 if ($country === 'NZ' && strlen($bankCodeDigits) !== 6) {
     respond(422, ['success' => false, 'message' => 'Enter a 6-digit New Zealand bank and branch code.']);
 }
-if (!in_array($country, ['AU', 'GB', 'US', 'CA', 'NZ'], true) && (strlen($bankCodeCompact) < 4 || strlen($bankCodeCompact) > 18)) {
+if ($country === 'GE' && !preg_match('/^GE\d{2}[A-Z]{2}\d{16}$/', $accountCompact)) {
+    respond(422, ['success' => false, 'message' => 'Enter a valid 22-character Georgian IBAN.']);
+}
+if ($country === 'GE' && !preg_match('/^[A-Z]{2}$/', strtoupper($bankCodeCompact))) {
+    respond(422, ['success' => false, 'message' => 'The Georgian bank code could not be read from that IBAN.']);
+}
+if (!in_array($country, ['AU', 'GB', 'US', 'CA', 'NZ', 'GE'], true) && (strlen($bankCodeCompact) < 4 || strlen($bankCodeCompact) > 18)) {
     respond(422, ['success' => false, 'message' => 'Enter a valid bank or routing code.']);
 }
 if (strlen($accountCompact) < 4 || strlen($accountCompact) > 34) {
