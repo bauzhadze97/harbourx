@@ -1,0 +1,44 @@
+{% extends "admin/_layout.html" %}
+{% set page = 'users' %}
+{% block title %}მომხმარებლები{% endblock %}
+{% block body %}
+<div class="topbar"><h1>მომხმარებლები</h1><div class="grow"></div>
+  <form method="get" action="/admin/users" class="row">
+    <input name="q" value="{{ q }}" placeholder="ID, username, სახელი" style="width:220px">
+    <button class="btn ghost sm">ძებნა</button>
+  </form>
+</div>
+<div class="card"><div class="table-wrap"><table>
+  <thead><tr><th>ID</th><th>სახელი</th><th>ბალანსი</th><th>ყიდვები</th>
+    <th>მოწვეული</th><th>ბონუსი</th><th>სტატუსი</th><th>ბოლოს</th><th>ქმედება</th></tr></thead>
+  <tbody>{% for u in users %}
+    <tr><td class="mono">{{ u.id }}</td>
+      <td>{{ u.first_name or '—' }}{% if u.username %}<br>
+        <span class="muted small">@{{ u.username }}</span>{% endif %}</td>
+      <td><b>{{ money(u.balance) }} ₾</b></td>
+      <td>{{ u.purchases }}</td><td>{{ u.referral_count }}</td>
+      <td>{{ money(u.referral_bonus) }}</td>
+      <td><span class="tag {{ 'bad' if u.is_banned else 'good' }}">
+        {{ 'დაბლოკილი' if u.is_banned else 'აქტიური' }}</span></td>
+      <td class="small muted">{{ u.last_seen_at }}</td>
+      <td>
+        <form method="post" action="/admin/users" class="row" style="gap:5px">
+          <input type="hidden" name="csrf" value="{{ csrf }}">
+          <input type="hidden" name="id" value="{{ u.id }}">
+          <input type="hidden" name="action" value="balance">
+          <input name="amount" placeholder="10.00" style="width:88px">
+          <select name="direction" style="width:auto"><option value="plus">+</option>
+            <option value="minus">−</option></select>
+          <input name="note" placeholder="შენიშვნა" style="width:120px">
+          <button class="btn sm">ცვლილება</button>
+        </form>
+        <form method="post" action="/admin/users" style="margin-top:5px">
+          <input type="hidden" name="csrf" value="{{ csrf }}">
+          <input type="hidden" name="id" value="{{ u.id }}">
+          <button class="btn ghost sm" name="action" value="ban">
+            {{ 'განბლოკვა' if u.is_banned else 'დაბლოკვა' }}</button>
+        </form>
+      </td></tr>
+  {% else %}<tr><td colspan="9" class="muted">ჯერ არაფერი.</td></tr>{% endfor %}</tbody>
+</table></div></div>
+{% endblock %}

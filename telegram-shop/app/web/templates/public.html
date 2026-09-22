@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ka">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ cfg.site_title }}</title>
+<meta name="description" content="{{ cfg.site_tagline }} — საკონტაქტო ინფორმაცია">
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<main class="public">
+  <div class="hero">
+    <div class="logo">🌶️</div>
+    <h1>{{ cfg.site_title }}</h1>
+    <p>{{ cfg.site_tagline }}</p>
+  </div>
+
+  {% if bot_username %}
+  <a class="cta" href="https://t.me/{{ bot_username }}">🤖 ბოტის გახსნა — @{{ bot_username }}</a>
+  {% endif %}
+
+  <h2>საკონტაქტო ინფორმაცია</h2>
+  <div class="contact-list">
+    {% if cfg.admin_contact %}
+    <div class="contact">
+      <div class="ico">👾</div>
+      <div class="who"><b>ადმინისტრაცია</b><span>შეკვეთები და ზოგადი კითხვები</span></div>
+      <a class="btn sm" href="https://t.me/{{ cfg.admin_contact|replace('@','') }}">{{ cfg.admin_contact }}</a>
+    </div>
+    {% endif %}
+    {% if cfg.operator_contact %}
+    <div class="contact">
+      <div class="ico">🎧</div>
+      <div class="who"><b>ოპერატორი</b><span>მხარდაჭერა და დავები</span></div>
+      <a class="btn sm" href="https://t.me/{{ cfg.operator_contact|replace('@','') }}">{{ cfg.operator_contact }}</a>
+    </div>
+    {% endif %}
+    {% if cfg.channel_url %}
+    <div class="contact">
+      <div class="ico">📣</div>
+      <div class="who"><b>არხი</b><span>სიახლეები და განახლებები</span></div>
+      <a class="btn sm ghost" href="{{ cfg.channel_url }}">გახსნა</a>
+    </div>
+    {% endif %}
+    {% if cfg.chat_url %}
+    <div class="contact">
+      <div class="ico">💬</div>
+      <div class="who"><b>ჩატი</b><span>მომხმარებლების საუბარი</span></div>
+      <a class="btn sm ghost" href="{{ cfg.chat_url }}">გახსნა</a>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if reviews_total %}
+  <div class="card" style="margin-top:22px;text-align:center">
+    <div class="stat" style="border:0;background:transparent;padding:0">
+      <div class="k">შეფასებები</div>
+      <div class="v">{{ '%.1f'|format(reviews_average) }} / 5</div>
+      <div class="muted small">{{ reviews_total }} შეფასების მიხედვით</div>
+    </div>
+  </div>
+  {% endif %}
+
+  <p class="foot">ყველა ოპერაცია მხოლოდ Telegram-ის ბოტში ხდება.<br>
+     ამ გვერდზე გაყიდვა არ მიმდინარეობს.</p>
+</main>
+</body>
+</html>

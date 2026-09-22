@@ -1,0 +1,87 @@
+{% extends "admin/_layout.html" %}
+{% set page = 'settings' %}
+{% block title %}პარამეტრები{% endblock %}
+{% block body %}
+<h1>პარამეტრები</h1>
+<form method="post" action="/admin/settings" enctype="multipart/form-data">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+
+<div class="card">
+  <h2>/start — ფოტო და ტექსტი</h2>
+  <p class="muted small">ეს ზუსტად ის სურათი და აღწერაა, რომელსაც მომხმარებელი
+     ბოტის გახსნისას ხედავს.</p>
+  <div class="row">
+    <div style="flex:0 0 auto">
+      {% if cfg.start_photo %}
+        <img class="thumb" style="width:120px;height:120px" src="/media/{{ cfg.start_photo }}" alt="">
+      {% else %}
+        <div class="thumb" style="width:120px;height:120px;display:grid;place-items:center" class="muted">—</div>
+      {% endif %}
+    </div>
+    <div style="flex:1 1 260px">
+      <div class="field"><label>ახალი ფოტო (jpg/png/webp, ≤6MB)</label>
+        <input type="file" name="start_photo_file" accept="image/*"></div>
+      <label class="small"><input type="checkbox" name="clear_photo" value="1" style="width:auto">
+        ფოტოს წაშლა</label>
+    </div>
+  </div>
+  <div class="field" style="margin-top:12px"><label>მისალმების ტექსტი</label>
+    <textarea name="start_text" rows="7">{{ cfg.start_text }}</textarea></div>
+</div>
+
+<div class="card">
+  <h2>წესები</h2>
+  <div class="field"><textarea name="rules_text" rows="8">{{ cfg.rules_text }}</textarea>
+    <p class="muted small">HTML-ის მარტივი ტეგები მუშაობს: &lt;b&gt;, &lt;i&gt;, &lt;code&gt;.</p></div>
+</div>
+
+<div class="card">
+  <h2>კონტაქტები და ბმულები</h2>
+  <div class="row">
+    <div class="field inline"><label>ადმინისტრაცია</label>
+      <input name="admin_contact" value="{{ cfg.admin_contact }}"></div>
+    <div class="field inline"><label>ოპერატორი</label>
+      <input name="operator_contact" value="{{ cfg.operator_contact }}"></div>
+  </div>
+  <div class="row" style="margin-top:10px">
+    <div class="field inline"><label>მხარდაჭერის ბმული</label>
+      <input name="support_url" value="{{ cfg.support_url }}"></div>
+    <div class="field inline"><label>ჩატი</label>
+      <input name="chat_url" value="{{ cfg.chat_url }}"></div>
+    <div class="field inline"><label>არხი</label>
+      <input name="channel_url" value="{{ cfg.channel_url }}"></div>
+  </div>
+  <div class="field" style="margin-top:10px"><label>შეფასებების არხი (@username ან -100…)</label>
+    <input name="review_channel" value="{{ cfg.review_channel }}">
+    <p class="muted small">ბოტი ამ არხის ადმინი უნდა იყოს.</p></div>
+</div>
+
+<div class="card">
+  <h2>წესები და ფასდაკლება</h2>
+  <div class="row">
+    <div class="field inline"><label>დავის ვადა (საათი)</label>
+      <input name="dispute_window_hours" value="{{ cfg.dispute_window_hours }}"></div>
+    <div class="field inline"><label>რეფერალის ბონუსი (%)</label>
+      <input name="referral_bonus_percent" value="{{ cfg.referral_bonus_percent }}"></div>
+    <div class="field inline"><label>მინ. შევსება (თეთრი)</label>
+      <input name="min_deposit" value="{{ cfg.min_deposit }}"></div>
+  </div>
+  <div class="field" style="margin-top:10px"><label>დაგროვებადი ფასდაკლება</label>
+    <input name="discount_tiers" value="{{ cfg.discount_tiers }}">
+    <p class="muted small">ფორმატი: <code>ყიდვები:პროცენტი</code>, მძიმით გამოყოფილი.
+       მაგ. <code>3:2,5:5,10:7,20:10</code></p></div>
+</div>
+
+<div class="card">
+  <h2>საიტი</h2>
+  <div class="row">
+    <div class="field inline"><label>სათაური</label>
+      <input name="site_title" value="{{ cfg.site_title }}"></div>
+    <div class="field inline"><label>ქვესათაური</label>
+      <input name="site_tagline" value="{{ cfg.site_tagline }}"></div>
+  </div>
+</div>
+
+<button class="btn">შენახვა</button>
+</form>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "admin/_layout.html" %}
+{% set page = 'orders' %}
+{% block title %}შეკვეთები{% endblock %}
+{% block body %}
+<h1>შეკვეთები</h1>
+<div class="card"><div class="table-wrap"><table>
+  <thead><tr><th>#</th><th>მყიდველი</th><th>პროდუქტი</th><th>ქალაქი</th>
+    <th>ფასი</th><th>ფასდ.</th><th>გადახდილი</th><th>სტატუსი</th><th>დავის ვადა</th><th>თარიღი</th></tr></thead>
+  <tbody>{% for o in orders %}
+    <tr><td>{{ o.id }}</td>
+      <td>{{ o.first_name or o.username or '—' }}<br><span class="muted small mono">{{ o.user_id }}</span></td>
+      <td>{{ o.product_name }}<br><span class="muted small">{{ o.payload[:60] }}</span></td>
+      <td>{{ o.city_name }}</td>
+      <td>{{ money(o.price) }}</td><td>{{ money(o.discount) }}</td>
+      <td><b>{{ money(o.paid) }} ₾</b></td>
+      <td><span class="tag {{ 'bad' if o.status=='refunded' else ('warn' if o.status=='disputed' else 'good') }}">{{ o.status }}</span></td>
+      <td class="small muted">{{ o.dispute_until }}</td>
+      <td class="small muted">{{ o.created_at }}</td></tr>
+  {% else %}<tr><td colspan="10" class="muted">ჯერ არაფერი.</td></tr>{% endfor %}</tbody>
+</table></div></div>
+{% endblock %}

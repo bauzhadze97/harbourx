@@ -1,0 +1,26 @@
+{% extends "admin/_layout.html" %}
+{% set page = 'reviews' %}
+{% block title %}შეფასებები{% endblock %}
+{% block body %}
+<h1>შეფასებები</h1>
+<div class="card"><div class="table-wrap"><table>
+  <thead><tr><th>#</th><th>ავტორი</th><th>პროდუქტი</th><th>ქულა</th><th>ტექსტი</th>
+    <th>ხილვადობა</th><th>თარიღი</th><th></th></tr></thead>
+  <tbody>{% for r in reviews %}
+    <tr><td>{{ r.id }}</td>
+      <td>{{ r.first_name or r.username or r.user_id }}</td>
+      <td>{{ r.product_name }}</td>
+      <td>{{ '⭐️' * r.rating }}</td>
+      <td>{{ r.text }}</td>
+      <td><span class="tag {{ 'good' if r.is_public else '' }}">
+        {{ 'ხილული' if r.is_public else 'დამალული' }}</span></td>
+      <td class="small muted">{{ r.created_at }}</td>
+      <td><form method="post" action="/admin/reviews" style="display:flex;gap:6px">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <input type="hidden" name="id" value="{{ r.id }}">
+        <button class="btn ghost sm" name="action" value="hide">გადართვა</button>
+        <button class="btn danger sm" name="action" value="delete">წაშლა</button>
+      </form></td></tr>
+  {% else %}<tr><td colspan="8" class="muted">ჯერ არაფერი.</td></tr>{% endfor %}</tbody>
+</table></div></div>
+{% endblock %}

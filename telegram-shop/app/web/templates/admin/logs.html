@@ -1,0 +1,47 @@
+{% extends "admin/_layout.html" %}
+{% set page = 'logs' %}
+{% block title %}ჟურნალი{% endblock %}
+{% block body %}
+<h1>ჟურნალი</h1>
+<div class="card">
+  <h2>ფულის მოძრაობა</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>#</th><th>მომხმარებელი</th><th>თანხა</th><th>ნაშთი</th>
+      <th>ტიპი</th><th>ref</th><th>შენიშვნა</th><th>თარიღი</th></tr></thead>
+    <tbody>{% for l in ledger %}
+      <tr><td>{{ l.id }}</td><td class="mono small">{{ l.username or l.user_id }}</td>
+        <td style="color:{{ '#4ec9a5' if l.amount > 0 else '#f1666f' }}">
+          {{ money(l.amount) }}</td>
+        <td>{{ money(l.balance_after) }}</td>
+        <td><span class="tag">{{ l.kind }}</span></td>
+        <td class="mono small">{{ l.ref }}</td><td class="small">{{ l.note }}</td>
+        <td class="small muted">{{ l.created_at }}</td></tr>
+    {% else %}<tr><td colspan="8" class="muted">ცარიელია.</td></tr>{% endfor %}</tbody>
+  </table></div>
+</div>
+
+<div class="grid two">
+  <div class="card">
+    <h2>ადმინის ქმედებები</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>ვინ</th><th>რა</th><th>დეტალი</th><th>IP</th><th>როდის</th></tr></thead>
+      <tbody>{% for e in entries %}
+        <tr><td>{{ e.actor }}</td><td class="mono small">{{ e.action }}</td>
+          <td class="small">{{ e.detail }}</td><td class="mono small">{{ e.ip }}</td>
+          <td class="small muted">{{ e.created_at }}</td></tr>
+      {% else %}<tr><td colspan="5" class="muted">ცარიელია.</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </div>
+  <div class="card">
+    <h2>IPN მოვლენები</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>#</th><th>payment_id</th><th>სტატუსი</th><th>როდის</th></tr></thead>
+      <tbody>{% for e in ipn %}
+        <tr><td>{{ e.id }}</td><td class="mono small">{{ e.payment_id }}</td>
+          <td><span class="tag">{{ e.status }}</span></td>
+          <td class="small muted">{{ e.created_at }}</td></tr>
+      {% else %}<tr><td colspan="4" class="muted">ცარიელია.</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </div>
+</div>
+{% endblock %}
