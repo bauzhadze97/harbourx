@@ -92,11 +92,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap"></noscript>
-<script src="theme.js?v=20260928-finland"></script>
-<link rel="stylesheet" href="hx-motion.css?v=20260928-finland">
-<link rel="stylesheet" href="portal.css?v=20260928-finland">
-<script src="hx-motion.js?v=20260928-finland" defer></script>
-<script src="qrcode.min.js?v=20260928-finland" defer></script>
+<script src="theme.js?v=20260928-finnish-reviews"></script>
+<link rel="stylesheet" href="hx-motion.css?v=20260928-finnish-reviews">
+<link rel="stylesheet" href="portal.css?v=20260928-finnish-reviews">
+<script src="hx-motion.js?v=20260928-finnish-reviews" defer></script>
+<script src="qrcode.min.js?v=20260928-finnish-reviews" defer></script>
 </head>
 <body>
 <div class="portal-shell">

@@ -408,7 +408,7 @@ if ($error) echo '<div class="notice error">' . htmlspecialchars($error) . '</di
     </div>
   </div>
 </div>
-<script src="qrcode.min.js?v=20260928-finland"></script>
+<script src="qrcode.min.js?v=20260928-finnish-reviews"></script>
 <script>
   (function () {
     var input = document.getElementById('btcWalletInput');
