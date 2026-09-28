@@ -947,19 +947,6 @@ body.nav-open { overflow: hidden; }
   background: var(--panel);
   box-shadow: var(--shadow-sm);
 }
-.voice__example {
-  align-self: flex-start;
-  margin-bottom: 16px;
-  padding: 5px 10px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-pill);
-  background: var(--panel-2);
-  color: var(--muted);
-  font-size: .72rem;
-  font-weight: 700;
-  letter-spacing: .05em;
-  text-transform: uppercase;
-}
 .voice__stars { display: flex; gap: 3px; margin-bottom: 20px; color: var(--sand); }
 .voice__stars svg { width: 17px; height: 17px; }
 .voice blockquote {
